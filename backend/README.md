@@ -31,5 +31,13 @@ active designated-team membership:
 - authenticated user who is not a designated team member -> `403`
 - membership is read from storage on each request, so revoking
   `users.is_team_member` denies access on the very next request
+- membership defaults to denied and must be granted explicitly
 
-`/health` is the only unauthenticated route and exposes no decision data.
+`/health` is the only unauthenticated route and exposes no decision data. The
+interactive documentation and schema endpoints (`/docs`, `/redoc`,
+`/openapi.json`) are disabled so the protected API surface cannot be enumerated.
+
+## Schema provisioning
+
+The application creates any missing tables at startup, so a fresh deployment can
+serve requests immediately. Migration tooling is out of scope for this Story.

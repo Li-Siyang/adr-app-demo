@@ -28,9 +28,9 @@ class TokenVerifier(Protocol):
 class SsoTokenVerifier:
     """Verifies organizational SSO tokens against the provider's JWKS (CR-FR-001)."""
 
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, jwk_client: PyJWKClient | None = None) -> None:
         self._settings = settings
-        self._jwk_client = PyJWKClient(settings.sso_jwks_url)
+        self._jwk_client = jwk_client or PyJWKClient(settings.sso_jwks_url)
 
     def verify(self, token: str) -> TokenClaims:
         try:

@@ -1,5 +1,6 @@
 """Unit tests for STORY-001 access control (CR-FR-001-002, CR-NFR-001-002, AC-001)."""
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
@@ -68,6 +69,28 @@ def test_health_endpoint_stays_public(client: TestClient) -> None:
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+@pytest.mark.parametrize("path", ["/docs", "/redoc", "/openapi.json"])
+def test_api_surface_is_not_publicly_discoverable(
+    client: TestClient, path: str
+) -> None:
+    assert client.get(path).status_code == 404
+
+
+def test_membership_defaults_to_denied(
+    client: TestClient, db_session: Session
+) -> None:
+    db_session.add(
+        User(
+            subject="sso|member",
+            email="member@example.com",
+            display_name="Team Member",
+        )
+    )
+    db_session.commit()
+
+    assert client.get(PROTECTED_PATH, headers=auth(MEMBER_TOKEN)).status_code == 403
 
 
 def test_unknown_protected_path_is_not_found_for_a_member(

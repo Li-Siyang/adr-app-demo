@@ -11,15 +11,20 @@ from app.models.user import User
 
 bearer_scheme = HTTPBearer(auto_error=False)
 
-UNAUTHENTICATED = HTTPException(
-    status_code=status.HTTP_401_UNAUTHORIZED,
-    detail="Authentication required",
-    headers={"WWW-Authenticate": "Bearer"},
-)
-NOT_A_TEAM_MEMBER = HTTPException(
-    status_code=status.HTTP_403_FORBIDDEN,
-    detail="Access is restricted to designated team members",
-)
+
+def _unauthenticated() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Authentication required",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+def _not_a_team_member() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Access is restricted to designated team members",
+    )
 
 
 def get_current_member(
@@ -35,19 +40,19 @@ def get_current_member(
     membership takes effect immediately, even for an existing session.
     """
     if credentials is None or not credentials.credentials:
-        raise UNAUTHENTICATED
+        raise _unauthenticated()
 
     try:
         claims = verifier.verify(credentials.credentials)
     except TokenVerificationError:
-        raise UNAUTHENTICATED from None
+        raise _unauthenticated() from None
 
     user = db.execute(
         select(User).where(User.subject == claims.subject)
     ).scalar_one_or_none()
 
     if user is None or not user.is_team_member:
-        raise NOT_A_TEAM_MEMBER
+        raise _not_a_team_member()
 
     return user
 

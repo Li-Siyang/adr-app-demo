@@ -52,7 +52,7 @@ def db_session() -> Iterator[Session]:
 
 @pytest.fixture
 def client(db_session: Session) -> Iterator[TestClient]:
-    app = create_app()
+    app = create_app(initialize_schema=lambda: None)
     app.dependency_overrides[get_db] = lambda: db_session
     app.dependency_overrides[get_token_verifier] = FakeTokenVerifier
     with TestClient(app) as test_client:
