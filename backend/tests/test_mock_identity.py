@@ -77,9 +77,9 @@ def test_roles_are_additive_for_combined_mock_identity(client: TestClient) -> No
 
     assert response.status_code == 200
     assert response.json()["selected_identity"]["roles"] == [
-        Role.TEAM_MEMBER,
-        Role.ADMINISTRATOR,
-        Role.APPROVER,
+        Role.TEAM_MEMBER.value,
+        Role.ADMINISTRATOR.value,
+        Role.APPROVER.value,
     ]
 
 

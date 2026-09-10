@@ -39,8 +39,8 @@ def require_selected_identity(
 
 
 @router.get("/mock-identities", response_model=list[MockIdentity])
-def list_mock_identities() -> tuple[MockIdentity, ...]:
-    return MOCK_IDENTITIES
+def list_mock_identities() -> list[MockIdentity]:
+    return list(MOCK_IDENTITIES)
 
 
 @router.get("/mock-session", response_model=MockSession)
@@ -85,4 +85,3 @@ def get_attribution_preview(
         actor=identity,
         message=f"Demonstration actions use {identity.display_name} for attribution.",
     )
-
