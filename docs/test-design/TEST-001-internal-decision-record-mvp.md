@@ -3,7 +3,7 @@
 **Test Design ID:** TEST-001  
 **Status:** Approved  
 **Mode:** DESIGN MODE  
-**Source Requirement:** `docs/requirements/requirement-definition-v1.md`, Version 1.1, Approved  
+**Source Requirement:** `docs/requirements/requirement-definition.md`, Version 1.1, Approved
 **Source Development Plan:** `docs/planning/PLAN-001-internal-decision-record-mvp.md`, explicitly provided as approved  
 **Scope:** STORY-001 through STORY-016  
 

@@ -1,32 +1,43 @@
 # Development Plan
 
+**Plan ID:** PLAN-001
+**Version:** 1.1
+
 ## 1. Source Requirement
 
-Requirement document: `docs/requirements/requirement-definition-v1.md`
+Requirement document: `docs/requirements/requirement-definition.md`
 
-Requirement version: 1.1
+Requirement version: 1.3
 
 Requirement status: Approved
 
-Planning date: 2026-09-01
+Planning date: 2026-09-10
 
 ---
 
 ## 2. Planning Summary
 
-This plan delivers the Internal Decision Record Application MVP for one internal
-team. The work is organized around access control, decision lifecycle,
-versioning, discovery, comments, archival, and operational quality.
+This plan delivers the Internal Decision Record Application demonstration MVP
+for one modeled internal team. The work is organized around Mock identity
+selection, role-dependent behavior, decision authoring and lifecycle,
+replacement versioning, immutable history, discovery, top-level comments,
+archival, auditability, and operational compatibility.
 
-Authentication and authorization are foundational dependencies. Core record
-creation and lifecycle behavior precede versioning, archival, comments, and
-discovery. Audit, confidentiality, retention, recovery, performance, and browser
-compatibility apply across the product.
+Mock identity selection and core record creation are foundational. Role
+administration and lifecycle behavior precede replacement versioning and
+archival. Immutable audit behavior is cross-cutting and must be available before
+governed actions are completed.
 
-No product-level planning blocker remains. Engineering risks center on
-concurrent lifecycle actions, immutable history, immediate access revocation,
-atomic version and tag operations, permanent Draft deletion, and recovery
-verification.
+Version 1.3 removes organizational SSO, a real access-security boundary, record
+deletion, backup and recovery, encryption at rest, tag administration, comment
+replies, and a formal response-time target from MVP scope. It adds a permanent,
+retained, replacement-specific Abandoned condition for replacement-version
+Drafts. The MVP uses only demo or synthetic data.
+
+No product-level planning blocker remains. Principal engineering risks are
+atomic lifecycle outcomes, immutable history, replacement abandonment,
+consistent Mock-identity attribution, permanent audit retention, and preserving
+record links and archival state.
 
 ---
 
@@ -38,30 +49,32 @@ No blocking requirement gaps identified.
 
 ### Non-blocking Gaps
 
-No non-blocking requirement gaps identified. The approved availability and
-accessibility statements are scope constraints rather than measurable delivery
-targets.
+No non-blocking requirement gaps identified. Responsiveness, availability, and
+accessibility are approved best-effort scope constraints without mandatory
+measurable targets.
 
 ---
 
 ## 4. Epics
 
-### EPIC-001: Secure Team Access and Role Administration
+### EPIC-001: Mock Identity and Role Administration
 
-Objective: Restrict the application to authenticated team members and enforce
-additive role permissions, including approver administration.
+Objective: Let a person select a clearly identified Mock identity and apply its
+additive roles and attribution consistently without implying real
+authentication or access protection.
 
-Related Requirements: CR-USR-001–006, CR-USR-009–010, CR-FR-001–002,
-CR-FR-009–010, CR-NFR-001–002, CR-BR-001–002, CR-BR-013, CR-BR-015.
+Related Requirements: CR-BG-003; CR-USR-001, CR-USR-004–006,
+CR-USR-009–011; CR-FR-009–010, CR-FR-027–028; CR-NFR-013; CR-BR-001–002,
+CR-BR-013, CR-BR-015, CR-BR-018.
 
 Stories: STORY-001, STORY-002
 
 ### EPIC-002: Decision Record Authoring and Lifecycle
 
-Objective: Create complete decision records and move them safely through the
-approved review lifecycle.
+Objective: Create complete decision records and move non-abandoned records
+safely through the approved review lifecycle.
 
-Related Requirements: CR-USR-003, CR-FR-003–010, CR-FR-023–024,
+Related Requirements: CR-USR-003; CR-FR-003–010, CR-FR-023–024;
 CR-BR-003–004, CR-BR-010, CR-BR-016.
 
 Stories: STORY-003, STORY-004, STORY-005
@@ -69,47 +82,52 @@ Stories: STORY-003, STORY-004, STORY-005
 ### EPIC-003: Ownership, Versioning, and History
 
 Objective: Preserve authorship and immutable history while supporting ownership
-transfer and controlled evolution of Accepted decisions.
+transfer, controlled replacement of Accepted decisions, and retained
+abandonment of replacement Drafts.
 
-Related Requirements: CR-USR-007–009, CR-FR-006A, CR-FR-011–014, CR-FR-026,
-CR-NFR-003, CR-BR-005–006, CR-BR-011, CR-BR-013–014.
+Related Requirements: CR-USR-007–009; CR-FR-006A, CR-FR-011–014,
+CR-FR-026, CR-FR-030; CR-NFR-003; CR-BR-005–006, CR-BR-011,
+CR-BR-013–014, CR-BR-019.
 
 Stories: STORY-006, STORY-007, STORY-008
 
-### EPIC-004: Discovery and Tag Governance
+### EPIC-004: Discovery and Basic Tags
 
-Objective: Discover all authorized decisions by one exact tag and maintain tag
-references without losing records.
+Objective: Create and associate tags and discover retained records through one
+exact tag filter.
 
-Related Requirements: CR-FR-005, CR-FR-015–016, CR-FR-025, CR-BR-009,
-CR-BR-017.
+Related Requirements: CR-FR-005, CR-FR-015–016, CR-FR-025; CR-BR-009.
 
 Stories: STORY-009, STORY-010
 
 ### EPIC-005: Decision Discussion
 
-Objective: Support simple discussion through comments, single-level replies,
-and auditable soft deletion.
+Objective: Support top-level comments and auditable author-only soft deletion
+without replies.
 
-Related Requirements: CR-USR-002, CR-FR-017–019, CR-BR-012.
+Related Requirements: CR-USR-002; CR-FR-017, CR-FR-019; CR-BR-012.
 
 Stories: STORY-011
 
-### EPIC-006: Archival, Restoration, and Draft Deletion
+### EPIC-006: Archival, Restoration, and Record Retention
 
-Objective: Retain published records, restore archived records to their prior
-state, and permanently delete eligible Drafts under approved rules.
+Objective: Archive and restore retained records while ensuring decision-record
+deletion is unavailable in every lifecycle, replacement-specific, and archival
+condition.
 
-Related Requirements: CR-USR-006, CR-FR-020–022, CR-BR-007–008, CR-BR-014.
+Related Requirements: CR-USR-006; CR-FR-020–021, CR-FR-029; CR-NFR-008;
+CR-BR-007, CR-BR-014.
 
 Stories: STORY-012, STORY-013
 
-### EPIC-007: Security, Audit, and Operational Quality
+### EPIC-007: Demo Data, Audit, and Operational Quality
 
-Objective: Meet the approved confidentiality, capacity, performance, audit,
-retention, recovery, and compatibility requirements.
+Objective: Enforce the demo-data boundary, provide HTTPS in deployed
+environments, retain governed audit evidence, and meet approved capacity and
+browser requirements.
 
-Related Requirements: CR-SCP-002–003, CR-NFR-001–012.
+Related Requirements: CR-SCP-002–003; CR-FR-014, CR-FR-019–021,
+CR-FR-023, CR-FR-030; CR-NFR-004–008, CR-NFR-010–013; CR-BR-010.
 
 Stories: STORY-014, STORY-015, STORY-016
 
@@ -117,26 +135,31 @@ Stories: STORY-014, STORY-015, STORY-016
 
 ## 5. User Stories
 
-### STORY-001: Authenticate and Restrict Team Access
+### STORY-001: Select a Mock Identity
 
 **User Story**
 
-As an internal team member, I want to authenticate through organizational SSO
-so that I can securely access decision records.
+As an MVP user, I want to choose a preconfigured Mock identity so that I can
+demonstrate behavior associated with that identity's roles.
 
 **Description**
 
-Permit access only to authenticated members of the designated team and remove
-access when membership is lost.
+Provide a login or entry screen listing preconfigured identities as Mock users.
+Use the selected identity for roles and attribution while clearly communicating
+that selection does not authenticate the person, verify team membership, or
+protect data from unauthorized access.
 
 **Related Requirements**
 
-CR-USR-001–002; CR-FR-001–002; CR-NFR-001–002.
+CR-BG-003; CR-USR-001, CR-USR-011; CR-FR-027–028; CR-NFR-013; CR-BR-018;
+CR-US-015.
 
 **Source Acceptance Criteria Mapping**
 
-AC-001: Access is denied to anyone who is not an authenticated member of the
-designated team.
+AC-043 maps Mock identity selection, configured roles, and subsequent
+attribution. AC-044 maps the explicit absence of organizational SSO, identity
+verification, team-membership verification, and a real security boundary.
+AC-037 maps the demo-data notice on the login or entry screen.
 
 **Dependencies**
 
@@ -156,14 +179,14 @@ the Pull Request is reviewed.
 
 **User Story**
 
-As an administrator, I want to designate approvers and apply additive user roles
-so that only authorized users can make governed decisions.
+As an administrator Mock identity, I want to designate approvers and apply
+additive roles so that governed decision behavior can be demonstrated.
 
 **Description**
 
-Enforce administrator-only approver administration and replacement creation,
-while allowing a user to hold additive roles and a designated approver to
-self-approve.
+Enforce administrator-only approver administration and replacement governance,
+allow a Mock identity to hold additive roles, and permit a designated approver
+to decide a record they authored.
 
 **Related Requirements**
 
@@ -172,10 +195,9 @@ CR-BR-013, CR-BR-015.
 
 **Source Acceptance Criteria Mapping**
 
-AC-003: Non-administrators cannot designate approvers, archive, restore, or
-create replacements. AC-006: Non-approvers cannot decide a Proposed record.
-AC-007: A designated approver may decide their own Proposed record. AC-023:
-permissions from multiple held roles are additive.
+AC-003 maps administrator-only governed actions, including replacement creation
+and abandonment. AC-006 maps denial for non-approvers. AC-007 maps
+self-approval. AC-023 maps additive permissions.
 
 **Dependencies**
 
@@ -195,24 +217,24 @@ the Pull Request is reviewed.
 
 **User Story**
 
-As a team member, I want to create a structured Draft so that the decision and
-its rationale can be reviewed and understood later.
+As a team-member Mock identity, I want to create a structured Draft so that the
+decision and its rationale can be reviewed and understood later.
 
 **Description**
 
-Create a Draft with the required content, distinct author and owner, one or more
-tags, and the mandatory information-handling notice.
+Create a Draft with all required content, distinct author and owner, one or more
+tags, attribution to the selected Mock identity, and the mandatory
+demo-or-synthetic-data notice.
 
 **Related Requirements**
 
-CR-BG-001–002; CR-OBJ-001–002; CR-USR-003, CR-USR-007; CR-FR-003–005,
-CR-FR-006A, CR-FR-023; CR-BR-010.
+CR-BG-001–002; CR-OBJ-001–002; CR-USR-002–003, CR-USR-007; CR-SCP-003;
+CR-FR-003–005, CR-FR-006A, CR-FR-023; CR-BR-010; CR-US-001.
 
 **Source Acceptance Criteria Mapping**
 
-AC-002: A new record is Draft and records its creator as author. AC-004: Missing
-required fields are identified when submission is attempted. AC-037: Creation
-and editing screens display the prohibited-information notice.
+AC-002 maps Draft creation and Mock-author attribution. AC-004 maps required
+field validation at submission. AC-037 maps the prohibited-data notice.
 
 **Dependencies**
 
@@ -232,23 +254,25 @@ the Pull Request is reviewed.
 
 **User Story**
 
-As an author, I want to edit and submit a complete Draft so that an approver can
-review it.
+As an author Mock identity, I want to edit and submit a complete,
+non-abandoned Draft so that an approver can review it.
 
 **Description**
 
-Allow the author to edit Draft content and transition it to Proposed only when
-all required fields and at least one designated approver are present.
+Allow the attributed author to edit eligible Draft content and transition it to
+Proposed only when all required fields and at least one designated approver are
+present. Abandoned replacement Drafts cannot be edited or submitted.
 
 **Related Requirements**
 
-CR-USR-003; CR-FR-006, CR-FR-007–008, CR-FR-024; CR-BR-003, CR-BR-016.
+CR-USR-003; CR-FR-006–008, CR-FR-024, CR-FR-030; CR-BR-003,
+CR-BR-016, CR-BR-019; CR-US-002.
 
 **Source Acceptance Criteria Mapping**
 
-AC-004: Incomplete Draft submission is prevented. AC-005: A complete Draft with
-an approver becomes Proposed. AC-024: Submission without an approver is
-prevented with an actionable message.
+AC-004 maps incomplete Draft submission prevention. AC-005 maps valid
+Draft-to-Proposed submission. AC-024 maps the approver requirement. AC-047 maps
+the prohibition on editing or submitting an Abandoned replacement Draft.
 
 **Dependencies**
 
@@ -268,8 +292,8 @@ the Pull Request is reviewed.
 
 **User Story**
 
-As a designated approver, I want to accept or reject a Proposed decision so that
-the team has a clear outcome.
+As a designated approver Mock identity, I want to accept or reject a Proposed
+decision so that the modeled team has a clear outcome.
 
 **Description**
 
@@ -279,7 +303,7 @@ resubmission. Rejected records are immutable.
 
 **Related Requirements**
 
-CR-FR-006–010; CR-FR-014; CR-BR-002–004.
+CR-FR-006–010, CR-FR-014; CR-BR-002–004; CR-US-003, CR-US-010.
 
 **Source Acceptance Criteria Mapping**
 
@@ -305,24 +329,26 @@ the Pull Request is reviewed.
 
 **User Story**
 
-As an author, owner, or administrator, I want to transfer a Draft or Proposed
-record without changing authorship so that responsibility can change safely.
+As an author, owner, or administrator Mock identity, I want to transfer an
+eligible Draft or Proposed record without changing authorship so that modeled
+responsibility can change safely.
 
 **Description**
 
-Allow only approved roles and lifecycle states to transfer ownership. Retain
-records when an author leaves, without granting additional permissions.
+Allow only approved roles and eligible record conditions to transfer ownership.
+Retain records when an author leaves without granting additional permissions.
+Abandoned replacement Drafts cannot be transferred.
 
 **Related Requirements**
 
-CR-USR-007–008; CR-FR-006A, CR-FR-026; CR-BR-011.
+CR-USR-007–008; CR-FR-006A, CR-FR-026, CR-FR-030; CR-BR-011,
+CR-BR-019; CR-US-011, CR-US-013.
 
 **Source Acceptance Criteria Mapping**
 
-AC-014: Approved roles may transfer Draft or Proposed records and authorship is
-unchanged; all other combinations are denied. AC-030: A departed author's
-record remains and the owner or administrator retains only otherwise-granted
-actions.
+AC-014 maps the transfer actor and record-condition matrix while preserving
+authorship. AC-030 maps retained records after author departure. AC-047 maps
+immutability of ownership on Abandoned replacement Drafts.
 
 **Dependencies**
 
@@ -338,33 +364,40 @@ All mapped source Acceptance Criteria are satisfied; required automated tests
 are implemented; existing tests pass; documentation is updated when required;
 the Pull Request is reviewed.
 
-### STORY-007: Create and Decide a Replacement Version
+### STORY-007: Govern Replacement Versions
 
 **User Story**
 
-As an administrator, I want to create one replacement version of an Accepted
-record so that the decision can evolve without altering its history.
+As an administrator Mock identity, I want to create, complete, or abandon one
+replacement version of an Accepted record so that the decision can evolve
+without altering retained history.
 
 **Description**
 
-Create a linked Draft replacement only when no active replacement exists. Keep
-it active until Accepted, Rejected, or deleted, and atomically supersede the
-previous Accepted version when its replacement is Accepted.
+Create one linked active replacement Draft when none exists. End its active
+interval when it is Accepted, Rejected, or its Draft is marked Abandoned.
+Acceptance atomically supersedes the previous Accepted version. Abandonment
+retains the Draft and link, leaves the original Accepted, permits a new
+replacement, and makes the abandoned replacement permanently immutable and
+non-reactivatable.
 
 **Related Requirements**
 
-CR-USR-009; CR-FR-011–013; CR-BR-005–006, CR-BR-013–014.
+CR-USR-009; CR-FR-011–013, CR-FR-030; CR-BR-005–006, CR-BR-013–014,
+CR-BR-019; CR-US-006, CR-US-016.
 
 **Source Acceptance Criteria Mapping**
 
-AC-009: Accepted content cannot be edited directly. AC-010: An administrator
-creates a linked active Draft. AC-011: Acceptance supersedes the prior version.
-AC-025: A second active replacement is denied. AC-039: Accepted, Rejected, or
-deleted replacements cease to be active.
+AC-009 maps direct-edit prevention for Accepted records. AC-010 maps controlled
+replacement creation. AC-011 maps atomic supersession. AC-025 maps the
+single-active-replacement rule. AC-039 maps all active-interval endpoints.
+AC-046 maps valid abandonment and retained navigation. AC-047 maps
+post-abandonment immutability, non-reactivation, and invalid abandonment
+targets.
 
 **Dependencies**
 
-STORY-002, STORY-005.
+STORY-002, STORY-005, STORY-015.
 
 **Priority**
 
@@ -380,23 +413,27 @@ the Pull Request is reviewed.
 
 **User Story**
 
-As a reader, I want to inspect change history and navigate linked versions so
-that I can understand how a decision evolved.
+As a reader using a Mock identity, I want to inspect change history and navigate
+accepted, superseded, and abandoned replacement links so that I can understand
+how a decision evolved.
 
 **Description**
 
-Expose immutable change history and bidirectional navigation between
-Superseded and replacement versions.
+Expose immutable attributed change history and navigation between originals and
+accepted or abandoned replacement versions without corrupting links or
+reactivating abandoned records.
 
 **Related Requirements**
 
-CR-OBJ-002; CR-FR-013–014; CR-NFR-003; CR-BR-004–006, CR-BR-009.
+CR-OBJ-002; CR-FR-013–014, CR-FR-030; CR-NFR-003; CR-BR-004–006,
+CR-BR-009, CR-BR-019; CR-US-007.
 
 **Source Acceptance Criteria Mapping**
 
-AC-012: Readers can navigate between related versions. AC-013: History shows
-what changed, who changed it, and when, and cannot be modified. AC-038:
-Rejected and Superseded content is immutable.
+AC-012 maps navigation between Superseded and accepted replacements. AC-013
+maps immutable attributed history. AC-038 maps Rejected and Superseded
+immutability. AC-046 maps navigation to retained abandoned replacements.
+AC-047 maps abandoned-record immutability.
 
 **Dependencies**
 
@@ -416,22 +453,23 @@ the Pull Request is reviewed.
 
 **User Story**
 
-As a team member, I want to filter by one exact tag so that I can find relevant
-current and historical records.
+As a team-member Mock identity, I want to filter by one exact tag so that I can
+find relevant current and retained historical records.
 
 **Description**
 
-Return authorized matching records, including Rejected, Superseded, and
-archived records.
+Return matching records, including Rejected, Superseded, and archived records.
+The MVP has no real authorization boundary and uses only demo or synthetic
+data.
 
 **Related Requirements**
 
-CR-FR-005, CR-FR-015–016; CR-BR-009.
+CR-FR-005, CR-FR-015–016; CR-BR-009; CR-US-004.
 
 **Source Acceptance Criteria Mapping**
 
-AC-015: Exact single-tag filtering returns matching authorized records,
-including matching Rejected, Superseded, and archived records.
+AC-015 maps exact single-tag filtering, including matching Rejected,
+Superseded, and archived records.
 
 **Dependencies**
 
@@ -447,63 +485,26 @@ All mapped source Acceptance Criteria are satisfied; required automated tests
 are implemented; existing tests pass; documentation is updated when required;
 the Pull Request is reviewed.
 
-### STORY-010: Create and Govern Tags
+### STORY-010: Create and Associate Tags
 
 **User Story**
 
-As a team member, I want to create tags, while administrators maintain them, so
-that decision classification remains usable.
+As a team-member Mock identity, I want to create tags and associate one or more
+with records so that records remain discoverable.
 
 **Description**
 
-Allow team tag creation and administrator-only rename, merge, and deletion,
-while updating references and never deleting associated records.
+Allow team members to create tags and make them available for record
+association. Tag rename, merge, and deletion are outside MVP scope.
 
 **Related Requirements**
 
-CR-FR-025; CR-BR-017.
+CR-FR-005, CR-FR-025; CR-US-014.
 
 **Source Acceptance Criteria Mapping**
 
-AC-029 maps tag creation and administrator-only maintenance. AC-040 maps rename
-reference updates. AC-041 maps merge replacement. AC-042 maps association-only
-deletion with record preservation.
-
-**Dependencies**
-
-STORY-002, STORY-003.
-
-**Priority**
-
-Must
-
-**Definition of Done**
-
-All mapped source Acceptance Criteria are satisfied; required automated tests
-are implemented; existing tests pass; documentation is updated when required;
-the Pull Request is reviewed.
-
-### STORY-011: Discuss a Decision
-
-**User Story**
-
-As a team member, I want to comment and add a single-level reply so that I can
-contribute to decision discussion.
-
-**Description**
-
-Support top-level comments, one reply level, and author-only soft deletion that
-preserves replies and audit evidence.
-
-**Related Requirements**
-
-CR-USR-002; CR-FR-017–019; CR-BR-012.
-
-**Source Acceptance Criteria Mapping**
-
-AC-016 maps comment creation. AC-017 maps single-level replies. AC-018 maps
-author soft deletion, `[deleted]`, preserved replies, and audit evidence.
-AC-019 denies deletion by another user. AC-028 denies nested replies.
+AC-029 maps team-member tag creation and association of one or more selected
+tags with a record.
 
 **Dependencies**
 
@@ -519,28 +520,70 @@ All mapped source Acceptance Criteria are satisfied; required automated tests
 are implemented; existing tests pass; documentation is updated when required;
 the Pull Request is reviewed.
 
+### STORY-011: Discuss a Decision
+
+**User Story**
+
+As a team-member Mock identity, I want to add a top-level comment and
+soft-delete my own comment so that I can contribute to discussion while
+retaining attribution.
+
+**Description**
+
+Support top-level comments and author-only soft deletion with a `[deleted]`
+placeholder and audit evidence. Comment replies and editing are outside MVP
+scope.
+
+**Related Requirements**
+
+CR-USR-002; CR-FR-017, CR-FR-019; CR-BR-012; CR-US-005, CR-US-012.
+
+**Source Acceptance Criteria Mapping**
+
+AC-016 maps top-level comment creation and Mock-identity attribution. AC-018
+maps author soft deletion, the `[deleted]` placeholder, and audit evidence.
+AC-019 denies deletion by another user.
+
+**Dependencies**
+
+STORY-001, STORY-003, STORY-015.
+
+**Priority**
+
+Must
+
+**Definition of Done**
+
+All mapped source Acceptance Criteria are satisfied; required automated tests
+are implemented; existing tests pass; documentation is updated when required;
+the Pull Request is reviewed.
+
 ### STORY-012: Archive and Restore Records
 
 **User Story**
 
-As an administrator, I want to archive a record and restore its prior lifecycle
-state so that it can leave active use without being lost.
+As an administrator Mock identity, I want to archive a record and restore its
+prior lifecycle and replacement-specific condition so that it can leave active
+use without being lost or reactivated incorrectly.
 
 **Description**
 
-Archive any lifecycle state, retain and discover archived records permanently,
-restore the pre-archive state, and block archival of an Accepted original while
-its replacement is Proposed.
+Archive eligible records, retain and discover them permanently, and restore the
+pre-archive lifecycle status. Preserve Abandoned on restored replacement Drafts
+and block archival of an Accepted original while its active replacement is
+Proposed.
 
 **Related Requirements**
 
-CR-USR-006; CR-FR-020–021; CR-BR-007, CR-BR-014; CR-NFR-008.
+CR-USR-006; CR-FR-020–021, CR-FR-030; CR-BR-007, CR-BR-014,
+CR-BR-019; CR-NFR-008; CR-US-009.
 
 **Source Acceptance Criteria Mapping**
 
 AC-020 maps administrator archival, retention, and discovery. AC-021 maps
-restoration to the prior state. AC-026 maps the active-Proposed replacement
-archive block.
+restoration to the prior lifecycle status. AC-026 maps the active-Proposed
+replacement archive block. AC-047 maps preservation of the Abandoned condition
+during archive and restore.
 
 **Dependencies**
 
@@ -556,32 +599,32 @@ All mapped source Acceptance Criteria are satisfied; required automated tests
 are implemented; existing tests pass; documentation is updated when required;
 the Pull Request is reviewed.
 
-### STORY-013: Permanently Delete an Eligible Draft
+### STORY-013: Prevent Decision-Record Deletion
 
 **User Story**
 
-As a Draft author, owner, or administrator, I want to permanently delete an
-eligible Draft while retaining minimal audit evidence.
+As a product stakeholder, I want decision-record deletion unavailable so that
+every record remains retained and archival remains the only way to remove it
+from active use.
 
 **Description**
 
-Delete only current Drafts; remove their content, comments, and ordinary
-history; retain record ID, actor, and timestamp permanently. Deny permanent
-deletion of non-Draft records.
+Do not expose or permit permanent or soft decision-record deletion in any
+lifecycle, replacement-specific, or archival condition, including Abandoned.
+This does not prevent author-only soft deletion of comment content.
 
 **Related Requirements**
 
-CR-FR-022; CR-BR-008; CR-NFR-007–008.
+CR-SCP-001; CR-FR-029; CR-OOS-007.
 
 **Source Acceptance Criteria Mapping**
 
-AC-022 denies permanent deletion of non-Draft records. AC-027 maps authorized
-Draft deletion and retained minimal audit evidence. AC-033–034 map audit
-creation and permanent retention.
+AC-045 maps the absence or denial of decision-record deletion and preservation
+of otherwise-permitted archival and restoration.
 
 **Dependencies**
 
-STORY-003, STORY-006, STORY-011, STORY-015.
+STORY-003, STORY-012.
 
 **Priority**
 
@@ -593,30 +636,33 @@ All mapped source Acceptance Criteria are satisfied; required automated tests
 are implemented; existing tests pass; documentation is updated when required;
 the Pull Request is reviewed.
 
-### STORY-014: Protect Confidential Application Data
+### STORY-014: Enforce Demo Data and Deployed HTTPS Boundaries
 
 **User Story**
 
-As a product stakeholder, I want confidential application data encrypted so
-that it is protected in transit and at rest.
+As a product stakeholder, I want the MVP clearly limited to demo or synthetic
+data and deployed traffic protected by HTTPS so that the demonstration remains
+within its approved operating boundary.
 
 **Description**
 
-Apply confidentiality controls to all in-scope application data while retaining
-the team access boundary.
+Display the required data-use notice at identity selection, creation, and edit
+surfaces. Prohibit real internal confidential, regulated personal, and health
+information. Use HTTPS for client-facing traffic in deployed environments;
+local development is exempt.
 
 **Related Requirements**
 
-CR-SCP-003; CR-NFR-001–002, CR-NFR-005.
+CR-SCP-003; CR-FR-023; CR-NFR-005; CR-BR-010; CR-OOS-006.
 
 **Source Acceptance Criteria Mapping**
 
-AC-001 maps the team access boundary. AC-032 maps encryption in transit and at
-rest.
+AC-037 maps the visible demo-data notice. AC-032 maps HTTPS in deployed
+environments and the local-development exemption.
 
 **Dependencies**
 
-STORY-001.
+STORY-001, STORY-003.
 
 **Priority**
 
@@ -633,22 +679,24 @@ the Pull Request is reviewed.
 **User Story**
 
 As a product stakeholder, I want governed actions audited and retained so that
-important changes remain traceable.
+important changes remain traceable to Mock identities.
 
 **Description**
 
-Record all approved audit event categories and retain audit entries and archived
-records permanently.
+Create audit evidence for role and approver changes, lifecycle transitions,
+replacement-Draft abandonment, archive and restore, ownership transfer, and
+comment deletion. Permanently retain audit entries and archived records.
 
 **Related Requirements**
 
-CR-FR-014, CR-FR-019–022; CR-NFR-007–008.
+CR-FR-014, CR-FR-019–021, CR-FR-030; CR-NFR-007–008.
 
 **Source Acceptance Criteria Mapping**
 
-AC-013 maps immutable change history. AC-018 maps comment deletion audit.
-AC-027 maps minimal Draft deletion audit. AC-033 enumerates audited events.
-AC-034 maps permanent retention.
+AC-013 maps immutable attributed history. AC-018 maps comment-deletion audit.
+AC-033 maps all approved audit event categories and required abandonment and
+comment-deletion attribution. AC-034 maps permanent retention. AC-046 maps the
+abandonment audit event.
 
 **Dependencies**
 
@@ -664,34 +712,36 @@ All mapped source Acceptance Criteria are satisfied; required automated tests
 are implemented; existing tests pass; documentation is updated when required;
 the Pull Request is reviewed.
 
-### STORY-016: Meet Capacity and Operational Targets
+### STORY-016: Meet Capacity and Compatibility Requirements
 
 **User Story**
 
-As a product stakeholder, I want the MVP to meet its capacity, performance,
-recovery, and browser targets so that it is usable under approved conditions.
+As a product stakeholder, I want the MVP to remain functional at approved
+capacity and in supported browsers so that its workflows can be demonstrated
+under approved conditions.
 
 **Description**
 
-Validate operation for 25 users and 1,000 records; make primary content usable
-within two seconds for the specified views; provide daily backup with approved
-RPO/RTO; and support the approved Chrome and Edge versions. Availability and
-accessibility remain best-effort scope constraints without formal targets.
+Validate all in-scope behavior with 25 preconfigured Mock users and 1,000
+decision records, without a response-time assertion. Support the current and
+immediately prior major versions of Chrome and Edge. Responsiveness,
+availability, and accessibility remain best-effort scope constraints.
 
 **Related Requirements**
 
-CR-SCP-002; CR-NFR-004, CR-NFR-006, CR-NFR-009–012.
+CR-SCP-002; CR-NFR-004, CR-NFR-006, CR-NFR-010–012.
 
 **Source Acceptance Criteria Mapping**
 
-AC-031 maps capacity and two-second usability. AC-035 maps daily backup, RPO 24
-hours, and RTO 8 hours. AC-036 maps supported browser versions. No source
-Acceptance Criterion is required for CR-NFR-010 or CR-NFR-012 because each is
-explicitly an approved scope constraint rather than mandatory behavior.
+AC-031 maps functional behavior at approved capacity without a response-time
+assertion. AC-036 maps supported browser versions. No source Acceptance
+Criterion is required for CR-NFR-006, CR-NFR-010, or CR-NFR-012 because each is
+explicitly an approved scope constraint rather than mandatory measurable
+behavior.
 
 **Dependencies**
 
-STORY-003, STORY-009, STORY-014, STORY-015.
+STORY-003–STORY-015.
 
 **Priority**
 
@@ -707,21 +757,22 @@ the Pull Request is reviewed.
 
 ## 6. Engineering Tasks
 
-### TASK-001: Integrate organizational authentication
+### TASK-001: Provide Mock identity selection
 
 Parent Story: STORY-001
 
-Purpose: Authenticate users and enforce current designated-team membership on
-application and record access.
+Purpose: Present preconfigured identities as Mock users, establish the selected
+identity for roles and attribution, and communicate the absence of real
+authentication or access protection.
 
 Dependencies: None.
 
-### TASK-002: Enforce role authorization
+### TASK-002: Enforce role-dependent behavior
 
 Parent Story: STORY-002
 
-Purpose: Apply additive roles and administrator, approver, author, and owner
-permissions consistently to governed actions.
+Purpose: Apply additive administrator, approver, author, and owner permissions
+consistently to governed actions under the selected Mock identity.
 
 Dependencies: TASK-001.
 
@@ -729,8 +780,7 @@ Dependencies: TASK-001.
 
 Parent Story: STORY-002
 
-Purpose: Allow administrators to designate approvers and audit designation
-changes.
+Purpose: Allow administrator Mock identities to designate approvers.
 
 Dependencies: TASK-002.
 
@@ -738,8 +788,8 @@ Dependencies: TASK-002.
 
 Parent Story: STORY-003
 
-Purpose: Capture all required record fields, author, owner, tags, Draft status,
-and the information-handling notice.
+Purpose: Capture all required fields, Mock author, owner, tags, Draft status,
+and the demo-or-synthetic-data notice.
 
 Dependencies: TASK-001.
 
@@ -747,8 +797,8 @@ Dependencies: TASK-001.
 
 Parent Story: STORY-004
 
-Purpose: Enforce author editing and complete-record/approver validation before
-Draft-to-Proposed transition.
+Purpose: Enforce author editing and complete-record and approver validation
+before a non-abandoned Draft transitions to Proposed.
 
 Dependencies: TASK-003, TASK-004.
 
@@ -756,17 +806,17 @@ Dependencies: TASK-003, TASK-004.
 
 Parent Story: STORY-005
 
-Purpose: Enforce designated-approver acceptance/rejection, self-approval, and a
-single valid outcome under concurrent actions.
+Purpose: Enforce designated-approver acceptance or rejection, self-approval,
+and one valid outcome under concurrent actions.
 
-Dependencies: TASK-002, TASK-005.
+Dependencies: TASK-002, TASK-005, TASK-021.
 
 ### TASK-007: Restart review after Proposed edits
 
 Parent Story: STORY-005
 
-Purpose: Atomically return edited Proposed records to Draft and invalidate prior
-or in-progress review.
+Purpose: Atomically return edited Proposed records to Draft and invalidate
+prior or in-progress review.
 
 Dependencies: TASK-005, TASK-006.
 
@@ -774,17 +824,17 @@ Dependencies: TASK-005, TASK-006.
 
 Parent Story: STORY-006
 
-Purpose: Transfer ownership only for approved roles and statuses while
-preserving author identity and auditability.
+Purpose: Transfer ownership only for approved actors and eligible record
+conditions while preserving author identity and auditability.
 
-Dependencies: TASK-002, TASK-004.
+Dependencies: TASK-002, TASK-004, TASK-021.
 
-### TASK-009: Handle author departure
+### TASK-009: Handle modeled author departure
 
 Parent Story: STORY-006
 
-Purpose: Retain records and enforce existing owner/administrator permissions
-after author team membership ends.
+Purpose: Retain records and enforce otherwise-granted owner and administrator
+behavior after a preconfigured Mock author is represented as having left.
 
 Dependencies: TASK-001, TASK-008.
 
@@ -801,8 +851,8 @@ Dependencies: TASK-003, TASK-006.
 
 Parent Story: STORY-007
 
-Purpose: Atomically accept the replacement, supersede the prior Accepted
-version, and preserve valid links.
+Purpose: Atomically accept a replacement, supersede the prior Accepted version,
+and preserve valid links.
 
 Dependencies: TASK-010.
 
@@ -810,35 +860,35 @@ Dependencies: TASK-010.
 
 Parent Story: STORY-008
 
-Purpose: Retain immutable change evidence and expose navigation without cycles
-or corrupted history.
+Purpose: Retain immutable attributed change evidence and expose navigation
+across accepted, superseded, and abandoned replacement links without cycles or
+corruption.
 
-Dependencies: TASK-004, TASK-011.
+Dependencies: TASK-004, TASK-011, TASK-025.
 
 ### TASK-013: Provide exact tag filtering
 
 Parent Story: STORY-009
 
-Purpose: Return all authorized records assigned the selected exact tag,
-including historical and archived matches.
+Purpose: Return records assigned the selected exact tag, including matching
+Rejected, Superseded, and archived records.
 
 Dependencies: TASK-004.
 
-### TASK-014: Provide tag administration
+### TASK-014: Provide basic tag creation and association
 
 Parent Story: STORY-010
 
-Purpose: Support team tag creation and atomic administrator rename, merge, and
-association-only deletion.
+Purpose: Let team-member Mock identities create tags and associate one or more
+tags with decision records.
 
-Dependencies: TASK-002, TASK-004.
+Dependencies: TASK-001, TASK-004.
 
-### TASK-015: Provide comments and single-level replies
+### TASK-015: Provide top-level comments
 
 Parent Story: STORY-011
 
-Purpose: Add and view top-level comments and one reply level while denying
-nested replies.
+Purpose: Add and view attributed top-level comments without reply behavior.
 
 Dependencies: TASK-001, TASK-004.
 
@@ -846,8 +896,8 @@ Dependencies: TASK-001, TASK-004.
 
 Parent Story: STORY-011
 
-Purpose: Enforce author-only soft deletion, `[deleted]` presentation, reply
-preservation, and audit creation under concurrent activity.
+Purpose: Enforce author-only soft deletion, `[deleted]` presentation, and audit
+creation under concurrent deletion attempts.
 
 Dependencies: TASK-015, TASK-021.
 
@@ -856,7 +906,7 @@ Dependencies: TASK-015, TASK-021.
 Parent Story: STORY-012
 
 Purpose: Enforce administrator-only archival, permanent retention, discovery,
-and restoration to the pre-archive lifecycle status.
+and restoration of lifecycle and replacement-specific conditions.
 
 Dependencies: TASK-002, TASK-006, TASK-013.
 
@@ -865,61 +915,70 @@ Dependencies: TASK-002, TASK-006, TASK-013.
 Parent Story: STORY-012
 
 Purpose: Deny archival of an Accepted original while its active replacement is
-Proposed.
+Proposed and preserve Abandoned through archive and restore.
 
-Dependencies: TASK-010, TASK-017.
+Dependencies: TASK-010, TASK-017, TASK-025.
 
-### TASK-019: Permanently delete eligible Drafts
+### TASK-019: Prevent decision-record deletion
 
 Parent Story: STORY-013
 
-Purpose: Delete approved Draft data atomically, deny other deletion, and retain
-only the required permanent minimal audit event.
+Purpose: Ensure no permanent or soft decision-record deletion action is exposed
+or accepted in any lifecycle, replacement-specific, or archival condition.
 
-Dependencies: TASK-008, TASK-015, TASK-021.
+Dependencies: TASK-004, TASK-017, TASK-025.
 
-### TASK-020: Apply data confidentiality controls
+### TASK-020: Apply demo-data and HTTPS controls
 
 Parent Story: STORY-014
 
-Purpose: Protect all application data in transit and at rest.
+Purpose: Present the approved data-use notices and require HTTPS for
+client-facing traffic in deployed environments while exempting local
+development.
 
-Dependencies: TASK-001.
+Dependencies: TASK-001, TASK-004.
 
 ### TASK-021: Record and retain audit events
 
 Parent Story: STORY-015
 
 Purpose: Create immutable audit evidence for every approved event category and
-retain it permanently.
+retain audit entries and archived records permanently.
 
 Dependencies: TASK-001, TASK-002, TASK-004.
 
-### TASK-022: Validate capacity and response targets
+### TASK-022: Validate approved functional capacity
 
 Parent Story: STORY-016
 
-Purpose: Verify the approved views become usable within two seconds under the
-25-user and 1,000-record capacity.
+Purpose: Verify all in-scope functions continue to satisfy their mapped
+Acceptance Criteria with 25 preconfigured Mock users and 1,000 records, without
+a response-time assertion.
 
-Dependencies: TASK-013, TASK-020, TASK-021.
-
-### TASK-023: Provide backup and recovery capability
-
-Parent Story: STORY-016
-
-Purpose: Perform daily backups and demonstrate RPO 24 hours and RTO 8 hours.
-
-Dependencies: TASK-020, TASK-021.
+Dependencies: TASK-001–TASK-021, TASK-025.
 
 ### TASK-024: Validate supported browsers
 
 Parent Story: STORY-016
 
-Purpose: Verify all in-scope functions on current and previous major versions
-of Chrome and Edge.
+Purpose: Verify all in-scope functions on the current and immediately prior
+major versions of Chrome and Edge.
 
-Dependencies: TASK-004–TASK-023.
+Dependencies: TASK-001–TASK-022, TASK-025.
+
+### TASK-025: Abandon a replacement-version Draft
+
+Parent Story: STORY-007
+
+Purpose: Let an administrator permanently mark only an active replacement Draft
+as Abandoned, retain and audit it and its link, end its active interval, deny
+reactivation or mutation, and permit a new replacement.
+
+Dependencies: TASK-010, TASK-021.
+
+Retired from the Version 1.3 active plan: TASK-023 (backup and recovery).
+TASK-019, TASK-020, and TASK-022 retain their identifiers but have been
+redefined to match the approved Version 1.3 requirements.
 
 ---
 
@@ -927,97 +986,101 @@ Dependencies: TASK-004–TASK-023.
 
 | Requirement | Story | Status |
 |---|---|---|
-| CR-BG-001–002, CR-OBJ-001–002 | STORY-003, STORY-005, STORY-008–013 | Covered |
-| CR-USR-001–002 | STORY-001, STORY-011 | Covered |
-| CR-USR-003 | STORY-003–005 | Covered |
+| CR-BG-001–003, CR-OBJ-001–002 | STORY-001, STORY-003, STORY-005, STORY-007–STORY-015 | Covered |
+| CR-USR-001–002 | STORY-001, STORY-003, STORY-011 | Covered |
+| CR-USR-003 | STORY-003–STORY-005 | Covered |
 | CR-USR-004–006 | STORY-002, STORY-012 | Covered |
 | CR-USR-007–008 | STORY-003, STORY-006 | Covered |
 | CR-USR-009–010 | STORY-002, STORY-007 | Covered |
-| CR-SCP-001 | STORY-001–013 | Covered |
+| CR-USR-011 | STORY-001 | Covered |
+| CR-SCP-001 | STORY-001–STORY-013 | Covered |
 | CR-SCP-002 | STORY-016 | Covered |
 | CR-SCP-003 | STORY-003, STORY-014 | Covered |
-| CR-FR-001–002 | STORY-001 | Covered |
-| CR-FR-003–005 | STORY-003, STORY-009 | Covered |
-| CR-FR-006, CR-FR-023–024 | STORY-004–005 | Covered |
+| CR-FR-003–005 | STORY-003, STORY-009–STORY-010 | Covered |
+| CR-FR-006, CR-FR-023–024 | STORY-003–STORY-005, STORY-014 | Covered |
 | CR-FR-006A, CR-FR-026 | STORY-006 | Covered |
-| CR-FR-007–010 | STORY-004–005 | Covered |
-| CR-FR-011–014 | STORY-007–008 | Covered |
-| CR-FR-015–016, CR-FR-025 | STORY-009–010 | Covered |
-| CR-FR-017–019 | STORY-011 | Covered |
+| CR-FR-007–010 | STORY-004–STORY-005 | Covered |
+| CR-FR-011–014, CR-FR-030 | STORY-007–STORY-008 | Covered |
+| CR-FR-015–017, CR-FR-019, CR-FR-025 | STORY-009–STORY-011 | Covered |
 | CR-FR-020–021 | STORY-012 | Covered |
-| CR-FR-022 | STORY-013 | Covered |
-| CR-NFR-001–002, CR-NFR-005 | STORY-001, STORY-014 | Covered |
-| CR-NFR-003 | STORY-008 | Covered |
-| CR-NFR-004, CR-NFR-006 | STORY-016 | Covered |
-| CR-NFR-007–008 | STORY-013, STORY-015 | Covered |
-| CR-NFR-009, CR-NFR-011 | STORY-016 | Covered |
-| CR-NFR-010, CR-NFR-012 | STORY-016 | Covered |
+| CR-FR-027–028 | STORY-001 | Covered |
+| CR-FR-029 | STORY-013 | Covered |
+| CR-NFR-003 | STORY-007–STORY-008 | Covered |
+| CR-NFR-004 | STORY-016 | Covered |
+| CR-NFR-005 | STORY-014 | Covered |
+| CR-NFR-006, CR-NFR-010, CR-NFR-012 | STORY-016 | Covered as scope constraints |
+| CR-NFR-007–008 | STORY-007, STORY-011–STORY-012, STORY-015 | Covered |
+| CR-NFR-011 | STORY-016 | Covered |
+| CR-NFR-013 | STORY-001 | Covered |
 | CR-BR-001–002, CR-BR-013, CR-BR-015 | STORY-002 | Covered |
-| CR-BR-003–004, CR-BR-016 | STORY-004–005 | Covered |
-| CR-BR-005–006, CR-BR-014 | STORY-007, STORY-012 | Covered |
+| CR-BR-003–004, CR-BR-016 | STORY-004–STORY-005 | Covered |
+| CR-BR-005–006, CR-BR-014, CR-BR-019 | STORY-007–STORY-008, STORY-012 | Covered |
 | CR-BR-007 | STORY-012 | Covered |
-| CR-BR-008 | STORY-013 | Covered |
-| CR-BR-009 | STORY-008–009 | Covered |
-| CR-BR-010 | STORY-003 | Covered |
+| CR-BR-009 | STORY-008–STORY-009 | Covered |
+| CR-BR-010 | STORY-003, STORY-014 | Covered |
 | CR-BR-011 | STORY-006 | Covered |
 | CR-BR-012 | STORY-011 | Covered |
-| CR-BR-017 | STORY-010 | Covered |
-| CR-US-001–014 | STORY-003–012 | Covered |
-| CR-OOS-001–013 | All stories (scope guardrails) | Covered |
+| CR-BR-018 | STORY-001 | Covered |
+| CR-US-001–016 | STORY-001–STORY-012 | Covered |
+| CR-OOS-001–014 and Version 1.3 exclusions | All stories | Covered as scope guardrails |
 
 ### Source Acceptance Criteria Coverage
 
 | Acceptance Criteria | Story |
 |---|---|
-| AC-001 | STORY-001, STORY-014 |
 | AC-002 | STORY-003 |
 | AC-003 | STORY-002 |
-| AC-004–005 | STORY-003–004 |
+| AC-004–005 | STORY-003–STORY-004 |
 | AC-006–008 | STORY-005 |
-| AC-009–011, AC-025, AC-039 | STORY-007 |
+| AC-009–011, AC-025, AC-039, AC-046–047 | STORY-007 |
 | AC-012–013 | STORY-008 |
 | AC-014, AC-030 | STORY-006 |
 | AC-015 | STORY-009 |
-| AC-016–019, AC-028 | STORY-011 |
+| AC-016, AC-018–019 | STORY-011 |
 | AC-020–021, AC-026 | STORY-012 |
-| AC-022, AC-027 | STORY-013 |
 | AC-023 | STORY-002 |
 | AC-024 | STORY-004 |
-| AC-029, AC-040–042 | STORY-010 |
-| AC-031, AC-035–036 | STORY-016 |
+| AC-029 | STORY-010 |
+| AC-031, AC-036 | STORY-016 |
 | AC-032 | STORY-014 |
-| AC-033–034 | STORY-013, STORY-015 |
-| AC-037 | STORY-003 |
+| AC-033–034 | STORY-015 |
+| AC-037 | STORY-001, STORY-003, STORY-014 |
 | AC-038 | STORY-005, STORY-008 |
+| AC-043–044 | STORY-001 |
+| AC-045 | STORY-013 |
 
-Every source Acceptance Criterion is mapped to at least one Story.
+Every active source Acceptance Criterion in Requirement Version 1.3 is mapped
+to at least one Story. Retired criteria from prior versions are not mapped as
+active work.
 
 ---
 
 ## 8. Story Dependency Map
 
-- STORY-001 enables every authenticated product capability.
-- STORY-002 depends on STORY-001 and enables governed lifecycle, versioning,
-  archival, and tag administration.
+- STORY-001 establishes Mock identity, role context, attribution, and the
+  identity-screen data notice used across the MVP.
+- STORY-002 depends on STORY-001 and enables governed lifecycle, replacement,
+  archival, and abandonment actions.
 - STORY-003 depends on STORY-001 and establishes the record used by all
   remaining functional Stories.
 - STORY-004 depends on STORY-002 and STORY-003; STORY-005 depends on STORY-004.
-- STORY-006 depends on role enforcement and record creation.
-- STORY-007 depends on role administration and lifecycle decisions; STORY-008
-  depends on created records and replacement versioning.
-- STORY-009 and STORY-010 depend on tagged record creation; tag administration
-  also depends on administrator authorization.
-- STORY-011 depends on access control and record creation.
-- STORY-012 depends on authorization, lifecycle, versioning, and discovery.
-- STORY-013 depends on record ownership, comments, and audit retention.
-- STORY-014 depends on access control. STORY-015 spans governed events and must
-  be available before comment and Draft deletion are completed.
-- STORY-016 is validated after the relevant functional, security, and audit
-  capabilities exist.
+- STORY-006 depends on role behavior and record creation.
+- STORY-015 begins after identity, roles, and records exist; it must support
+  audited actions before those actions are completed.
+- STORY-007 depends on role administration, lifecycle decisions, and audit
+  support. STORY-008 depends on record creation and replacement governance.
+- STORY-009 and STORY-010 depend on tagged record creation.
+- STORY-011 depends on identity, record creation, and audit support.
+- STORY-012 depends on authorization, lifecycle, replacement governance,
+  discovery, and audit support.
+- STORY-013 depends on record creation and archival behavior so deletion denial
+  is consistent in every required condition.
+- STORY-014 depends on identity and record-entry surfaces.
+- STORY-016 is validated after all in-scope functional behavior is integrated.
 
-Parallel development is practical after STORY-001–003: ownership, discovery,
-comments, audit, and confidentiality can progress independently, while
-versioning and archival remain lifecycle-dependent.
+After STORY-001–STORY-003, ownership, basic tags, discovery, demo-data controls,
+and audit foundations can progress in parallel. Replacement versioning and
+archival remain lifecycle-dependent.
 
 ---
 
@@ -1031,8 +1094,8 @@ versioning and archival remain lifecycle-dependent.
 6. STORY-005
 7. STORY-006
 8. STORY-014
-9. STORY-009
-10. STORY-010
+9. STORY-010
+10. STORY-009
 11. STORY-011
 12. STORY-007
 13. STORY-008
@@ -1040,9 +1103,11 @@ versioning and archival remain lifecycle-dependent.
 15. STORY-013
 16. STORY-016
 
-This order establishes access, authorization, core records, and audit first.
-Lifecycle then enables versioning and archival. Operational targets are
-validated against the integrated MVP.
+This order establishes Mock identity, role behavior, core records, and audit
+support first. Lifecycle then enables replacement governance, immutable
+history, and archival. Deletion denial is verified after the applicable record
+conditions exist. Capacity and compatibility are validated against the
+integrated MVP.
 
 ---
 
@@ -1050,27 +1115,29 @@ validated against the integrated MVP.
 
 - Concurrent proposal decisions or edits could violate the single-outcome
   lifecycle unless transitions are atomic.
-- Replacement acceptance spans multiple records and could corrupt version
-  links or Superseded state if partially completed.
-- Immediate loss of team access depends on reliable membership and session
-  invalidation behavior.
-- Tag merge, rename, and deletion affect many references and require atomic
-  record-preserving updates.
-- Draft deletion must remove ordinary data while reliably preserving the
-  minimal permanent audit event.
-- Permanent retention and immutable history require controls against both
-  application-level and operational modification or deletion.
-- Soft comment deletion must remain consistent with concurrent replies.
-- The two-second target includes user-visible usability rather than only server
-  response time, so validation must cover the complete interaction boundary.
-- Recovery objectives require repeatable restoration evidence, not backup
-  creation alone.
+- Replacement acceptance spans multiple records and could corrupt links or
+  Superseded state if partially completed.
+- Replacement abandonment must atomically end the active interval, preserve the
+  original link, create audit evidence, and enforce permanent immutability
+  without becoming a lifecycle status.
+- Mock identity selection affects every attributed and role-dependent action;
+  inconsistent propagation could produce incorrect permissions or history.
+- Permanent retention and immutable history require controls against
+  application-level modification or deletion.
+- Archival and restoration must preserve the prior lifecycle status and the
+  Abandoned replacement-specific condition without reactivation.
+- Concurrent comment-deletion requests must produce one stable `[deleted]`
+  presentation and correct audit attribution.
+- Functional-capacity validation must exercise all in-scope behavior with 25
+  Mock users and 1,000 records even though no response-time assertion applies.
+- The existing STORY-001 SSO implementation and Version 1.1 test design do not
+  satisfy this plan and must not be treated as evidence for Version 1.3.
 
 ---
 
 ## 11. Open Planning Questions
 
-No open product or planning questions remain. Detailed test design, concurrency
-control, transaction handling, session invalidation, and data-integrity
-enforcement are assigned to engineering tasks without changing product
-requirements.
+No open product or planning questions remain. Concurrency control, transaction
+handling, Mock-identity state propagation, audit immutability, link integrity,
+and capacity-test execution are engineering concerns represented by the tasks
+above without changing the approved product requirements.
