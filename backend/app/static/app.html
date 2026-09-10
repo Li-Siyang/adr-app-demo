@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Decision Records Demonstration</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">Internal Decision Record Demonstration</p>
+          <h1>Mock identity context</h1>
+        </div>
+        <button id="change-identity" class="secondary" type="button">
+          Change Mock identity
+        </button>
+      </header>
+
+      <section id="identity-context" class="identity-card" aria-live="polite">
+        <p>Loading selected Mock identity...</p>
+      </section>
+
+      <section class="disclaimer" aria-labelledby="identity-limit-title">
+        <h2 id="identity-limit-title">Demonstration context only</h2>
+        <p>
+          This Mock identity is used for demonstrated roles and attribution. It
+          is not authentication, does not verify team membership, and does not
+          create an access-control boundary.
+        </p>
+      </section>
+
+      <section aria-labelledby="attribution-title">
+        <h2 id="attribution-title">Attribution preview</h2>
+        <p id="attribution-preview">Loading attribution...</p>
+      </section>
+    </main>
+  </body>
+</html>
+

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Choose a Mock Identity | Decision Records</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/index.js" defer></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <p class="eyebrow">Internal Decision Record Demonstration</p>
+        <h1>Choose a Mock Identity</h1>
+        <p class="lede">
+          Choose any preconfigured Mock user to demonstrate its configured roles
+          and attribution.
+        </p>
+      </header>
+
+      <section class="notice" aria-labelledby="data-notice-title">
+        <h2 id="data-notice-title">Demo data only</h2>
+        <p>
+          Use only demo or synthetic data. Do not enter real internal
+          confidential information, regulated personal information, or health
+          information.
+        </p>
+      </section>
+
+      <section class="disclaimer" aria-labelledby="identity-limit-title">
+        <h2 id="identity-limit-title">This is not authentication</h2>
+        <p>
+          Mock identity selection does not verify who you are, verify team
+          membership, or protect application data from unauthorized access.
+          Anyone using this demonstration may choose any listed identity.
+        </p>
+      </section>
+
+      <section aria-labelledby="identity-list-title">
+        <h2 id="identity-list-title">Preconfigured Mock users</h2>
+        <div id="identity-list" class="identity-grid" aria-live="polite">
+          <p>Loading Mock identities...</p>
+        </div>
+        <p id="selection-error" class="error" role="alert" hidden></p>
+      </section>
+    </main>
+  </body>
+</html>
+
