@@ -1,10 +1,10 @@
 # Requirement Definition
 
 **Product:** Internal Decision Record Application  
-**Version:** 1.1  
+**Version:** 1.3
 **Status:** Approved  
 **Scope:** Minimum Viable Product (MVP)  
-**Approval date:** 2026-09-01
+**Approval date:** 2026-09-10
 
 ## Requirement Classification
 
@@ -14,7 +14,7 @@
 - **Scope Constraint:** An approved limit that does not require application
   behavior.
 
-Resolved assumptions, recommendations, and questions from Version 1.0 are
+Resolved assumptions, recommendations, and questions from prior versions are
 removed from the active requirement set. Their disposition is recorded in
 **Resolution Traceability**.
 
@@ -30,12 +30,19 @@ business decisions.
 The application must preserve enough context for team members to understand in
 the future why a decision was made.
 
+**CR-BG-003 — Confirmed Requirement**
+
+The current MVP environment cannot support organizational single sign-on in the
+short term. The MVP will therefore demonstrate the decision-record workflows
+with preconfigured Mock users and demo or synthetic data.
+
 # Objective
 
 **CR-OBJ-001 — Confirmed Requirement**
 
-Provide one place where the team can create, review, approve, discover, discuss,
-version, and retain decision records.
+Provide one MVP demonstration environment where the team can create, review,
+approve, discover, discuss, version, and retain decision records using
+preconfigured Mock identities and demo or synthetic data.
 
 **CR-OBJ-002 — Confirmed Requirement**
 
@@ -48,7 +55,7 @@ rejected, replaced, or archived.
 
 **CR-USR-001 — Confirmed Requirement**
 
-The MVP serves one internal team with up to 25 members.
+The MVP models one internal team with up to 25 preconfigured Mock users.
 
 **CR-USR-002 — Confirmed Requirement**
 
@@ -57,7 +64,7 @@ All team members may view decision records and add comments.
 **CR-USR-003 — Confirmed Requirement**
 
 Team members may create decision records. Authors may edit records they authored
-only while those records are editable.
+only while those records are editable and have not been marked Abandoned.
 
 **CR-USR-004 — Confirmed Requirement**
 
@@ -78,18 +85,25 @@ Author and owner are distinct roles for a decision record.
 **CR-USR-008 — Confirmed Requirement**
 
 The author, owner, or an administrator may transfer ownership while a record is
-Draft or Proposed. A transfer changes the owner but not the author.
+a Draft that has not been marked Abandoned, or Proposed. A transfer changes the
+owner but not the author.
 
 **CR-USR-009 — Confirmed Requirement**
 
 The administrator is the highest responsible person; there is no separate
 highest-responsible-person role. Administrators may create replacement versions
-of Accepted records.
+of Accepted records and may mark replacement-version Drafts as Abandoned.
 
 **CR-USR-010 — Confirmed Requirement**
 
 A user may hold multiple roles simultaneously. Permissions from all roles held
 by the user are additive.
+
+**CR-USR-011 — Confirmed Requirement**
+
+A person using the MVP may choose any preconfigured Mock identity. The choice
+establishes the identity and roles used to demonstrate application behavior; it
+does not verify the person's identity or membership in the modeled team.
 
 # Scope
 
@@ -99,42 +113,49 @@ by the user are additive.
 
 The MVP includes:
 
-- Organizational single sign-on and access restricted to one internal team.
+- Preconfigured Mock users and a login or entry screen on which a person chooses
+  the Mock identity used in the application.
 - Creation and viewing of technical and business decision records.
 - Author editing of editable records.
 - A defined review and decision lifecycle.
 - Administrator assignment of approvers.
 - Versioning of Accepted decisions.
-- Immutable change history, except for ordinary change history removed with the
-  permitted permanent deletion of a Draft.
+- Administrator abandonment of replacement-version Drafts as a retained,
+  replacement-specific condition.
+- Immutable change history.
 - Exact filtering by one tag.
-- Adding comments, single-level replies, and soft deletion of one's own
-  comments.
+- Team-member tag creation and association of one or more tags with records.
+- Adding top-level comments and author-only soft deletion of one's own comments.
 - Administrator-controlled archival and restoration.
 - Role-based ownership transfer.
-- Team tag creation and administrator tag administration.
+- No deletion of decision records in any lifecycle state.
 
 **CR-SCP-002 — Confirmed Requirement**
 
-The MVP must support up to 25 users and 1,000 decision records.
+The MVP must support up to 25 preconfigured Mock users and 1,000 decision
+records.
 
 **CR-SCP-003 — Confirmed Requirement**
 
-Decision records may contain internal confidential information but must not
-contain regulated personal information or health information.
+The MVP may contain only demo or synthetic data. Real internal confidential
+information, regulated personal information, and health information are
+prohibited.
 
 # Functional Requirements
 
-## Authentication and Access
+## Mock Identity Selection
 
-**CR-FR-001 — Confirmed Requirement**
+**CR-FR-027 — Confirmed Requirement**
 
-Users must authenticate through the organization's single sign-on service.
+The MVP must provide a login or entry screen that lists the preconfigured
+identities as Mock users and allows a person to choose one before entering the
+application.
 
-**CR-FR-002 — Confirmed Requirement**
+**CR-FR-028 — Confirmed Requirement**
 
-Only authenticated members of the designated internal team may access the
-application or its decision records.
+The application must use the selected Mock identity and its configured roles for
+role-dependent behavior and user attribution. Selection of a Mock identity must
+not be treated as authentication of the person making the selection.
 
 ## Decision Record Creation and Editing
 
@@ -161,21 +182,24 @@ A decision record must support one or more tags for discovery.
 
 **CR-FR-006 — Confirmed Requirement**
 
-An author must be able to edit a record they authored while it is Draft or
-Proposed. Saving an edit to a Proposed record must automatically return it to
-Draft, invalidate any prior or in-progress review, and require resubmission
-before another review.
+An author must be able to edit a record they authored while it is a Draft that
+has not been marked Abandoned, or while it is Proposed. Saving an edit to a
+Proposed record must automatically return it to Draft, invalidate any prior or
+in-progress review, and require resubmission before another review.
 
 **CR-FR-006A — Confirmed Requirement**
 
 The application must maintain author and owner as distinct record attributes.
 The author, owner, or an administrator may transfer ownership only while the
-record is Draft or Proposed; authorship must remain unchanged.
+record is a Draft that has not been marked Abandoned, or Proposed; authorship
+must remain unchanged.
 
 **CR-FR-023 — Confirmed Requirement**
 
-Creation and editing screens must show a notice prohibiting entry of regulated
-personal information and health information.
+The login or entry screen and all creation and editing screens must show a
+notice that the MVP permits only demo or synthetic data and prohibits real
+internal confidential information, regulated personal information, and health
+information.
 
 ## Decision Lifecycle
 
@@ -195,7 +219,9 @@ The supported lifecycle transitions are:
 - Accepted to Superseded, automatically when its replacement is accepted.
 
 Archival and restoration do not change this transition list; archival is a
-separate record condition.
+separate record condition. Abandoned is also a separate,
+replacement-specific condition and is not a lifecycle status or lifecycle
+transition.
 
 **CR-FR-009 — Confirmed Requirement**
 
@@ -207,9 +233,10 @@ A designated approver may accept or reject a record they authored.
 
 **CR-FR-024 — Confirmed Requirement**
 
-A Draft must have at least one designated approver before it can be submitted to
-Proposed. If it does not, submission must be prevented and an actionable message
-must state that at least one designated approver is required.
+A Draft that has not been marked Abandoned must have at least one designated
+approver before it can be submitted to Proposed. If it does not, submission
+must be prevented and an actionable message must state that at least one
+designated approver is required. A Draft marked Abandoned cannot be submitted.
 
 ## Versioning and Immutability
 
@@ -223,7 +250,7 @@ Changes to an Accepted record must be made through a new version linked to that
 record. Only an administrator may create the replacement version. An Accepted
 record may have no more than one active replacement version. A replacement
 version becomes active when its Draft is created and remains active until it is
-Accepted, Rejected, or deleted.
+Accepted, Rejected, or marked Abandoned.
 
 **CR-FR-013 — Confirmed Requirement**
 
@@ -237,8 +264,30 @@ When a replacement version is accepted:
 
 The application must retain an immutable version history showing what changed,
 who made each change, and when. Rejected and Superseded records must be
-completely immutable. The removal of ordinary change history when a Draft is
-permanently deleted under CR-FR-022 is the only approved exception.
+completely immutable.
+
+**CR-FR-030 — Confirmed Requirement**
+
+Only an administrator may mark an active replacement-version Draft as
+Abandoned. Abandoned is a permanent, replacement-specific retained condition,
+not a decision-record lifecycle status. The record retains Draft as its
+lifecycle status, and marking it Abandoned must:
+
+- Retain the replacement record and its link to the original Accepted record.
+- Keep that retained link available for user navigation between the original
+  Accepted record and the abandoned replacement.
+- Leave the original record Accepted and unchanged.
+- End the replacement's active-replacement interval so that an administrator
+  may create a new replacement for the original Accepted record.
+- Make the abandoned replacement record immutable. Its record content,
+  lifecycle data, ownership, approver designations, and version content cannot
+  be changed. Comments remain governed by the separate comment requirements,
+  and archival or restoration may change only its separate archival condition.
+
+The application must not allow Abandoned to be applied to an ordinary Draft
+that was not created as a replacement version, a Proposed replacement, or an
+Accepted, Rejected, or Superseded record. It must not provide a way to remove
+the Abandoned condition or reactivate an abandoned replacement.
 
 ## Discovery and Tags
 
@@ -250,34 +299,27 @@ assigned that exact tag.
 **CR-FR-016 — Confirmed Requirement**
 
 Rejected, Superseded, and archived records must remain discoverable to
-authorized users.
+users operating under a selected Mock identity.
 
 **CR-FR-025 — Confirmed Requirement**
 
-Any team member may create a tag. Only administrators may rename, merge, or
-delete tags. Renaming a tag must update that tag's references on all associated
-records. Merging a source tag into a target tag must replace the source tag with
-the target tag on all records associated with the source tag. Deleting a tag
-must remove only that tag association from associated records and must never
-delete a record.
+Any team member may create a tag and make it available for association with
+decision records.
 
 ## Comments
 
 **CR-FR-017 — Confirmed Requirement**
 
-Team members must be able to add and view comments on a decision record.
-
-**CR-FR-018 — Confirmed Requirement**
-
-Team members must be able to add a single-level reply to a top-level comment.
+Team members must be able to add and view top-level comments on a decision
+record.
 
 **CR-FR-019 — Confirmed Requirement**
 
 A team member may delete only their own comments. Deletion must be soft:
-`[deleted]` must appear in place of the deleted comment, replies must remain
-visible, and an audit record must be retained.
+`[deleted]` must appear in place of the deleted comment, and an audit record
+attributed to the deleting Mock identity must be retained.
 
-## Archival, Restoration, and Deletion
+## Archival, Restoration, and Record Non-deletion
 
 **CR-FR-020 — Confirmed Requirement**
 
@@ -290,15 +332,15 @@ that replacement review is resolved.
 
 Only an administrator may restore an archived record. Restoration must return
 the record to the lifecycle status it held immediately before archival.
+Restoring an abandoned replacement Draft must preserve its Abandoned condition
+and must not reactivate it.
 
-**CR-FR-022 — Confirmed Requirement**
+**CR-FR-029 — Confirmed Requirement**
 
-Only a record currently in Draft may be permanently deleted. Its author, owner,
-or an administrator may permanently delete it. Any non-Draft record is
-archive-only and must not be permanently deleted. Permanent Draft deletion must
-remove the record content, comments, and ordinary change history. It must
-permanently retain a minimal audit event containing the record ID, actor, and
-timestamp.
+The MVP must not provide permanent or soft deletion of a decision record in any
+lifecycle state or replacement-specific condition, including a replacement
+Draft marked Abandoned. Archival and restoration remain available under
+CR-FR-020 and CR-FR-021 and do not delete the record.
 
 **CR-FR-026 — Confirmed Requirement**
 
@@ -309,40 +351,38 @@ editing permission.
 
 # Non-functional Requirements
 
-## Security and Confidentiality
-
-**CR-NFR-001 — Confirmed Requirement**
-
-The application must prevent users outside the designated team from accessing
-decision records.
-
-**CR-NFR-002 — Confirmed Requirement**
-
-The application must protect internal confidential decision information from
-unauthorized access.
+## Identity Limitation and Data Integrity
 
 **CR-NFR-003 — Confirmed Requirement**
 
-Historical versions must be immutable.
+Historical versions, including replacement-version Drafts marked Abandoned,
+must be immutable.
+
+**CR-NFR-013 — Confirmed Requirement**
+
+The MVP must clearly identify selectable identities as Mock and must not state or
+imply that Mock identity selection authenticates a person, verifies team
+membership, or creates a security boundary that protects application data from
+unauthorized access.
+
+## Data Protection
 
 **CR-NFR-005 — Confirmed Requirement**
 
-Application data must be encrypted in transit and at rest.
+In deployed environments, application traffic between a user's client and the
+application must use HTTPS. This requirement does not apply to local development.
 
 ## Capacity and Performance
 
 **CR-NFR-004 — Confirmed Requirement**
 
-The MVP must remain functional with up to 25 authorized users and 1,000 decision
-records.
+The MVP must remain functional with up to 25 preconfigured Mock users and 1,000
+decision records.
 
-**CR-NFR-006 — Confirmed Requirement**
+**CR-NFR-006 — Scope Constraint**
 
-The record list, record detail, and exact single-tag filter results must each
-make their primary content usable within two seconds at the approved capacity of
-up to 25 users and 1,000 records. Measurement begins with the user's initiating
-action and ends when the primary content is usable. No percentile or
-load-testing tool is prescribed.
+Usability responsiveness at the approved capacity is best effort. The MVP has
+no formal response-time target or performance acceptance measurement.
 
 ## Audit and Retention
 
@@ -350,25 +390,16 @@ load-testing tool is prescribed.
 
 The application must create audit records for:
 
-- Authentication events.
 - User role changes and approver designation changes.
 - Lifecycle transitions.
+- Replacement-Draft abandonment actions.
 - Archive and restore actions.
 - Ownership transfers.
 - Comment deletions.
-- Permanent Draft deletions; the permanently retained minimal event must contain
-  the record ID, actor, and timestamp.
 
 **CR-NFR-008 — Confirmed Requirement**
 
 Archived records and audit records must be retained permanently.
-
-## Backup and Recovery
-
-**CR-NFR-009 — Confirmed Requirement**
-
-Backups must be performed daily. The recovery point objective (RPO) is 24 hours
-and the recovery time objective (RTO) is 8 hours.
 
 ## Availability, Accessibility, and Compatibility
 
@@ -399,14 +430,14 @@ Self-approval is permitted when the author is a designated approver.
 
 **CR-BR-003 — Confirmed Requirement**
 
-Authors may edit records they authored in Draft or Proposed. Saving an edit to a
-Proposed record returns it to Draft, invalidates prior and in-progress review,
-and requires resubmission.
+Authors may edit records they authored in a Draft that has not been marked
+Abandoned, or in Proposed. Saving an edit to a Proposed record returns it to
+Draft, invalidates prior and in-progress review, and requires resubmission.
 
 **CR-BR-004 — Confirmed Requirement**
 
-Accepted records cannot be edited directly; Rejected and Superseded records are
-completely immutable.
+Accepted records cannot be edited directly; Rejected, Superseded, and
+replacement-version Drafts marked Abandoned are immutable as decision records.
 
 **CR-BR-005 — Confirmed Requirement**
 
@@ -423,32 +454,26 @@ version.
 Only administrators may archive or restore records. Any lifecycle status may be
 archived, subject to CR-BR-014.
 
-**CR-BR-008 — Confirmed Requirement**
-
-Only current Draft records may be permanently deleted, by their author, owner,
-or an administrator. Non-Draft records are archive-only. Permanent Draft
-deletion removes the record content, comments, and ordinary change history while
-permanently retaining a minimal audit event containing the record ID, actor, and
-timestamp.
-
 **CR-BR-009 — Confirmed Requirement**
 
 Superseded and Rejected records remain available for future review.
 
 **CR-BR-010 — Confirmed Requirement**
 
-Regulated personal information and health information must not be entered into
-decision records.
+Only demo or synthetic data may be entered into or otherwise used in the MVP.
+Real internal confidential information, regulated personal information, and
+health information must not be entered, stored, or processed.
 
 **CR-BR-011 — Confirmed Requirement**
 
-The author, owner, or an administrator may transfer ownership only in Draft or
-Proposed; authorship is unchanged.
+The author, owner, or an administrator may transfer ownership only in a Draft
+that has not been marked Abandoned, or in Proposed; authorship is unchanged.
 
 **CR-BR-012 — Confirmed Requirement**
 
 Only a comment's author may delete that comment. Deletion is soft and preserves
-replies and an audit record.
+the `[deleted]` placeholder and an audit record attributed to the deleting Mock
+identity.
 
 **CR-BR-013 — Confirmed Requirement**
 
@@ -459,8 +484,8 @@ to create a replacement version.
 
 There may be only one active replacement per Accepted record. An original
 Accepted record cannot be archived while that replacement is Proposed. A
-replacement is active from creation of its Draft until it is Accepted, Rejected,
-or deleted.
+replacement is active from creation of its Draft until it is Accepted or
+Rejected, or until its Draft is marked Abandoned.
 
 **CR-BR-015 — Confirmed Requirement**
 
@@ -468,13 +493,23 @@ Users may hold multiple roles, and their permissions are additive.
 
 **CR-BR-016 — Confirmed Requirement**
 
-A Draft cannot become Proposed without at least one designated approver.
+A Draft that has not been marked Abandoned cannot become Proposed without at
+least one designated approver. A Draft marked Abandoned cannot become Proposed.
 
-**CR-BR-017 — Confirmed Requirement**
+**CR-BR-018 — Confirmed Requirement**
 
-Tag rename updates references on every associated record. Tag merge replaces the
-source tag with the target tag on every record associated with the source tag.
-Tag deletion removes only that tag association and never deletes a record.
+The selected Mock identity determines the roles and attribution used by the MVP.
+Because any person may choose a preconfigured Mock identity, these roles govern
+demonstrated application behavior but do not establish real-world authorization
+or access control.
+
+**CR-BR-019 — Confirmed Requirement**
+
+Only an administrator may mark an active replacement-version Draft as
+Abandoned. The Abandoned condition is permanent, retained,
+replacement-specific, and immutable as defined by CR-FR-030. It is not a
+decision-record lifecycle status, does not delete the record, does not change
+the original Accepted record, and ends the active-replacement interval.
 
 # User Stories
 
@@ -485,8 +520,8 @@ rationale so that the team can understand it later.
 
 **CR-US-002 — Confirmed Requirement**
 
-As an author, I want to submit a complete Draft with a designated approver so
-that it can be reviewed.
+As an author, I want to submit a complete Draft that has not been marked
+Abandoned and has a designated approver so that it can be reviewed.
 
 **CR-US-003 — Confirmed Requirement**
 
@@ -500,8 +535,8 @@ locate relevant decisions.
 
 **CR-US-005 — Confirmed Requirement**
 
-As a team member, I want to comment and add a single-level reply so that I can
-contribute to discussion.
+As a team member, I want to add a top-level comment so that I can contribute to
+discussion.
 
 **CR-US-006 — Confirmed Requirement**
 
@@ -510,13 +545,14 @@ decision so that it can evolve without altering history.
 
 **CR-US-007 — Confirmed Requirement**
 
-As a reader, I want to navigate between Superseded and replacement versions so
-that I can understand how a decision evolved.
+As a reader, I want to navigate between an original decision and its accepted
+or abandoned replacement versions so that I can understand how the decision
+evolved.
 
 **CR-US-008 — Confirmed Requirement**
 
-As an administrator, I want to designate approvers so that only authorized users
-can decide proposals.
+As an administrator, I want to designate approvers so that only designated Mock
+approver identities can decide proposals.
 
 **CR-US-009 — Confirmed Requirement**
 
@@ -530,13 +566,13 @@ review so that reviewers decide only the revised content.
 
 **CR-US-011 — Confirmed Requirement**
 
-As an author, owner, or administrator, I want to transfer ownership of a Draft or
-Proposed record without changing authorship.
+As an author, owner, or administrator, I want to transfer ownership of a
+non-abandoned Draft or a Proposed record without changing authorship.
 
 **CR-US-012 — Confirmed Requirement**
 
-As a comment author, I want to soft-delete my comment while preserving its
-replies and audit evidence.
+As a comment author, I want to soft-delete my comment while preserving a visible
+placeholder and audit attribution.
 
 **CR-US-013 — Confirmed Requirement**
 
@@ -545,58 +581,83 @@ record after its author departs.
 
 **CR-US-014 — Confirmed Requirement**
 
-As a team member, I want to create tags, while administrators maintain the tag
-set, so that records remain discoverable.
+As a team member, I want to create tags and associate them with records so that
+records remain discoverable.
+
+**CR-US-015 — Confirmed Requirement**
+
+As an MVP user, I want to choose a preconfigured Mock identity on the login or
+entry screen so that I can demonstrate behavior associated with that identity's
+roles.
+
+**CR-US-016 — Confirmed Requirement**
+
+As an administrator, I want to mark an unneeded replacement-version Draft as
+Abandoned so that its record and original-version link are preserved while a
+new replacement can be created.
 
 # Acceptance Criteria
 
-## Authentication, Authorization, and Roles
+## Mock Identity and Roles
 
-**AC-001**
+**AC-043**
 
-Given a user is not an authenticated member of the designated team, when the
-user attempts to access the application or a decision record, then access is
-denied.
+Given the login or entry screen is displayed, then all available identities are
+identified as preconfigured Mock users. When a person chooses one, then the
+application opens using that Mock identity's configured roles and uses that
+identity for subsequent user attribution.
+
+**AC-044**
+
+Given the login or entry screen or other identity-related MVP content is
+displayed, then it does not require organizational SSO and does not state or
+imply that choosing a Mock identity verifies the person, verifies team
+membership, or protects application data from unauthorized access.
 
 **AC-002**
 
-Given an authenticated team member creates a record, when creation completes,
-then the record is in Draft and the creator is recorded as its author.
+Given a selected Mock team-member identity creates a record, when creation
+completes, then the record is in Draft and the selected Mock identity is
+recorded as its author.
 
 **AC-003**
 
 Given a non-administrator, when the user attempts to designate an approver,
-archive, restore, or create an Accepted record's replacement, then the action is
-denied.
+archive, restore, create an Accepted record's replacement, or mark a replacement
+Draft as Abandoned, then the action is denied.
 
 **AC-023**
 
-Given a user holds multiple roles, when authorization is evaluated, then an
-action is permitted if any role held grants it and no role removes permission
-granted by another role.
+Given a selected Mock identity holds multiple roles, when role-dependent
+behavior is evaluated, then an action is permitted if any role held grants it
+and no role removes permission granted by another role.
 
 ## Required Content and Submission
 
 **AC-004**
 
-Given a Draft is missing a required field, when submission is attempted, then
-the transition is prevented and each missing required field is identified.
+Given a Draft that has not been marked Abandoned is missing a required field,
+when submission is attempted, then the transition is prevented and each missing
+required field is identified.
 
 **AC-005**
 
-Given a Draft has all required fields and at least one designated approver, when
-the author submits it, then its status becomes Proposed.
+Given a Draft that has not been marked Abandoned has all required fields and at
+least one designated approver, when the author submits it, then its status
+becomes Proposed.
 
 **AC-024**
 
-Given a Draft has no designated approver, when submission is attempted, then it
-remains Draft and an actionable message states that at least one designated
-approver must be designated.
+Given a Draft that has not been marked Abandoned has no designated approver,
+when submission is attempted, then it remains Draft and an actionable message
+states that at least one designated approver must be designated.
 
 **AC-037**
 
-Given a user opens a creation or editing screen, then a notice is visible that
-regulated personal information and health information must not be entered.
+Given a person opens the login or entry screen or a creation or editing screen,
+then a notice is visible that only demo or synthetic data may be used and that
+real internal confidential information, regulated personal information, and
+health information must not be entered.
 
 ## Approval and Lifecycle
 
@@ -642,20 +703,22 @@ previous Accepted version automatically becomes Superseded.
 
 **AC-012**
 
-Given a Superseded record or its accepted replacement, when an authorized user
-views it, then the user can navigate to the related version.
+Given a Superseded record or its accepted replacement, when a user views it
+under a selected Mock identity, then the user can navigate to the related
+version.
 
 **AC-013**
 
-Given a record has changed, when an authorized user views its history, then the
-history identifies what changed, who changed it, and when, and its entries cannot
-be modified.
+Given a record has changed, when a user under a selected Mock identity views its
+history, then the history identifies what changed, which Mock identity made the
+change, and when, and its entries cannot be modified.
 
 **AC-014**
 
-Given the author, owner, or an administrator transfers a Draft or Proposed
-record, when transfer completes, then the owner changes and author is unchanged.
-Given any other user or lifecycle status, the transfer is denied.
+Given the author, owner, or an administrator transfers a Draft that has not been
+marked Abandoned, or a Proposed record, when transfer completes, then the owner
+changes and author is unchanged. Given a Draft marked Abandoned, any other user,
+or any other lifecycle status, the transfer is denied.
 
 **AC-025**
 
@@ -664,81 +727,73 @@ administrator attempts to create another, then creation is denied.
 
 **AC-039**
 
-Given an active replacement, when it is Accepted, Rejected, or deleted, then it
-ceases to count as the Accepted record's active replacement.
+Given an active replacement, when it is Accepted, Rejected, or its Draft is
+marked Abandoned, then it ceases to count as the Accepted record's active
+replacement.
+
+**AC-046**
+
+Given an Accepted record has an active replacement-version Draft, when an
+administrator marks that Draft as Abandoned, then the replacement retains Draft
+as its lifecycle status, gains the permanent replacement-specific Abandoned
+condition, and no longer counts as active. The replacement record and its link
+to the original are retained and users can navigate between them; the original
+remains Accepted and unchanged; an audit record identifies the action,
+administrator, and time; and an administrator can create a new linked
+replacement.
+
+**AC-047**
+
+Given a replacement-version Draft marked Abandoned, when any user attempts to
+change its record content, lifecycle data, ownership, approver designations, or
+version content, remove its Abandoned condition, reactivate it, or submit it,
+then the action is denied. An administrator may still archive or restore it;
+restoration preserves both its Draft lifecycle status and its Abandoned
+condition. Given an ordinary Draft, a Proposed replacement, or an Accepted,
+Rejected, or Superseded record, when an administrator attempts to mark it
+Abandoned, then the action is denied.
 
 ## Discovery, Tags, and Comments
 
 **AC-015**
 
-Given records have tags, when an authorized user applies one exact tag filter,
-then records assigned that exact tag are returned, including matching Rejected,
-Superseded, and archived records.
+Given records have tags, when a user under a selected Mock identity applies one
+exact tag filter, then records assigned that exact tag are returned, including
+matching Rejected, Superseded, and archived records.
 
 **AC-016**
 
-Given an authenticated team member views a record, when the user adds a comment,
-then it is visible on that record.
-
-**AC-017**
-
-Given a top-level comment, when an authenticated team member adds a reply, then
-the single-level reply is visible with that comment.
+Given a selected Mock team-member identity views a record, when the user adds a
+comment, then it is visible on that record and attributed to that Mock identity.
 
 **AC-018**
 
 Given a comment author deletes their own comment, then `[deleted]` replaces its
-content, existing replies remain visible, and an audit record of the deletion is
+content and an audit record attributed to the deleting Mock identity is
 retained.
 
 **AC-019**
 
 Given a user attempts to delete another user's comment, then deletion is denied.
 
-**AC-028**
-
-Given a user attempts to reply to a reply, then the nested-reply action is not
-available or is denied.
-
 **AC-029**
 
-Given a team member creates a tag, then it is available for assignment. Given a
-non-administrator attempts to rename, merge, or delete a tag, then the action is
-denied.
+Given a team member creates a tag, then it is available for association with one
+or more decision records. Given a team member associates one or more tags with a
+record, then each selected tag is associated with that record.
 
-**AC-040**
-
-Given an administrator renames a tag, when the rename completes, then references
-on all associated records use the renamed tag.
-
-**AC-041**
-
-Given an administrator merges a source tag into a target tag, when the merge
-completes, then the target tag replaces the source tag on all records associated
-with the source tag.
-
-**AC-042**
-
-Given an administrator deletes a tag, when deletion completes, then only that
-tag association is removed from associated records and no record is deleted.
-
-## Archival, Restoration, Departure, and Deletion
+## Archival, Restoration, Departure, and Record Non-deletion
 
 **AC-020**
 
 Given an administrator archives a record in any lifecycle status and no
 replacement rule blocks it, then it is marked archived, retained permanently,
-and remains discoverable to authorized users.
+and remains discoverable to users under selected Mock identities.
 
 **AC-021**
 
 Given an archived record, when an administrator restores it, then it returns to
 the lifecycle status held immediately before archival.
-
-**AC-022**
-
-Given a non-Draft record, when permanent deletion is attempted, then the action
-is unavailable or denied.
 
 **AC-026**
 
@@ -747,52 +802,46 @@ administrator attempts to archive the original, then archival is denied. After
 that review resolves to Accepted or Rejected, the active-Proposed block no longer
 applies.
 
-**AC-027**
-
-Given a current Draft, when its author, owner, or an administrator permanently
-deletes it, then its record content, comments, and ordinary change history are
-removed and are no longer available or restorable, while a minimal audit event
-containing the record ID, actor, and timestamp is retained permanently. Given
-any other user, deletion is denied.
-
 **AC-030**
 
 Given an author has left the team, then the authored record remains retained and
 its owner or an administrator can perform every action otherwise granted to that
 user by this document.
 
+**AC-045**
+
+Given a decision record in any lifecycle, replacement-specific, or archival
+condition, including a replacement Draft marked Abandoned, when any user
+attempts to delete the record, then no permanent or soft record-deletion action
+is available or the attempt is denied. The record remains available for
+otherwise-permitted archival or restoration.
+
 ## Non-functional Criteria
 
 **AC-031**
 
-Given up to 1,000 records and test activity within the 25-user capacity, when a
-user initiates opening the record list, opening a record detail, or applying an
-exact single-tag filter, then the corresponding primary content is usable within
-two seconds of that initiating action.
+Given 25 preconfigured Mock users and 1,000 decision records, when each in-scope
+function is exercised, then it continues to satisfy its applicable functional
+acceptance criteria. No response-time assertion applies.
 
 **AC-032**
 
-Given application data is transmitted or stored, then it is encrypted in transit
-and at rest.
+Given a deployed environment, when a user accesses or uses the application, then
+the client-facing application connection and subsequent application traffic use
+HTTPS. No equivalent HTTPS acceptance check is required for local development.
 
 **AC-033**
 
-Given an authentication event, role or approver change, lifecycle transition,
-archive or restore, ownership transfer, comment deletion, or permanent Draft
-deletion, then an audit record is created for that event. A permanent Draft
-deletion audit event contains the record ID, actor, and timestamp.
+Given a role or approver change, lifecycle transition, archive or restore,
+replacement-Draft abandonment, ownership transfer, or comment deletion, then an
+audit record is created for that event. A replacement-Draft abandonment audit
+record identifies the acting administrator and time. A comment-deletion audit
+record identifies the deleting Mock identity.
 
 **AC-034**
 
-Given an archived record or audit entry, including the minimal event retained
-after permanent Draft deletion, then no retention expiry or permanent deletion
-action is applied to it.
-
-**AC-035**
-
-Given normal backup operations, then a backup is performed each day. Given
-recovery is required, recovery supports no more than 24 hours of data loss and
-restoration within 8 hours.
+Given an archived record or audit entry, then no retention expiry or permanent
+deletion action is applied to it.
 
 **AC-036**
 
@@ -806,32 +855,45 @@ engineering treatment without an additional product decision:
 
 - If an author leaves, the record is retained; the owner or administrator may
   use only their otherwise-granted permissions. If an owner leaves, ownership
-  may be transferred only while Draft or Proposed.
-- A user who loses team membership must no longer be granted application access;
-  session invalidation mechanics are an engineering concern.
+  may be transferred only while the record is a Draft that has not been marked
+  Abandoned, or Proposed.
+- A person may select a Mock identity configured with any role, including
+  administrator. The resulting permissions demonstrate role behavior only and
+  do not verify or authorize the person in the real world.
 - Concurrent decisions on the same Proposed record must not produce more than
   one lifecycle outcome; the concurrency mechanism is an engineering concern.
 - Editing during review invokes AC-008, invalidating that review.
 - A rejected replacement remains Rejected and the original remains Accepted.
 - A second active replacement is denied under AC-025.
 - A replacement counts as active from creation of its Draft until it is
-  Accepted, Rejected, or deleted.
+  Accepted, Rejected, or its Draft is marked Abandoned.
+- Only an active replacement-version Draft can be marked Abandoned, and only by
+  an administrator. Ordinary Drafts, Proposed replacements, Accepted, Rejected,
+  and Superseded records cannot be marked Abandoned.
+- An abandoned replacement retains Draft as its lifecycle status, its
+  replacement-specific Abandoned condition, its record, and its link to the
+  original Accepted record. It is immutable as a decision record, cannot be
+  submitted or reactivated, does not supersede or otherwise change the original,
+  and no longer prevents creation of a new replacement.
 - Version links must not corrupt history or create cycles; enforcement is an
   engineering data-integrity concern.
 - Archival of an original with an active Proposed replacement is denied under
   AC-026.
 - A departed comment author's comments remain retained; only the author can
-  request their deletion while authorized.
-- Soft deletion of a comment with replies follows AC-018.
-- Concurrent reply and deletion requests must preserve the soft-deleted
-  placeholder, replies, and audit entry; transaction handling is an engineering
-  concern.
-- Archive and restore of a Draft returns it to Draft, after which Draft deletion
-  rules apply.
-- Tag rename, merge, and deletion follow the reference and record-preservation
-  behavior in CR-BR-017.
-- Permanent Draft deletion removes record content, comments, and ordinary change
-  history while permanently retaining the required minimal audit event.
+  request their deletion through the Mock identity attributed as the comment
+  author and subject to the otherwise-applicable rules.
+- Concurrent comment-deletion requests must preserve one soft-deleted
+  placeholder and the required audit attribution; transaction handling is an
+  engineering concern.
+- Archive and restore of a Draft returns it to Draft. Neither action deletes the
+  record.
+- An archived replacement remains active unless it becomes Accepted, Rejected,
+  or Abandoned; archival and restoration do not alter its lifecycle status or
+  its Abandoned condition. Restoring an abandoned replacement Draft does not
+  reactivate it.
+- Decision-record deletion remains unavailable in every lifecycle,
+  replacement-specific, and archival condition, including Abandoned, under
+  AC-045.
 
 # Out of Scope
 
@@ -844,21 +906,25 @@ The following are approved MVP scope constraints:
 **CR-OOS-003 — Confirmed Requirement:** Microsoft Teams, Slack, Jira, and GitHub
 integrations.
 
-**CR-OOS-004 — Confirmed Requirement:** Access for external collaborators.
+**CR-OOS-004 — Confirmed Requirement:** External-collaborator identities and
+workflows.
 
-**CR-OOS-005 — Confirmed Requirement:** Organization-wide or multi-team access.
+**CR-OOS-005 — Confirmed Requirement:** Organization-wide or multi-team
+identities and workflows.
 
-**CR-OOS-006 — Confirmed Requirement:** Storage or processing of regulated
-personal information or health information.
+**CR-OOS-006 — Confirmed Requirement:** Storage or processing of real internal
+confidential information, regulated personal information, or health
+information.
 
-**CR-OOS-007 — Confirmed Requirement:** Permanent deletion of non-Draft decision
-records.
+**CR-OOS-007 — Confirmed Requirement:** Permanent or soft deletion of decision
+records in any lifecycle, replacement-specific, or archival condition,
+including Abandoned.
 
 **CR-OOS-008 — Confirmed Requirement:** In-application notifications.
 
 **CR-OOS-009 — Confirmed Requirement**
 
-Comment editing, nested replies, mentions, and thread resolution.
+Comment editing, all comment replies, mentions, and thread resolution.
 
 **CR-OOS-010 — Confirmed Requirement**
 
@@ -877,35 +943,64 @@ Accessibility compliance certification or a mandatory accessibility standard.
 
 A formal availability SLA.
 
+**CR-OOS-014 — Confirmed Requirement**
+
+Production-grade identity and access control, including organizational SSO,
+verification of team membership, and enforcement of a real security boundary.
+No production authentication behavior or future implementation approach is
+defined by this MVP requirement.
+
+The following additional exclusions are approved for Version 1.3 and do not
+define or imply a future solution:
+
+- Backup and recovery, including daily backups, recovery point objectives,
+  recovery time objectives, and restoration evidence.
+- Encryption at rest.
+- Tag administration, including tag rename, merge, and deletion.
+- A formal response-time target or performance acceptance measurement.
+
 # Open Questions
 
-No unresolved product question currently blocks Development Planning. Test
-design, transaction handling, session invalidation, concurrency control, and
-data-integrity enforcement are implementation details that may become
-engineering tasks and do not require additional product decisions.
+No unresolved product question currently blocks Development Planning.
+Post-abandonment behavior is fully defined by CR-FR-030: the retained
+replacement-version Draft is immutable and cannot be reactivated.
+Production-grade identity, backup and recovery, encryption at rest, tag
+administration, comment replies, decision-record deletion, and a formal
+response-time target are outside MVP scope and have no defined future
+implementation requirements. Test design, transaction handling, concurrency
+control, and data-integrity enforcement are implementation details that may
+become engineering tasks and do not require additional product decisions.
 
 # Requirement Traceability
 
 | Requirement area | Acceptance criteria or constraint |
 |---|---|
-| CR-BG-001–002, CR-OBJ-001–002 | Delivered collectively by AC-002, AC-005–018, AC-020–021, and AC-033–034 |
-| CR-USR-001–010 | AC-001–003, AC-006–007, AC-014, AC-023, AC-029 |
-| CR-SCP-001–003 | AC-001–005, AC-015–021, AC-024, AC-028–032, AC-037 |
-| CR-FR-001–003 | AC-001–002 |
+| CR-BG-001–003, CR-OBJ-001–002 | Delivered collectively by AC-002, AC-005–016, AC-018–021, AC-031–034, AC-037, AC-043–047 |
+| CR-USR-001–011 | AC-002–003, AC-006–007, AC-014, AC-023, AC-029, AC-043–044, AC-046–047 |
+| CR-SCP-001–003 | AC-002–005, AC-015–016, AC-018–021, AC-024, AC-029–031, AC-037, AC-043–047 |
+| CR-FR-003 | AC-002 |
 | CR-FR-004–006A | AC-004–005, AC-008, AC-014 |
 | CR-FR-007–010, CR-FR-024 | AC-005–008, AC-024, AC-038 |
-| CR-FR-011–014 | AC-009–013, AC-025, AC-038–039 |
-| CR-FR-015–019, CR-FR-025 | AC-015–019, AC-028–029, AC-040–042 |
-| CR-FR-020–022, CR-FR-026 | AC-020–022, AC-026–027, AC-030, AC-033–034 |
+| CR-FR-011–014, CR-FR-030 | AC-009–013, AC-025, AC-038–039, AC-046–047 |
+| CR-FR-015–017, CR-FR-019, CR-FR-025 | AC-015–016, AC-018–019, AC-029 |
+| CR-FR-020–021, CR-FR-026, CR-FR-029 | AC-020–021, AC-026, AC-030, AC-045 |
 | CR-FR-023 | AC-037 |
-| CR-NFR-001–005 | AC-001, AC-009, AC-013, AC-032, AC-038 |
-| CR-NFR-006 | AC-031 |
-| CR-NFR-007–009 | AC-018, AC-033–035 |
-| CR-NFR-010, CR-NFR-012 | Approved scope constraints; no mandatory measurable target |
+| CR-FR-027–028 | AC-002, AC-043–044 |
+| CR-NFR-003 | AC-009, AC-013, AC-038, AC-047 |
+| CR-NFR-005 | AC-032 |
+| CR-NFR-004 | AC-031 |
+| CR-NFR-006, CR-NFR-010, CR-NFR-012 | Approved scope constraints; no mandatory measurable target |
+| CR-NFR-007–008 | AC-018, AC-033–034, AC-046 |
 | CR-NFR-011 | AC-036 |
-| CR-BR-001–017 | AC-003, AC-005–010, AC-014, AC-018–027, AC-038–042 |
-| CR-US-001–014 | Covered by the corresponding functional criteria above |
-| CR-OOS-001–013 | Approved scope constraints |
+| CR-NFR-013 | AC-044 |
+| CR-BR-001–007, CR-BR-009–016, CR-BR-018–019 | AC-003, AC-005–010, AC-014, AC-018–021, AC-023–026, AC-029–030, AC-037–039, AC-043–047 |
+| CR-US-001–016 | Covered by the corresponding functional criteria above |
+| CR-OOS-001–014 | Approved scope constraints |
+| Version 1.3 additional exclusions | Approved scope constraints for backup/recovery, encryption at rest, tag administration, and a formal response-time target or performance acceptance measurement |
+
+Historical resolution tables below preserve the IDs that applied in their named
+versions. Items retired from the active Version 1.3 definition are explicitly
+identified in **Resolution Traceability from Version 1.2**.
 
 ## Resolution Traceability from Version 1.0
 
@@ -936,6 +1031,40 @@ engineering tasks and do not require additional product decisions.
 | OQ-012 | Resolved by CR-NFR-005–012 and AC-031–036 |
 | OQ-013 | Resolved by CR-OOS-011 |
 
+## Resolution Traceability from Version 1.1
+
+| Version 1.1 item | Resolution in Version 1.2 |
+|---|---|
+| CR-SCP-001, CR-FR-001–002, AC-001 | Organizational SSO and designated-team access enforcement were removed from the MVP. CR-FR-027–028 and AC-043–044 define the approved preconfigured Mock-user selection behavior. |
+| CR-USR-001 | Revised to define the modeled team as up to 25 preconfigured Mock users. |
+| CR-SCP-003, CR-FR-023, CR-BR-010, AC-037, CR-OOS-006 | Revised to allow only demo or synthetic data and to prohibit real internal confidential information, regulated personal information, and health information. |
+| CR-NFR-001–002 | Removed because Mock identity selection is not a real security boundary and the MVP must not contain information that requires internal-confidentiality protection. CR-NFR-013 and AC-044 define the approved limitation. |
+| CR-NFR-005, AC-032 | Unchanged. Restricting the MVP to demo or synthetic data does not remove the separately approved encryption requirement. |
+| CR-NFR-007, AC-033 | Authentication-event auditing was removed. All other approved audit events remain unchanged. |
+| Former team-membership edge case | Immediate access revocation and session invalidation were removed because the MVP neither verifies team membership nor provides a real access-control boundary. |
+| CR-OOS-004–006, CR-OOS-014 | Clarified that external, organization-wide, and multi-team identity workflows and all production-grade identity and access control are outside MVP scope. |
+
+## Resolution Traceability from Version 1.2
+
+| Version 1.2 item | Resolution in Version 1.3 |
+|---|---|
+| CR-SCP-001 | Revised to remove Draft deletion, comment replies, and tag administration; to retain top-level comments, author-only comment soft deletion, team tag creation and association, and archival/restoration; and to state that no decision record may be deleted. |
+| CR-FR-012, CR-BR-014, AC-039, replacement edge cases | Revised so an active replacement ends when Accepted, Rejected, or its Draft is marked Abandoned. Deletion is not a lifecycle outcome. |
+| New CR-FR-030, CR-BR-019, CR-US-016, AC-046–047 | Added the administrator-only, replacement-specific Abandoned condition for an active replacement Draft. The abandoned record and original-version link are retained, the original remains Accepted, the abandoned record is immutable and cannot be reactivated, a new replacement may be created, and Abandoned is not a global lifecycle status or deletion. |
+| CR-FR-014 | Revised to remove the exception that allowed ordinary history to be removed with a permanently deleted Draft. |
+| CR-FR-018, AC-017, AC-028 | Retired. Comment replies, including single-level and nested replies, are outside MVP scope under revised CR-OOS-009. |
+| CR-FR-019, CR-BR-012, CR-US-005, CR-US-012, AC-018, comment edge cases | Revised to cover top-level comments and author-only soft deletion with a `[deleted]` placeholder and audit attribution, without reply behavior. |
+| CR-FR-022, CR-BR-008, AC-022, AC-027 | Retired. New CR-FR-029 and AC-045 state that decision records cannot be permanently or softly deleted in any lifecycle or archival condition. CR-OOS-007 was expanded accordingly. |
+| CR-FR-025, CR-US-014, AC-029 | Revised to retain team-member tag creation and record association only. |
+| CR-BR-017, AC-040–042 | Retired. Tag rename, merge, and deletion are outside MVP scope. |
+| CR-NFR-005, AC-032 | Revised to require observable HTTPS use for deployed environments only. Encryption at rest was removed, and local development has no HTTPS requirement. |
+| CR-NFR-006, AC-031 | The two-second response target and its measurement were removed. CR-NFR-006 is now a best-effort usability Scope Constraint; AC-031 now verifies functional capacity only. |
+| CR-NFR-007, AC-033 | Revised to remove permanent Draft-deletion audit behavior. Comment-deletion audit attribution remains required. |
+| CR-NFR-008, AC-034 | Retained for archived records and audit records, with all references to permanent Draft-deletion audit retention removed. |
+| CR-NFR-009, AC-035 | Retired. Backup and recovery, including daily backup, RPO, RTO, and restoration evidence, are outside MVP scope without a defined future solution. |
+| CR-OOS-009 | Revised to place all comment replies outside MVP scope. |
+| Non-functional exclusions | Encryption at rest and a formal response-time target or performance acceptance measurement are outside MVP scope. |
+
 # Definition of Done
 
 The MVP requirement definition is ready for Development Planning when:
@@ -947,24 +1076,45 @@ The MVP requirement definition is ready for Development Planning when:
    explicitly identified as a scope constraint.
 4. Role permissions and every allowed lifecycle transition are unambiguous.
 5. Ownership-transfer permissions, conditions, and lifecycle rules are defined.
-6. The administrator's highest-responsible-person role and authorization are
+6. The administrator's highest-responsible-person role and permissions are
    defined.
 7. Re-review behavior after editing a Proposed record is defined.
-8. Comment deletion and reply behavior, including deleted comments with replies,
-   is defined.
-9. Required non-functional targets are measurable and approved.
-10. Product stakeholders approve this document as the MVP requirement baseline.
-11. Open product questions that affect required data behavior or acceptance
+8. Top-level comment behavior and author-only soft deletion with a `[deleted]`
+   placeholder and audit attribution are defined; comment replies are explicitly
+   outside scope.
+9. Required non-functional behaviors are measurable and approved; any
+   intentionally non-measurable target is identified as a Scope Constraint.
+10. Mock identity selection, role attribution, and its lack of a real security
+    boundary are explicit and testable.
+11. The demo-or-synthetic-only data restriction and all prohibited information
+    categories are explicit wherever users enter data.
+12. Product stakeholders approve this document as the MVP requirement baseline.
+13. Open product questions that affect required data behavior or acceptance
     measurement are resolved.
+14. Decision-record deletion is unavailable in every lifecycle,
+    replacement-specific, and archival condition, including Abandoned, and
+    remains distinct from archival and restoration.
+15. Removed backup/recovery, encryption-at-rest, tag-administration, comment-reply,
+    and formal response-time requirements are documented as outside MVP scope.
+16. Administrator-only abandonment of an active replacement-version Draft is
+    testable as a retained, immutable, non-deletion condition that ends the
+    active-replacement interval without adding a global lifecycle status;
+    inapplicable record types and post-abandonment behavior are explicit.
 
 ## Readiness Assessment
 
-Version 1.1 is stakeholder-approved and resolves all Version 1.0 Priority
-Questions, assumptions, and recommendations. The four subsequently approved
-decisions make the mandatory performance target measurable, define tag mutation
-effects, define permanent Draft deletion and its retained audit event, and
-define the active-replacement interval. Every item in this document's Definition
-of Done is satisfied. The remaining test-design, transaction, session,
+Version 1.3 is stakeholder-approved. It retains the unaffected Version 1.2
+requirements and incorporates the approved removal of backup and recovery,
+decision-record deletion, encryption at rest, tag administration, comment
+replies, and the formal response-time target. It also incorporates the approved
+administrator-only Abandoned condition for replacement-version Drafts, including
+retention, immutability, auditability, the active-replacement endpoint, and
+continued preservation through archive and restore. It retains
+archival/restoration, top-level comment soft deletion, team-member tag creation
+and association, HTTPS for deployed environments, and functional capacity for
+25 preconfigured Mock users and 1,000 decision records. It does not define
+future solutions for the removed capabilities. Every item in this document's
+Definition of Done is satisfied. The remaining test-design, transaction,
 concurrency, and integrity considerations are engineering-resolvable
-implementation details, not unresolved product decisions. Version 1.1 is
+implementation details, not unresolved product decisions. Version 1.3 is
 **READY for Development Planning**.
