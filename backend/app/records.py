@@ -1,4 +1,5 @@
 from datetime import date, datetime, timezone
+from threading import Lock
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, field_validator
@@ -67,6 +68,7 @@ class DecisionRecord(BaseModel):
 class DecisionRecordStore:
     def __init__(self) -> None:
         self._records: dict[str, DecisionRecord] = {}
+        self._lock = Lock()
 
     def create(
         self,
@@ -91,11 +93,14 @@ class DecisionRecordStore:
             tags=payload.tags,
             created_at=datetime.now(timezone.utc),
         )
-        self._records[record.id] = record
+        with self._lock:
+            self._records[record.id] = record
         return record
 
     def list(self) -> list[DecisionRecord]:
-        return list(self._records.values())
+        with self._lock:
+            return list(self._records.values())
 
     def get(self, record_id: str) -> DecisionRecord | None:
-        return self._records.get(record_id)
+        with self._lock:
+            return self._records.get(record_id)

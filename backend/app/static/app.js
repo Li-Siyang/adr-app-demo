@@ -105,10 +105,16 @@ recordForm.addEventListener("submit", async (event) => {
       body: JSON.stringify(payload),
     });
     if (!response.ok) {
-      const error = await response.json();
-      recordFormMessage.textContent = Array.isArray(error.detail)
-        ? displayValidationErrors(error.detail)
-        : error.detail;
+      let message = "Draft could not be saved. Please try again.";
+      try {
+        const error = await response.json();
+        message = Array.isArray(error.detail)
+          ? displayValidationErrors(error.detail)
+          : error.detail || message;
+      } catch {
+        // Keep the generic message when the server response is not JSON.
+      }
+      recordFormMessage.textContent = message;
       return;
     }
 

@@ -1,9 +1,12 @@
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import create_app
+from app.records import DecisionRecordCreate, DecisionRecordStore
+from app.identities import MOCK_IDENTITIES
 
 
 @pytest.fixture
@@ -123,3 +126,20 @@ def test_rejects_duplicate_tags_without_creating_draft(client: TestClient) -> No
 
     assert response.status_code == 422
     assert client.get("/api/decision-records").json() == {"records": []}
+
+
+def test_record_store_supports_concurrent_create_and_list() -> None:
+    store = DecisionRecordStore()
+    payload = DecisionRecordCreate(**complete_payload())
+    author = MOCK_IDENTITIES[0]
+
+    def create_record() -> None:
+        store.create(payload, author)
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [executor.submit(create_record) for _ in range(20)]
+        for future in futures:
+            future.result()
+        listed = store.list()
+
+    assert len(listed) == 20
