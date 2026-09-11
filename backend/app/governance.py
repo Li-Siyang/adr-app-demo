@@ -1,9 +1,11 @@
 from collections.abc import Collection
+from threading import RLock
 
 from app.identities import MockIdentity, Role
 
 
 designated_approver_ids: set[str] = set()
+governance_lock = RLock()
 
 
 def has_role(identity: MockIdentity, role: Role) -> bool:

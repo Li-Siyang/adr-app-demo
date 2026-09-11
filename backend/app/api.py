@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from app.governance import (
     designated_approver_ids,
+    governance_lock,
     is_administrator,
     is_designated_approver,
     role_permissions,
@@ -218,11 +219,12 @@ def submit_decision_record(
 ) -> DecisionRecord:
     author = require_selected_identity(selected_identity_id)
     try:
-        return get_record_store(request).submit(
-            record_id,
-            author,
-            has_designated_approver=bool(designated_approver_ids),
-        )
+        with governance_lock:
+            return get_record_store(request).submit(
+                record_id,
+                author,
+                has_designated_approver=bool(designated_approver_ids),
+            )
     except DraftSubmissionError as error:
         detail: dict[str, object] = {
             "message": "The Draft cannot be submitted.",
@@ -255,10 +257,13 @@ def get_governance_permissions(
 
 @router.get("/approvers", response_model=ApproverList)
 def list_designated_approvers() -> ApproverList:
-    approvers = [
-        identity for identity in MOCK_IDENTITIES if identity.id in designated_approver_ids
-    ]
-    return ApproverList(approvers=approvers)
+    with governance_lock:
+        approvers = [
+            identity
+            for identity in MOCK_IDENTITIES
+            if identity.id in designated_approver_ids
+        ]
+        return ApproverList(approvers=approvers)
 
 
 @router.post("/approvers", response_model=ApproverList)
@@ -275,8 +280,9 @@ def designate_approver(
             detail="The selected Mock identity does not exist.",
         )
 
-    designated_approver_ids.add(identity.id)
-    return list_designated_approvers()
+    with governance_lock:
+        designated_approver_ids.add(identity.id)
+        return list_designated_approvers()
 
 
 @router.delete("/approvers/{identity_id}", response_model=ApproverList)
@@ -292,5 +298,6 @@ def remove_approver(
             detail="The selected Mock identity does not exist.",
         )
 
-    designated_approver_ids.discard(identity_id)
-    return list_designated_approvers()
+    with governance_lock:
+        designated_approver_ids.discard(identity_id)
+        return list_designated_approvers()

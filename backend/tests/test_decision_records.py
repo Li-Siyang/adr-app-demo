@@ -1,10 +1,12 @@
 from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
+from threading import Event
+from time import sleep
 
 import pytest
 from fastapi.testclient import TestClient
 
-from app.governance import designated_approver_ids
+from app.governance import designated_approver_ids, governance_lock
 from app.identities import MOCK_IDENTITIES, MockIdentity
 from app.main import create_app
 from app.records import (
@@ -309,3 +311,32 @@ def test_submitted_record_cannot_be_edited_or_submitted_again(
 
     assert edit.status_code == 409
     assert resubmit.status_code == 409
+
+
+def test_submission_uses_current_approver_designation_atomically(
+    client: TestClient,
+) -> None:
+    created = client.post("/api/decision-records", json=complete_payload()).json()
+    designated_approver_ids.add("arun-approver")
+    request_started = Event()
+
+    def submit() -> object:
+        request_started.set()
+        return client.post(f"/api/decision-records/{created['id']}/submit")
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        with governance_lock:
+            future = executor.submit(submit)
+            assert request_started.wait(timeout=1)
+            sleep(0.05)
+            assert not future.done()
+            designated_approver_ids.clear()
+
+        response = future.result(timeout=1)
+    assert response.status_code == 422
+    assert "at least one designated approver" in (
+        response.json()["detail"]["approver"].lower()
+    )
+    assert client.get(f"/api/decision-records/{created['id']}").json()["status"] == (
+        "Draft"
+    )

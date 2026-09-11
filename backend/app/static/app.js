@@ -151,24 +151,32 @@ function beginEdit(record) {
   recordForm.scrollIntoView({ behavior: "smooth" });
 }
 
-async function submitDraft(record) {
-  const response = await fetch(`/api/decision-records/${record.id}/submit`, {
-    method: "POST",
-  });
-  if (!response.ok) {
-    const error = await response.json();
-    recordFormMessage.className = "error";
-    recordFormMessage.textContent = apiErrorMessage(
-      error,
-      "Draft could not be submitted.",
-    );
-    return;
-  }
+async function submitDraft(record, submitButton) {
+  submitButton.disabled = true;
+  try {
+    const response = await fetch(`/api/decision-records/${record.id}/submit`, {
+      method: "POST",
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      recordFormMessage.className = "error";
+      recordFormMessage.textContent = apiErrorMessage(
+        error,
+        "Draft could not be submitted.",
+      );
+      submitButton.disabled = false;
+      return;
+    }
 
-  recordFormMessage.className = "";
-  recordFormMessage.textContent = "Draft submitted for review.";
-  resetForm();
-  await loadRecords();
+    recordFormMessage.className = "";
+    recordFormMessage.textContent = "Draft submitted for review.";
+    resetForm();
+    await loadRecords();
+  } catch {
+    submitButton.disabled = false;
+    recordFormMessage.className = "error";
+    recordFormMessage.textContent = "Draft could not be submitted. Please try again.";
+  }
 }
 
 function renderRecords() {
@@ -206,7 +214,7 @@ function renderRecords() {
         const submit = document.createElement("button");
         submit.type = "button";
         submit.textContent = "Submit Draft";
-        submit.addEventListener("click", () => submitDraft(record));
+        submit.addEventListener("click", () => submitDraft(record, submit));
         actions.append(edit, submit);
         card.append(actions);
       }
