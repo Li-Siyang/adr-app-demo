@@ -227,11 +227,14 @@ next eligible Story using the following order:
 2. follow the approved Development Plan implementation order
 3. prefer higher-priority Stories
 4. prefer foundational work before dependent work
-5. select only Stories in `To Do`, `In Development`, `Test Failed`,
-   `Fixing`, or `Ready for Retest`; the latter three are the permitted
-   implementation-defect resume path
-6. do not start a Story in `Ready for Test`, `Testing`, `Ready for Review`,
-   `In Review`, or `Done`
+5. resolve the project's configured Jira status names or IDs to the canonical
+   states before applying this gate; do not assume display names are universal
+6. select only canonical `To Do` or `In Development` Stories for normal work
+7. select a canonical `Test Failed`, `Fixing`, or `Ready for Retest` Story only
+   when a Test Agent Failure Report classifies the failure as
+   `IMPLEMENTATION_DEFECT`
+8. do not start a Story in canonical `Ready for Test`, `Testing`,
+   `Ready for Review`, `In Review`, `Done`, or `Blocked` states
 
 Do not choose a Story merely because its numeric ID is smaller.
 
@@ -354,12 +357,18 @@ related Task records whose descriptions merely mention the Story. Zero matches
 must stop with `JIRA STORY MAPPING BLOCKED`; more than one match must stop with
 `JIRA DUPLICATE MAPPING BLOCKED`. Then read that issue and
 accept it only when it is a Jira Story and unambiguously matches both the exact
-Story ID and the approved Story title supplied in the kickoff or loaded through
-the direct `Develop the next Story` selection path. Validate the stable Story ID
-separately, and require the Jira summary to equal the canonical string
+Story ID and the approved Story title loaded from the Development Plan/source
+artifacts. A child kickoff must also repeat that approved title. Validate the
+stable Story ID separately, and require the Jira summary to equal the canonical string
 `[<Story ID>] <approved Story title>`. A supplied Jira Story key must identify
 that same unique issue. Then read any related implementation Tasks needed for
 traceability.
+
+The exact Source ID lookup must use the configured Source ID field identifier
+when the project provides one. The parent kickoff or repository Jira
+configuration must supply that identifier; if it is not available, use the
+Summary/Description fallbacks above and report `JIRA TOOLING BLOCKED` rather
+than claiming a custom-field-only mapping was absent.
 
 If no match exists, multiple mappings or plausible matches exist, the issue is
 not a Story, or its execution state cannot be verified, stop and emit the
@@ -379,6 +388,10 @@ required structured handoff with:
 If Jira tools or the Atlassian resource are unavailable, emit
 `JIRA TOOLING BLOCKED`; do not classify the result as a missing or duplicate
 mapping.
+
+Apply the resolved canonical execution-status gate to supplied-key child
+kickoffs as well as direct candidate selection. A readable issue in a
+non-eligible status must produce `Outcome: BLOCKED` and must not be modified.
 
 Do not substitute a GitHub Issue, infer a Jira key from naming patterns, or
 create/update Jira data.
@@ -815,6 +828,7 @@ Report:
 - Requirement reference
 - evidence
 - why the test may be incorrect
+- failure classification: `TEST_DEFECT` or `POSSIBLE_TEST_DEFECT`
 
 Return to:
 
