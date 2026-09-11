@@ -100,8 +100,8 @@ def test_tc_009_01_returns_matching_current_and_historical_records(
 
 @pytest.mark.skip(
     reason=(
-        "BLOCKED PLANNING_GAP: the record model and API do not yet support "
-        "the archived precondition assigned to STORY-012"
+        "DEFERRED BY HUMAN REVIEWER 2026-09-11: validate archived exact-tag "
+        "discovery with STORY-012 when archival support is available"
     )
 )
 def test_tc_009_01_returns_matching_archived_records() -> None:
