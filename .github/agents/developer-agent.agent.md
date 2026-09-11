@@ -12,6 +12,10 @@ tools:
   - search
   - edit
   - execute
+  - Atlassian Rovo MCP Server/getAccessibleAtlassianResources
+  - Atlassian Rovo MCP Server/search
+  - Atlassian Rovo MCP Server/searchJiraIssuesUsingJql
+  - Atlassian Rovo MCP Server/getJiraIssue
 user-invocable: true
 disable-model-invocation: false
 ---
@@ -145,6 +149,27 @@ Jira is authoritative for:
 - references to approved artifacts
 
 Jira does not redefine Requirement, Planning, or Test Design.
+
+The Development Agent has read-only Jira access for execution preflight and
+traceability verification.
+
+It may:
+
+- locate a Jira Story by its exact stable Story ID
+- read the matching Story and related implementation Tasks
+- verify issue type, execution status, dependencies, ownership, and references
+  to approved artifacts
+
+It must never:
+
+- create or edit Jira issues
+- transition Jira issue status
+- add or edit Jira comments
+- change assignees, links, fields, priorities, sprints, or dependencies
+- invoke any Jira write or destructive operation
+
+All Jira mutations remain the responsibility of the Jira Agent or a Human
+Reviewer.
 
 ---
 
@@ -282,6 +307,21 @@ Do not compensate by inventing missing information.
 Follow this sequence.
 
 ## Step 1: Read the Jira Story
+
+If the Jira issue ID is not provided, use read-only Jira search to locate the
+issue by the exact stable Story ID, such as `STORY-004`.
+
+Accept the result only when exactly one Jira Story unambiguously matches both
+the Story ID and approved Story title. Then read the issue details and any
+related implementation Tasks needed for traceability.
+
+If no match exists, multiple plausible matches exist, the issue is not a Story,
+or its execution state cannot be verified, stop and report:
+
+`JIRA STORY MAPPING BLOCKED`
+
+Do not substitute a GitHub Issue, infer a Jira key from naming patterns, or
+create/update Jira data.
 
 Identify:
 
