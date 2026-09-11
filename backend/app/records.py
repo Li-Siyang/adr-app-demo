@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import date, datetime, timezone
 from threading import Lock
 from typing import Literal
@@ -175,6 +177,14 @@ class DecisionRecordStore:
     def list(self) -> list[DecisionRecord]:
         with self._lock:
             return list(self._records.values())
+
+    def list_by_exact_tag(self, tag: str) -> list[DecisionRecord]:
+        with self._lock:
+            return [
+                record
+                for record in self._records.values()
+                if tag in record.tags
+            ]
 
     def get(self, record_id: str) -> DecisionRecord | None:
         with self._lock:

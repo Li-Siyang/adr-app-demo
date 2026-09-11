@@ -37,6 +37,21 @@
         <p id="attribution-preview">Loading attribution...</p>
       </section>
 
+      <section aria-labelledby="discover-records-title">
+        <h2 id="discover-records-title">Discover decision records</h2>
+        <form id="tag-filter-form" class="filter-form">
+          <label>Exact tag
+            <select id="tag-filter" name="tag">
+              <option value="">All tags</option>
+            </select>
+          </label>
+        </form>
+        <p id="record-list-message" aria-live="polite">
+          Loading decision records...
+        </p>
+        <div id="record-list" class="record-list"></div>
+      </section>
+
       <section class="notice" aria-labelledby="record-data-title">
         <h2 id="record-data-title">Decision record data boundary</h2>
         <p>
@@ -71,13 +86,6 @@
           </div>
           <p id="record-form-message" class="error" aria-live="polite"></p>
         </form>
-      </section>
-
-      <section aria-labelledby="drafts-title">
-        <h2 id="drafts-title">Decision records</h2>
-        <div id="record-list" class="record-list" aria-live="polite">
-          <p>Loading decision records...</p>
-        </div>
       </section>
     </main>
   </body>
