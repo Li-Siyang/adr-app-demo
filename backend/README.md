@@ -1,13 +1,17 @@
 # ADR demonstration backend
 
-This FastAPI application implements the STORY-001 Mock identity entry flow and
-the STORY-003 structured Draft creation flow.
+This FastAPI application implements the STORY-001 Mock identity entry flow,
+the STORY-003 structured Draft creation flow, and STORY-009 exact-tag record
+discovery.
 Identity selection is intentionally not authentication and does not create an
 access-control boundary.
 
 Drafts are retained in the application process for this demonstration. They
 capture the selected Mock identity as author, a distinct configured owner,
 required decision context, one or more tags, and the demo-data boundary notice.
+Users operating under a selected Mock identity can list all retained records or
+apply one exact tag filter. Tag discovery does not exclude records based on
+lifecycle or archival condition.
 
 ## Run locally
 
