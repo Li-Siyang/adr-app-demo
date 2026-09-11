@@ -3,8 +3,10 @@
 **Test Run ID:** TR-009  
 **Mode:** VALIDATION MODE  
 **Execution date:** 2026-09-11  
-**Initial implementation commit:** `270e8c09e547032cdafef997170c3f644bd62884`  
-**Validated production commit:** `9184430`  
+**Initial implementation commit:** `270e8c09e547032cdafef997170c3f644bd62884`
+
+**Validated production commit:** `9184430`
+
 **Source Requirement:** `docs/requirements/requirement-definition.md`, Version 1.3, Approved  
 **Source Development Plan:** `docs/planning/PLAN-001-internal-decision-record-mvp.md`, Version 1.1  
 **Source Test Design:** `docs/test-design/TEST-001-internal-decision-record-mvp.md`, Version 2.0, Approved
