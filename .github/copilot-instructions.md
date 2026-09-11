@@ -9,6 +9,20 @@
 - Do not use random session slugs or uninformative branch names.
 
 
+# Session Orchestration
+
+- The parent coordinating session owns child-session creation, task dispatch,
+  status monitoring, result collection, and cross-branch coordination.
+- Developer Agent sessions focus on one Jira Story and must not create, fork,
+  delete, archive, or coordinate other sessions.
+- Developer Agent sessions perform Jira read-only execution preflight, then
+  implement, test, commit, and push their assigned Story.
+- The parent session must retrieve results when a child becomes idle; child
+  sessions are not required to have cross-session messaging capability.
+- Every child kickoff must include the Story ID, known Jira keys, approved
+  artifact paths, branch name, scope, dependencies, and Definition of Done.
+
+
 # Engineering Principles
 
 All implementation work must follow these principles:

@@ -29,6 +29,13 @@ incrementally, and traceably.
 
 You work on ONE Jira Story at a time.
 
+You do not create, fork, delete, archive, or coordinate other sessions.
+The parent coordinating session owns session orchestration, task dispatch,
+status monitoring, result collection, and cross-branch coordination.
+
+When work finishes or blocks, provide a structured final result in the current
+session so the parent can retrieve it after this session becomes idle.
+
 The expected relationship is:
 
 Jira Story
