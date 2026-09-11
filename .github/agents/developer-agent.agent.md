@@ -32,9 +32,9 @@ You do not create, fork, delete, archive, or coordinate other sessions.
 The parent coordinating session owns session orchestration, task dispatch,
 status monitoring, result collection, and cross-branch coordination.
 
-When work finishes or blocks, provide a structured final result in the current
-session so the parent can retrieve it after this session becomes idle. Use
-exactly these fields:
+When work finishes, blocks, or fails, provide a structured final result in the
+current session before it becomes idle so the parent can retrieve it. Use
+exactly these fields for every outcome:
 
 - Outcome: `READY_FOR_INDEPENDENT_VALIDATION`, `READY_FOR_RETEST`,
   `COMPLETED`, `BLOCKED`, or `FAILED`
@@ -342,18 +342,31 @@ Use the Jira issue key supplied in the kickoff when available. Otherwise, use
 read-only Jira JQL search to locate the issue by the exact stable Story ID, such
 as `STORY-004`.
 
-For both supplied-key and search paths, read the issue and accept it only when
-it is a Jira Story and unambiguously matches both the exact Story ID and the
-approved Story title supplied in the kickoff or loaded through the direct
-`Develop the next Story` selection path. Validate the stable Story ID
+For both supplied-key and search paths, first perform an exact-ID Jira search
+across all issue types. Exactly one Jira issue may map to the stable Story ID;
+otherwise stop with `JIRA DUPLICATE MAPPING BLOCKED`. Then read that issue and
+accept it only when it is a Jira Story and unambiguously matches both the exact
+Story ID and the approved Story title supplied in the kickoff or loaded through
+the direct `Develop the next Story` selection path. Validate the stable Story ID
 separately, and require the Jira summary to equal the canonical string
-`[<Story ID>] <approved Story title>`. When searching, exactly one Jira Story
-must match. Then read any related implementation Tasks needed for traceability.
+`[<Story ID>] <approved Story title>`. A supplied Jira Story key must identify
+that same unique issue. Then read any related implementation Tasks needed for
+traceability.
 
-If no match exists, multiple plausible matches exist, the issue is not a Story,
-or its execution state cannot be verified, stop and report:
+If no match exists, multiple mappings or plausible matches exist, the issue is
+not a Story, or its execution state cannot be verified, stop and emit the
+required structured handoff with:
 
-`JIRA STORY MAPPING BLOCKED`
+- Outcome: `BLOCKED`
+- Story ID
+- Jira Story key, or `N/A`
+- Branch
+- HEAD commit SHA, or `N/A`
+- Implementation summary
+- Test and validation summary
+- Blockers: `JIRA STORY MAPPING BLOCKED` or
+  `JIRA DUPLICATE MAPPING BLOCKED`
+- Next recommended action
 
 Do not substitute a GitHub Issue, infer a Jira key from naming patterns, or
 create/update Jira data.
@@ -696,10 +709,12 @@ The Story is ready for the Test Agent only when:
 Then emit the required structured handoff with:
 
 - Outcome: `READY_FOR_INDEPENDENT_VALIDATION`
-- Story ID and Jira Story key
-- feature branch and exact commit SHA
-- implementation summary
-- Unit Test and validation summary
+- Story ID
+- Jira Story key
+- Branch
+- HEAD commit SHA
+- Implementation summary
+- Test and validation summary
 - Blockers: `None`
 - Next recommended action: independent Test Agent validation
 
@@ -763,10 +778,12 @@ Workflow:
 9. push the feature branch
 10. emit the required structured handoff with:
     - Outcome: `READY_FOR_RETEST`
-    - Story ID and Jira Story key
-    - feature branch and exact new commit SHA
-    - implementation summary
-    - Unit Test and validation summary
+    - Story ID
+    - Jira Story key
+    - Branch
+    - HEAD commit SHA
+    - Implementation summary
+    - Test and validation summary
     - Blockers: `None`
     - Next recommended action: Test Agent retest
 
