@@ -10,6 +10,7 @@ const recordList = document.querySelector("#record-list");
 const recordListMessage = document.querySelector("#record-list-message");
 
 let availableTags = [];
+let latestRecordRequest = 0;
 
 function roleName(role) {
   return role
@@ -64,8 +65,8 @@ function renderRecords(records) {
     records.length === 0 ? "No decision records found." : "";
 }
 
-function updateTagOptions(records) {
-  const discoveredTags = [...new Set(records.flatMap((record) => record.tags))].sort();
+function updateTagOptions(tags) {
+  const discoveredTags = [...new Set(tags)].sort();
   availableTags = [...new Set([...availableTags, ...discoveredTags])].sort();
   const selectedTag = tagFilter.value;
   const allTagsOption = document.createElement("option");
@@ -84,18 +85,32 @@ function updateTagOptions(records) {
 }
 
 async function loadRecords(tag = "") {
+  const requestId = ++latestRecordRequest;
   recordListMessage.textContent = "Loading decision records...";
   const query = tag ? `?tag=${encodeURIComponent(tag)}` : "";
-  const response = await fetch(`/api/decision-records${query}`);
-  if (!response.ok) {
-    recordList.replaceChildren();
-    recordListMessage.textContent = "Decision records could not be loaded.";
-    return;
-  }
+  try {
+    const response = await fetch(`/api/decision-records${query}`);
+    if (requestId !== latestRecordRequest) {
+      return;
+    }
+    if (!response.ok) {
+      recordList.replaceChildren();
+      recordListMessage.textContent = "Decision records could not be loaded.";
+      return;
+    }
 
-  const collection = await response.json();
-  updateTagOptions(collection.records);
-  renderRecords(collection.records);
+    const collection = await response.json();
+    if (requestId !== latestRecordRequest) {
+      return;
+    }
+    updateTagOptions(collection.records.flatMap((record) => record.tags));
+    renderRecords(collection.records);
+  } catch {
+    if (requestId === latestRecordRequest) {
+      recordList.replaceChildren();
+      recordListMessage.textContent = "Decision records could not be loaded.";
+    }
+  }
 }
 
 async function loadContext() {
@@ -114,6 +129,8 @@ async function loadContext() {
   const roles = document.createElement("p");
   roles.textContent = `Configured roles: ${identity.roles.map(roleName).join(", ")}`;
   identityContext.append(title, roles);
+
+  await loadRecords();
 
   const attributionResponse = await fetch("/api/attribution-preview");
   if (attributionResponse.ok) {
@@ -142,7 +159,6 @@ async function loadContext() {
   );
   recordOwner.disabled = false;
   saveDraft.disabled = false;
-  await loadRecords();
 }
 
 changeIdentity.addEventListener("click", async () => {
@@ -184,6 +200,7 @@ recordForm.addEventListener("submit", async (event) => {
       return;
     }
 
+    updateTagOptions(payload.tags);
     recordForm.reset();
     recordFormMessage.className = "";
     recordFormMessage.textContent = "Draft saved.";
