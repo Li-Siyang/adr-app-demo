@@ -97,3 +97,29 @@ def test_requires_at_least_one_non_blank_unique_tag(client: TestClient) -> None:
 
     assert response.status_code == 422
     assert client.get("/api/decision-records").json() == {"records": []}
+
+
+def test_retrieves_created_draft_by_id(client: TestClient) -> None:
+    created = client.post("/api/decision-records", json=complete_payload()).json()
+
+    response = client.get(f"/api/decision-records/{created['id']}")
+
+    assert response.status_code == 200
+    assert response.json() == created
+
+
+def test_unknown_decision_record_returns_not_found(client: TestClient) -> None:
+    response = client.get("/api/decision-records/not-configured")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "The decision record does not exist."
+
+
+def test_rejects_duplicate_tags_without_creating_draft(client: TestClient) -> None:
+    payload = complete_payload()
+    payload["tags"] = ["architecture", "architecture"]
+
+    response = client.post("/api/decision-records", json=payload)
+
+    assert response.status_code == 422
+    assert client.get("/api/decision-records").json() == {"records": []}
