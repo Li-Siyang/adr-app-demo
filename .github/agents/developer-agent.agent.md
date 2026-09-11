@@ -36,8 +36,8 @@ When work finishes or blocks, provide a structured final result in the current
 session so the parent can retrieve it after this session becomes idle. Use
 exactly these fields:
 
-- Outcome: `READY_FOR_INDEPENDENT_VALIDATION`, `COMPLETED`, `BLOCKED`, or
-  `FAILED`
+- Outcome: `READY_FOR_INDEPENDENT_VALIDATION`, `READY_FOR_RETEST`,
+  `COMPLETED`, `BLOCKED`, or `FAILED`
 - Story ID
 - Jira Story key
 - Branch
@@ -693,18 +693,15 @@ The Story is ready for the Test Agent only when:
 8. no known implementation blocker remains
 9. no unresolved Requirement or Planning ambiguity remains
 
-Then report:
+Then emit the required structured handoff with:
 
-`READY FOR INDEPENDENT VALIDATION`
-
-Include:
-
-- Story ID
-- Jira issue ID
-- feature branch
-- exact commit SHA
-- Unit Test summary
-- important implementation notes
+- Outcome: `READY_FOR_INDEPENDENT_VALIDATION`
+- Story ID and Jira Story key
+- feature branch and exact commit SHA
+- implementation summary
+- Unit Test and validation summary
+- Blockers: `None`
+- Next recommended action: independent Test Agent validation
 
 The exact commit SHA is required so the Test Agent can validate a deterministic
 implementation state.
@@ -716,7 +713,7 @@ implementation state.
 The expected handoff is:
 
 Development Agent
-→ READY FOR INDEPENDENT VALIDATION
+→ `Outcome: READY_FOR_INDEPENDENT_VALIDATION`
 → Test Agent
 
 The Test Agent validates the exact pushed commit.
@@ -764,10 +761,14 @@ Workflow:
 7. run Unit Tests
 8. commit the fix
 9. push the feature branch
-10. report the new commit SHA
-11. report:
-
-`READY FOR RETEST`
+10. emit the required structured handoff with:
+    - Outcome: `READY_FOR_RETEST`
+    - Story ID and Jira Story key
+    - feature branch and exact new commit SHA
+    - implementation summary
+    - Unit Test and validation summary
+    - Blockers: `None`
+    - Next recommended action: Test Agent retest
 
 Return control to the Test Agent.
 
@@ -849,7 +850,7 @@ Test Agent
 → Unit Tests
 → Commit
 → Push
-→ READY FOR RETEST
+→ `Outcome: READY_FOR_RETEST`
 → Test Agent
 
 Repeat until:
@@ -1000,7 +1001,9 @@ as a substitute for required Human approval.
 # Jira Status Events
 
 The Development Agent should report execution events but should not redefine Jira
-content.
+content. Jira display statuses are synchronization labels only; parent handoffs
+must always use the canonical `Outcome` values and full structured schema
+defined in the Role section.
 
 Examples:
 
@@ -1008,13 +1011,16 @@ Development started
 → `IN DEVELOPMENT`
 
 Implementation and Unit Tests complete
-→ `READY FOR INDEPENDENT VALIDATION`
+→ Jira event `READY FOR INDEPENDENT VALIDATION`
+→ Handoff `Outcome: READY_FOR_INDEPENDENT_VALIDATION`
 
 Implementation defect fixed
-→ `READY FOR RETEST`
+→ Jira event `READY FOR RETEST`
+→ Handoff `Outcome: READY_FOR_RETEST`
 
 PR created
-→ `PR CREATED`
+→ Jira event `PR CREATED`
+→ Handoff `Outcome: COMPLETED`
 
 The Jira Agent may synchronize these verified events into Jira.
 
