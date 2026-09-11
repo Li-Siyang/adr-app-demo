@@ -227,7 +227,11 @@ next eligible Story using the following order:
 2. follow the approved Development Plan implementation order
 3. prefer higher-priority Stories
 4. prefer foundational work before dependent work
-5. do not start a blocked Story
+5. select only Stories in `To Do`, `In Development`, `Test Failed`,
+   `Fixing`, or `Ready for Retest`; the latter three are the permitted
+   implementation-defect resume path
+6. do not start a Story in `Ready for Test`, `Testing`, `Ready for Review`,
+   `In Review`, or `Done`
 
 Do not choose a Story merely because its numeric ID is smaller.
 
@@ -342,9 +346,13 @@ Use the Jira issue key supplied in the kickoff when available. Otherwise, use
 read-only Jira JQL search to locate the issue by the exact stable Story ID, such
 as `STORY-004`.
 
-For both supplied-key and search paths, first perform an exact-ID Jira search
-across all issue types. Exactly one Jira issue may map to the stable Story ID;
-otherwise stop with `JIRA DUPLICATE MAPPING BLOCKED`. Then read that issue and
+For both supplied-key and search paths, first perform an exact source-ID lookup
+across all issue types using the dedicated Source ID field when configured,
+otherwise the exact bracketed ID in Summary, otherwise the structured Source
+section in Description. Do not use an unrestricted full-text search or count
+related Task records whose descriptions merely mention the Story. Zero matches
+must stop with `JIRA STORY MAPPING BLOCKED`; more than one match must stop with
+`JIRA DUPLICATE MAPPING BLOCKED`. Then read that issue and
 accept it only when it is a Jira Story and unambiguously matches both the exact
 Story ID and the approved Story title supplied in the kickoff or loaded through
 the direct `Develop the next Story` selection path. Validate the stable Story ID
@@ -364,9 +372,13 @@ required structured handoff with:
 - HEAD commit SHA, or `N/A`
 - Implementation summary
 - Test and validation summary
-- Blockers: `JIRA STORY MAPPING BLOCKED` or
-  `JIRA DUPLICATE MAPPING BLOCKED`
+- Blockers: `JIRA STORY MAPPING BLOCKED`, `JIRA DUPLICATE MAPPING BLOCKED`, or
+  `JIRA TOOLING BLOCKED`
 - Next recommended action
+
+If Jira tools or the Atlassian resource are unavailable, emit
+`JIRA TOOLING BLOCKED`; do not classify the result as a missing or duplicate
+mapping.
 
 Do not substitute a GitHub Issue, infer a Jira key from naming patterns, or
 create/update Jira data.
@@ -808,6 +820,10 @@ Return to:
 
 Test Agent / Human Reviewer
 
+Emit the required structured handoff with `Outcome: BLOCKED`, the canonical
+Story and branch fields, the evidence in the summaries, the blocker marker,
+and the next recommended action.
+
 ---
 
 ## REQUIREMENT_AMBIGUITY
@@ -819,6 +835,10 @@ Route to:
 Requirement Agent / Human Reviewer
 
 Do not guess.
+
+Emit the required structured handoff with `Outcome: BLOCKED`, the canonical
+Story and branch fields, `N/A` for unavailable commit data, the ambiguity in
+`Blockers`, and the next recommended action.
 
 ---
 
@@ -836,12 +856,20 @@ Route to:
 
 Planning Agent / Human Reviewer
 
+Emit the required structured handoff with `Outcome: BLOCKED`, the canonical
+Story and branch fields, the planning gap in `Blockers`, and the next
+recommended action.
+
 ---
 
 ## ENVIRONMENT_FAILURE
 
 Do not modify product behavior to compensate for unrelated infrastructure or
 test-environment problems.
+
+Emit the required structured handoff with `Outcome: FAILED`, the canonical
+Story and branch fields, `N/A` for unavailable commit data, the environment
+failure in `Blockers`, and the next recommended action.
 
 Report the environment issue.
 
@@ -1037,7 +1065,16 @@ Implementation defect fixed
 
 PR created
 → Jira event `PR CREATED`
-→ Handoff `Outcome: COMPLETED`
+→ Handoff with:
+  - Outcome: `COMPLETED`
+  - Story ID
+  - Jira Story key
+  - Branch
+  - HEAD commit SHA
+  - Implementation summary
+  - Test and validation summary
+  - Blockers: `None`
+  - Next recommended action: Human Review
 
 The Jira Agent may synchronize these verified events into Jira.
 
