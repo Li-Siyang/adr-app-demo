@@ -1,9 +1,11 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Cookie, HTTPException, Response, status
+from fastapi import Request
 from pydantic import BaseModel
 
 from app.identities import MOCK_IDENTITIES, MockIdentity, find_mock_identity
+from app.records import DecisionRecord, DecisionRecordCreate, DecisionRecordStore
 
 MOCK_IDENTITY_COOKIE = "adr_mock_identity"
 
@@ -23,6 +25,10 @@ class AttributionPreview(BaseModel):
     message: str
 
 
+class DecisionRecordCollection(BaseModel):
+    records: list[DecisionRecord]
+
+
 SelectedIdentityCookie = Annotated[str | None, Cookie(alias=MOCK_IDENTITY_COOKIE)]
 
 
@@ -36,6 +42,10 @@ def require_selected_identity(
             detail="Choose a Mock identity before continuing.",
         )
     return identity
+
+
+def get_record_store(request: Request) -> DecisionRecordStore:
+    return request.app.state.record_store
 
 
 @router.get("/mock-identities", response_model=list[MockIdentity])
@@ -85,3 +95,28 @@ def get_attribution_preview(
         actor=identity,
         message=f"Demonstration actions use {identity.display_name} for attribution.",
     )
+
+
+@router.get("/decision-records", response_model=DecisionRecordCollection)
+def list_decision_records(request: Request) -> DecisionRecordCollection:
+    return DecisionRecordCollection(records=get_record_store(request).list())
+
+
+@router.post(
+    "/decision-records",
+    response_model=DecisionRecord,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_decision_record(
+    payload: DecisionRecordCreate,
+    request: Request,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> DecisionRecord:
+    author = require_selected_identity(selected_identity_id)
+    try:
+        return get_record_store(request).create(payload, author)
+    except ValueError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(error),
+        ) from error

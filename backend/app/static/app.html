@@ -36,7 +36,37 @@
         <h2 id="attribution-title">Attribution preview</h2>
         <p id="attribution-preview">Loading attribution...</p>
       </section>
+
+      <section class="notice" aria-labelledby="record-data-title">
+        <h2 id="record-data-title">Decision record data boundary</h2>
+        <p>
+          Demo or synthetic data only. Do not enter real internal confidential
+          information, regulated personal information, or health information.
+        </p>
+      </section>
+
+      <section aria-labelledby="create-record-title">
+        <h2 id="create-record-title">Create a Draft</h2>
+        <form id="record-form">
+          <label>Title <input name="title" required></label>
+          <label>Context <textarea name="context" required></textarea></label>
+          <label>Decision <textarea name="decision" required></textarea></label>
+          <label>Rationale <textarea name="rationale" required></textarea></label>
+          <label>Alternatives considered
+            <textarea name="alternatives_considered" required></textarea>
+          </label>
+          <label>Consequences <textarea name="consequences" required></textarea></label>
+          <label>Owner
+            <select name="owner_id" id="record-owner" required></select>
+          </label>
+          <label>Decision date <input name="decision_date" type="date" required></label>
+          <label>Tags (one or more, comma separated)
+            <input name="tags" required>
+          </label>
+          <button type="submit">Save Draft</button>
+          <p id="record-form-message" class="error" aria-live="polite"></p>
+        </form>
+      </section>
     </main>
   </body>
 </html>
-

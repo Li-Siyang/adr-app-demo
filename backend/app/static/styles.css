@@ -128,6 +128,32 @@ button.secondary {
   font-weight: 700;
 }
 
+form {
+  display: grid;
+  gap: 1rem;
+  max-width: 44rem;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  font-weight: 700;
+}
+
+input,
+select,
+textarea {
+  border: 1px solid #aebfc9;
+  border-radius: 0.35rem;
+  padding: 0.65rem;
+  font: inherit;
+}
+
+textarea {
+  min-height: 5rem;
+  resize: vertical;
+}
+
 @media (max-width: 600px) {
   .shell {
     padding-top: 1.5rem;
@@ -137,4 +163,3 @@ button.secondary {
     display: block;
   }
 }
-
