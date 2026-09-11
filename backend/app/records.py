@@ -1,8 +1,9 @@
 from datetime import date, datetime, timezone
 from threading import Lock
+from typing import Literal
 from uuid import uuid4
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.identities import MockIdentity, find_mock_identity
 
@@ -45,9 +46,56 @@ class DecisionRecordCreate(BaseModel):
         return tags
 
 
+class DecisionRecordUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str | None = None
+    context: str | None = None
+    decision: str | None = None
+    rationale: str | None = None
+    alternatives_considered: str | None = None
+    consequences: str | None = None
+    decision_date: date | None = None
+    tags: list[str] | None = None
+
+    @field_validator(
+        "title",
+        "context",
+        "decision",
+        "rationale",
+        "alternatives_considered",
+        "consequences",
+    )
+    @classmethod
+    def normalize_text(cls, value: str | None) -> str | None:
+        if value is None:
+            raise ValueError("must not be null")
+        return value.strip()
+
+    @field_validator("tags")
+    @classmethod
+    def normalize_tags(cls, value: list[str] | None) -> list[str] | None:
+        if value is None:
+            raise ValueError("tags must not be null")
+        tags = [tag.strip() for tag in value]
+        if len(set(tags)) != len(tags):
+            raise ValueError("tags must be unique")
+        return tags
+
+    @field_validator("decision_date")
+    @classmethod
+    def require_decision_date(cls, value: date | None) -> date | None:
+        if value is None:
+            raise ValueError("decision date must not be null")
+        return value
+
+
 class DecisionRecord(BaseModel):
     id: str
-    status: str = "Draft"
+    status: Literal["Draft", "Proposed", "Accepted", "Rejected", "Superseded"] = (
+        "Draft"
+    )
+    abandoned: bool = False
     title: str
     context: str
     decision: str
@@ -65,7 +113,34 @@ class DecisionRecord(BaseModel):
     created_at: datetime
 
 
+class RecordNotFoundError(Exception):
+    pass
+
+
+class RecordActionError(Exception):
+    pass
+
+
+class DraftSubmissionError(Exception):
+    def __init__(self, missing_fields: list[str], approver_required: bool) -> None:
+        self.missing_fields = missing_fields
+        self.approver_required = approver_required
+        super().__init__("The Draft does not meet the submission requirements.")
+
+
 class DecisionRecordStore:
+    REQUIRED_SUBMISSION_FIELDS = (
+        "title",
+        "context",
+        "decision",
+        "rationale",
+        "alternatives_considered",
+        "consequences",
+        "owner",
+        "decision_date",
+        "tags",
+    )
+
     def __init__(self) -> None:
         self._records: dict[str, DecisionRecord] = {}
         self._lock = Lock()
@@ -104,3 +179,72 @@ class DecisionRecordStore:
     def get(self, record_id: str) -> DecisionRecord | None:
         with self._lock:
             return self._records.get(record_id)
+
+    def update(
+        self,
+        record_id: str,
+        payload: DecisionRecordUpdate,
+        actor: MockIdentity,
+    ) -> DecisionRecord:
+        updates = payload.model_dump(exclude_unset=True)
+
+        with self._lock:
+            record = self._records.get(record_id)
+            if record is None:
+                raise RecordNotFoundError
+            self._require_editable_by_author(record, actor)
+            updated = record.model_copy(update=updates)
+            self._records[record_id] = updated
+            return updated
+
+    def submit(
+        self,
+        record_id: str,
+        actor: MockIdentity,
+        *,
+        has_designated_approver: bool,
+    ) -> DecisionRecord:
+        with self._lock:
+            record = self._records.get(record_id)
+            if record is None:
+                raise RecordNotFoundError
+            self._require_editable_by_author(record, actor)
+
+            missing_fields = [
+                field
+                for field in self.REQUIRED_SUBMISSION_FIELDS
+                if self._is_missing(getattr(record, field))
+            ]
+            if missing_fields or not has_designated_approver:
+                raise DraftSubmissionError(
+                    missing_fields=missing_fields,
+                    approver_required=not has_designated_approver,
+                )
+
+            proposed = record.model_copy(update={"status": "Proposed"})
+            self._records[record_id] = proposed
+            return proposed
+
+    @staticmethod
+    def _require_editable_by_author(
+        record: DecisionRecord,
+        actor: MockIdentity,
+    ) -> None:
+        if record.abandoned:
+            raise RecordActionError(
+                "An Abandoned replacement Draft cannot be edited or submitted."
+            )
+        if record.status != "Draft":
+            raise RecordActionError("Only a Draft can be edited or submitted.")
+        if record.author.id != actor.id:
+            raise PermissionError("Only the Draft author may perform this action.")
+
+    @staticmethod
+    def _is_missing(value: object) -> bool:
+        if value is None:
+            return True
+        if isinstance(value, str):
+            return not value.strip()
+        if isinstance(value, list):
+            return not value or any(not item.strip() for item in value)
+        return False
