@@ -1,3 +1,14 @@
+# Branch Naming Standards
+
+- Feature branches for user stories MUST follow the exact format:
+  `feature/<STORY-ID>-<kebab-case-short-description>`
+- Examples:
+  - `feature/STORY-001-select-mock-identity`
+  - `feature/STORY-002-administer-roles-approvers`
+  - `feature/STORY-003-create-complete-draft`
+- Do not use random session slugs or uninformative branch names.
+
+
 # Engineering Principles
 
 All implementation work must follow these principles:
