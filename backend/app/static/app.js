@@ -92,25 +92,30 @@ loadContext();
 
 recordForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  saveDraft.disabled = true;
   recordFormMessage.textContent = "";
   const formData = new FormData(recordForm);
   const payload = Object.fromEntries(formData.entries());
   payload.tags = payload.tags.split(",").map((tag) => tag.trim());
 
-  const response = await fetch("/api/decision-records", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!response.ok) {
-    const error = await response.json();
-    recordFormMessage.textContent = Array.isArray(error.detail)
-      ? displayValidationErrors(error.detail)
-      : error.detail;
-    return;
-  }
+  try {
+    const response = await fetch("/api/decision-records", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      recordFormMessage.textContent = Array.isArray(error.detail)
+        ? displayValidationErrors(error.detail)
+        : error.detail;
+      return;
+    }
 
-  recordForm.reset();
-  recordFormMessage.className = "";
-  recordFormMessage.textContent = "Draft saved.";
+    recordForm.reset();
+    recordFormMessage.className = "";
+    recordFormMessage.textContent = "Draft saved.";
+  } finally {
+    saveDraft.disabled = false;
+  }
 });
