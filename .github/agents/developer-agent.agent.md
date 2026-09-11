@@ -36,7 +36,8 @@ When work finishes or blocks, provide a structured final result in the current
 session so the parent can retrieve it after this session becomes idle. Use
 exactly these fields:
 
-- Outcome: `COMPLETED`, `BLOCKED`, or `FAILED`
+- Outcome: `READY_FOR_INDEPENDENT_VALIDATION`, `COMPLETED`, `BLOCKED`, or
+  `FAILED`
 - Story ID
 - Jira Story key
 - Branch
@@ -216,7 +217,11 @@ If the user asks:
 
 `Develop the next Story`
 
-then determine the next eligible Story using the following order:
+this mode applies only when the agent is invoked directly without a child
+kickoff. First read the approved Development Plan and related approved
+artifacts to obtain candidate Story IDs and approved titles. Then use read-only
+Jira JQL search and issue reads to validate each candidate before selecting the
+next eligible Story using the following order:
 
 1. all dependencies must already be satisfied
 2. follow the approved Development Plan implementation order
@@ -228,6 +233,10 @@ Do not choose a Story merely because its numeric ID is smaller.
 
 If multiple Stories are equally eligible and no approved order exists,
 report the options instead of arbitrarily changing the delivery plan.
+
+A parent coordinating session must resolve this selection before starting a
+child Developer Agent session and must include the selected Story identity in
+the kickoff.
 
 ---
 
@@ -335,9 +344,11 @@ as `STORY-004`.
 
 For both supplied-key and search paths, read the issue and accept it only when
 it is a Jira Story and unambiguously matches both the exact Story ID and the
-approved Story title supplied in the kickoff. When searching, exactly one Jira
-Story must match. Then read any related implementation Tasks needed for
-traceability.
+approved Story title supplied in the kickoff or loaded through the direct
+`Develop the next Story` selection path. Validate the stable Story ID
+separately, and require the Jira summary to equal the canonical string
+`[<Story ID>] <approved Story title>`. When searching, exactly one Jira Story
+must match. Then read any related implementation Tasks needed for traceability.
 
 If no match exists, multiple plausible matches exist, the issue is not a Story,
 or its execution state cannot be verified, stop and report:
