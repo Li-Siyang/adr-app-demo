@@ -5,6 +5,11 @@ const recordForm = document.querySelector("#record-form");
 const recordOwner = document.querySelector("#record-owner");
 const recordFormMessage = document.querySelector("#record-form-message");
 const saveDraft = recordForm.querySelector('button[type="submit"]');
+const tagFilter = document.querySelector("#tag-filter");
+const recordList = document.querySelector("#record-list");
+const recordListMessage = document.querySelector("#record-list-message");
+
+let availableTags = [];
 
 function roleName(role) {
   return role
@@ -35,6 +40,62 @@ function disableDraftAuthoring(message) {
   recordOwner.disabled = true;
   saveDraft.disabled = true;
   recordFormMessage.textContent = message;
+}
+
+function renderRecords(records) {
+  recordList.replaceChildren(
+    ...records.map((record) => {
+      const article = document.createElement("article");
+      article.className = "record-card";
+
+      const title = document.createElement("h3");
+      title.textContent = record.title;
+      const details = document.createElement("p");
+      details.textContent =
+        `${record.status} | Owner: ${record.owner.display_name} | ` +
+        `Decision date: ${record.decision_date}`;
+      const tags = document.createElement("p");
+      tags.textContent = `Tags: ${record.tags.join(", ")}`;
+      article.append(title, details, tags);
+      return article;
+    }),
+  );
+  recordListMessage.textContent =
+    records.length === 0 ? "No decision records found." : "";
+}
+
+function updateTagOptions(records) {
+  const discoveredTags = [...new Set(records.flatMap((record) => record.tags))].sort();
+  availableTags = [...new Set([...availableTags, ...discoveredTags])].sort();
+  const selectedTag = tagFilter.value;
+  const allTagsOption = document.createElement("option");
+  allTagsOption.value = "";
+  allTagsOption.textContent = "All tags";
+  tagFilter.replaceChildren(
+    allTagsOption,
+    ...availableTags.map((tag) => {
+      const option = document.createElement("option");
+      option.value = tag;
+      option.textContent = tag;
+      return option;
+    }),
+  );
+  tagFilter.value = selectedTag;
+}
+
+async function loadRecords(tag = "") {
+  recordListMessage.textContent = "Loading decision records...";
+  const query = tag ? `?tag=${encodeURIComponent(tag)}` : "";
+  const response = await fetch(`/api/decision-records${query}`);
+  if (!response.ok) {
+    recordList.replaceChildren();
+    recordListMessage.textContent = "Decision records could not be loaded.";
+    return;
+  }
+
+  const collection = await response.json();
+  updateTagOptions(collection.records);
+  renderRecords(collection.records);
 }
 
 async function loadContext() {
@@ -81,6 +142,7 @@ async function loadContext() {
   );
   recordOwner.disabled = false;
   saveDraft.disabled = false;
+  await loadRecords();
 }
 
 changeIdentity.addEventListener("click", async () => {
@@ -89,6 +151,10 @@ changeIdentity.addEventListener("click", async () => {
 });
 
 loadContext();
+
+tagFilter.addEventListener("change", () => {
+  loadRecords(tagFilter.value);
+});
 
 recordForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -121,6 +187,7 @@ recordForm.addEventListener("submit", async (event) => {
     recordForm.reset();
     recordFormMessage.className = "";
     recordFormMessage.textContent = "Draft saved.";
+    await loadRecords(tagFilter.value);
   } finally {
     saveDraft.disabled = false;
   }

@@ -134,6 +134,28 @@ form {
   max-width: 44rem;
 }
 
+.filter-form {
+  margin-bottom: 1rem;
+}
+
+.record-list {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.record-card {
+  border: 1px solid #c7d3dc;
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  background: #fff;
+}
+
+.record-card h3,
+.record-card p:last-child {
+  margin-bottom: 0;
+}
+
 label {
   display: grid;
   gap: 0.35rem;

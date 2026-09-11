@@ -126,8 +126,13 @@ def get_attribution_preview(
 
 
 @router.get("/decision-records", response_model=DecisionRecordCollection)
-def list_decision_records(request: Request) -> DecisionRecordCollection:
-    return DecisionRecordCollection(records=get_record_store(request).list())
+def list_decision_records(
+    request: Request,
+    tag: str | None = None,
+) -> DecisionRecordCollection:
+    store = get_record_store(request)
+    records = store.list() if tag is None else store.list_by_exact_tag(tag)
+    return DecisionRecordCollection(records=records)
 
 
 @router.get("/decision-records/{record_id}", response_model=DecisionRecord)
