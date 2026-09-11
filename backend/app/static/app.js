@@ -4,12 +4,37 @@ const changeIdentity = document.querySelector("#change-identity");
 const recordForm = document.querySelector("#record-form");
 const recordOwner = document.querySelector("#record-owner");
 const recordFormMessage = document.querySelector("#record-form-message");
+const saveDraft = recordForm.querySelector('button[type="submit"]');
 
 function roleName(role) {
   return role
     .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function displayFieldName(location) {
+  const fieldName = location[location.length - 1];
+  if (typeof fieldName !== "string") {
+    return "Draft";
+  }
+
+  return fieldName
+    .replaceAll("_", " ")
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
+function displayValidationErrors(details) {
+  return details
+    .map((item) => `${displayFieldName(item.loc)}: ${item.msg}`)
+    .join(" ");
+}
+
+function disableDraftAuthoring(message) {
+  recordOwner.replaceChildren();
+  recordOwner.disabled = true;
+  saveDraft.disabled = true;
+  recordFormMessage.textContent = message;
 }
 
 async function loadContext() {
@@ -38,6 +63,13 @@ async function loadContext() {
   }
 
   const identitiesResponse = await fetch("/api/mock-identities");
+  if (!identitiesResponse.ok) {
+    disableDraftAuthoring(
+      "Owner options could not be loaded. Draft creation is unavailable.",
+    );
+    return;
+  }
+
   const identities = await identitiesResponse.json();
   recordOwner.replaceChildren(
     ...identities.map((owner) => {
@@ -47,6 +79,8 @@ async function loadContext() {
       return option;
     }),
   );
+  recordOwner.disabled = false;
+  saveDraft.disabled = false;
 }
 
 changeIdentity.addEventListener("click", async () => {
@@ -71,7 +105,7 @@ recordForm.addEventListener("submit", async (event) => {
   if (!response.ok) {
     const error = await response.json();
     recordFormMessage.textContent = Array.isArray(error.detail)
-      ? error.detail.map((item) => item.msg).join(" ")
+      ? displayValidationErrors(error.detail)
       : error.detail;
     return;
   }
