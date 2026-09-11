@@ -8,9 +8,12 @@ const saveDraft = recordForm.querySelector('button[type="submit"]');
 const tagFilter = document.querySelector("#tag-filter");
 const recordList = document.querySelector("#record-list");
 const recordListMessage = document.querySelector("#record-list-message");
+const cancelEdit = document.querySelector("#cancel-edit");
 
 let availableTags = [];
 let latestRecordRequest = 0;
+let selectedIdentityId = null;
+let editingRecordId = null;
 
 function roleName(role) {
   return role
@@ -36,11 +39,101 @@ function displayValidationErrors(details) {
     .join(" ");
 }
 
+function apiErrorMessage(error, fallback) {
+  if (Array.isArray(error.detail)) {
+    return displayValidationErrors(error.detail);
+  }
+  if (typeof error.detail === "string") {
+    return error.detail;
+  }
+  if (error.detail && typeof error.detail === "object") {
+    const messages = [error.detail.message];
+    if (error.detail.missing_fields?.length) {
+      messages.push(
+        `Missing required fields: ${error.detail.missing_fields
+          .map((field) => displayFieldName([field]))
+          .join(", ")}.`,
+      );
+    }
+    if (error.detail.approver) {
+      messages.push(error.detail.approver);
+    }
+    return messages.filter(Boolean).join(" ");
+  }
+  return fallback;
+}
+
 function disableDraftAuthoring(message) {
   recordOwner.replaceChildren();
   recordOwner.disabled = true;
   saveDraft.disabled = true;
   recordFormMessage.textContent = message;
+}
+
+function resetForm() {
+  editingRecordId = null;
+  recordForm.reset();
+  recordOwner.disabled = false;
+  cancelEdit.hidden = true;
+  saveDraft.textContent = "Save Draft";
+}
+
+function beginEdit(record) {
+  editingRecordId = record.id;
+  for (const field of [
+    "title",
+    "context",
+    "decision",
+    "rationale",
+    "alternatives_considered",
+    "consequences",
+    "decision_date",
+  ]) {
+    recordForm.elements[field].value = record[field];
+  }
+  recordForm.elements.owner_id.value = record.owner.id;
+  recordOwner.disabled = true;
+  recordForm.elements.tags.value = record.tags.join(", ");
+  cancelEdit.hidden = false;
+  saveDraft.textContent = "Save changes";
+  recordFormMessage.textContent = "";
+  recordForm.scrollIntoView({ behavior: "smooth" });
+}
+
+async function submitDraft(record, submitButton) {
+  submitButton.disabled = true;
+  let response;
+  try {
+    response = await fetch(`/api/decision-records/${record.id}/submit`, {
+      method: "POST",
+    });
+  } catch {
+    submitButton.disabled = false;
+    recordFormMessage.className = "error";
+    recordFormMessage.textContent =
+      "Draft could not be submitted. Please try again.";
+    return;
+  }
+
+  if (!response.ok) {
+    let message = "Draft could not be submitted.";
+    try {
+      message = apiErrorMessage(await response.json(), message);
+    } catch {
+      // Keep the generic message when the server response is not JSON.
+    }
+    submitButton.disabled = false;
+    recordFormMessage.className = "error";
+    recordFormMessage.textContent = message;
+    return;
+  }
+
+  recordFormMessage.className = "";
+  recordFormMessage.textContent = "Draft submitted for review.";
+  resetForm();
+  // loadRecords reports refresh failures in the list message, so a failed
+  // refresh cannot overwrite the completed-submission confirmation above.
+  await loadRecords(tagFilter.value);
 }
 
 function renderRecords(records) {
@@ -50,14 +143,35 @@ function renderRecords(records) {
       article.className = "record-card";
 
       const title = document.createElement("h3");
-      title.textContent = record.title;
+      title.textContent = record.title || "Untitled Draft";
       const details = document.createElement("p");
       details.textContent =
-        `${record.status} | Owner: ${record.owner.display_name} | ` +
+        `${record.status} | Author: ${record.author.display_name} | ` +
+        `Owner: ${record.owner.display_name} | ` +
         `Decision date: ${record.decision_date}`;
       const tags = document.createElement("p");
       tags.textContent = `Tags: ${record.tags.join(", ")}`;
       article.append(title, details, tags);
+
+      const editable =
+        record.author.id === selectedIdentityId &&
+        record.status === "Draft" &&
+        !record.abandoned;
+      if (editable) {
+        const actions = document.createElement("div");
+        actions.className = "record-actions";
+        const edit = document.createElement("button");
+        edit.type = "button";
+        edit.className = "secondary";
+        edit.textContent = "Edit Draft";
+        edit.addEventListener("click", () => beginEdit(record));
+        const submit = document.createElement("button");
+        submit.type = "button";
+        submit.textContent = "Submit Draft";
+        submit.addEventListener("click", () => submitDraft(record, submit));
+        actions.append(edit, submit);
+        article.append(actions);
+      }
       return article;
     }),
   );
@@ -122,6 +236,7 @@ async function loadContext() {
   }
 
   const identity = session.selected_identity;
+  selectedIdentityId = identity.id;
   identityContext.replaceChildren();
 
   const title = document.createElement("h2");
@@ -172,6 +287,11 @@ tagFilter.addEventListener("change", () => {
   loadRecords(tagFilter.value);
 });
 
+cancelEdit.addEventListener("click", () => {
+  resetForm();
+  recordFormMessage.textContent = "";
+});
+
 recordForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   saveDraft.disabled = true;
@@ -181,27 +301,31 @@ recordForm.addEventListener("submit", async (event) => {
   payload.tags = payload.tags.split(",").map((tag) => tag.trim());
 
   try {
-    const response = await fetch("/api/decision-records", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    const response = await fetch(
+      editingRecordId
+        ? `/api/decision-records/${editingRecordId}`
+        : "/api/decision-records",
+      {
+        method: editingRecordId ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      },
+    );
     if (!response.ok) {
       let message = "Draft could not be saved. Please try again.";
       try {
         const error = await response.json();
-        message = Array.isArray(error.detail)
-          ? displayValidationErrors(error.detail)
-          : error.detail || message;
+        message = apiErrorMessage(error, message);
       } catch {
         // Keep the generic message when the server response is not JSON.
       }
+      recordFormMessage.className = "error";
       recordFormMessage.textContent = message;
       return;
     }
 
     updateTagOptions(payload.tags);
-    recordForm.reset();
+    resetForm();
     recordFormMessage.className = "";
     recordFormMessage.textContent = "Draft saved.";
     await loadRecords(tagFilter.value);
