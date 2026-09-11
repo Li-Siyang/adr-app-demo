@@ -31,6 +31,11 @@ def change_approver_designation(
         return True
 
 
+def designated_approver_snapshot() -> frozenset[str]:
+    with _approver_designation_lock:
+        return frozenset(designated_approver_ids)
+
+
 def has_role(identity: MockIdentity, role: Role) -> bool:
     return role in identity.roles
 
@@ -40,7 +45,7 @@ def is_administrator(identity: MockIdentity) -> bool:
 
 
 def is_designated_approver(identity: MockIdentity) -> bool:
-    return identity.id in designated_approver_ids
+    return identity.id in designated_approver_snapshot()
 
 
 def can_decide_proposal(identity: MockIdentity) -> bool:

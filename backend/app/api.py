@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from app.audit import AuditChange, AuditEvent, AuditEventStore, AuditEventType
 from app.governance import (
     change_approver_designation,
-    designated_approver_ids,
+    designated_approver_snapshot,
     is_administrator,
     is_designated_approver,
     role_permissions,
@@ -241,8 +241,9 @@ def get_governance_permissions(
 
 @router.get("/approvers", response_model=ApproverList)
 def list_designated_approvers() -> ApproverList:
+    designated_ids = designated_approver_snapshot()
     approvers = [
-        identity for identity in MOCK_IDENTITIES if identity.id in designated_approver_ids
+        identity for identity in MOCK_IDENTITIES if identity.id in designated_ids
     ]
     return ApproverList(approvers=approvers)
 
