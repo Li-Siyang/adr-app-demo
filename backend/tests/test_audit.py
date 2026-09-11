@@ -1,5 +1,6 @@
 from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -12,9 +13,9 @@ from app.main import create_app
 
 
 @pytest.fixture
-def client() -> Iterator[TestClient]:
+def client(tmp_path: Path) -> Iterator[TestClient]:
     designated_approver_ids.clear()
-    with TestClient(create_app()) as test_client:
+    with TestClient(create_app(tmp_path / "audit.sqlite3")) as test_client:
         yield test_client
     designated_approver_ids.clear()
 
@@ -32,8 +33,10 @@ def test_supports_every_approved_governed_event_category() -> None:
     }
 
 
-def test_records_immutable_attributed_change_history_without_expiry() -> None:
-    store = AuditEventStore()
+def test_records_immutable_attributed_change_history_without_expiry(
+    tmp_path: Path,
+) -> None:
+    store = AuditEventStore(tmp_path / "audit.sqlite3")
     event = store.record(
         event_type=AuditEventType.OWNERSHIP_TRANSFERRED,
         actor=MOCK_IDENTITIES[0],
@@ -44,7 +47,7 @@ def test_records_immutable_attributed_change_history_without_expiry() -> None:
         ),
     )
 
-    assert store.get(event.id) is event
+    assert store.get(event.id) == event
     assert store.list(subject_type="decision_record", subject_id="decision-1") == (
         event,
     )
@@ -64,14 +67,14 @@ def test_records_immutable_attributed_change_history_without_expiry() -> None:
         event.actor.display_name = "Changed"
 
 
-def test_rejects_empty_or_no_op_audit_changes() -> None:
+def test_rejects_empty_or_no_op_audit_changes(tmp_path: Path) -> None:
     with pytest.raises(ValidationError):
         AuditChange(field="", before=False, after=True)
     with pytest.raises(ValidationError):
         AuditChange(field="status", before="Draft", after="Draft")
 
     with pytest.raises(ValidationError):
-        AuditEventStore().record(
+        AuditEventStore(tmp_path / "audit.sqlite3").record(
             event_type=AuditEventType.RECORD_ARCHIVED,
             actor=MOCK_IDENTITIES[0],
             subject_type="decision_record",
@@ -80,8 +83,8 @@ def test_rejects_empty_or_no_op_audit_changes() -> None:
         )
 
 
-def test_append_only_store_preserves_all_concurrent_events() -> None:
-    store = AuditEventStore()
+def test_append_only_store_preserves_all_concurrent_events(tmp_path: Path) -> None:
+    store = AuditEventStore(tmp_path / "audit.sqlite3")
 
     def record_event(index: int) -> None:
         store.record(
@@ -96,6 +99,23 @@ def test_append_only_store_preserves_all_concurrent_events() -> None:
         list(executor.map(record_event, range(20)))
 
     assert len(store.list()) == 20
+
+
+def test_audit_events_survive_store_recreation(tmp_path: Path) -> None:
+    database_path = tmp_path / "audit.sqlite3"
+    first_store = AuditEventStore(database_path)
+    event = first_store.record(
+        event_type=AuditEventType.RECORD_ARCHIVED,
+        actor=MOCK_IDENTITIES[2],
+        subject_type="decision_record",
+        subject_id="decision-1",
+        changes=(AuditChange(field="archived", before=False, after=True),),
+    )
+
+    recreated_store = AuditEventStore(database_path)
+
+    assert recreated_store.get(event.id) == event
+    assert recreated_store.list() == (event,)
 
 
 def test_approver_changes_create_attributed_audit_events(
@@ -139,6 +159,84 @@ def test_denied_and_no_op_approver_requests_do_not_create_audit_events(
     assert first.status_code == 200
     assert duplicate.status_code == 200
     assert len(client.get("/api/audit-events").json()["events"]) == 1
+
+
+def test_concurrent_approver_updates_emit_one_event_per_change(
+    client: TestClient,
+) -> None:
+    client.post("/api/mock-session", json={"identity_id": "zoe-admin"})
+
+    def designate() -> int:
+        return client.post(
+            "/api/approvers",
+            json={"identity_id": "arun-approver"},
+        ).status_code
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        designation_statuses = list(executor.map(lambda _: designate(), range(20)))
+
+    def remove() -> int:
+        return client.delete("/api/approvers/arun-approver").status_code
+
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        removal_statuses = list(executor.map(lambda _: remove(), range(20)))
+
+    assert designation_statuses == [200] * 20
+    assert removal_statuses == [200] * 20
+    assert client.get("/api/approvers").json() == {"approvers": []}
+    events = client.get("/api/audit-events").json()["events"]
+    assert len(events) == 2
+    assert [event["changes"][0]["after"] for event in events] == [True, False]
+
+
+def test_decision_record_history_filters_events_and_rejects_unknown_record(
+    client: TestClient,
+) -> None:
+    client.post("/api/mock-session", json={"identity_id": "maya-member"})
+    created = client.post(
+        "/api/decision-records",
+        json={
+            "title": "Audit history",
+            "context": "History must be queryable.",
+            "decision": "Use subject filtering.",
+            "rationale": "Unrelated events must not be returned.",
+            "alternatives_considered": "Return every event.",
+            "consequences": "History stays focused.",
+            "owner_id": "maya-member",
+            "decision_date": "2026-09-11",
+            "tags": ["audit"],
+        },
+    ).json()
+    store = client.app.state.audit_event_store
+    expected = store.record(
+        event_type=AuditEventType.OWNERSHIP_TRANSFERRED,
+        actor=MOCK_IDENTITIES[0],
+        subject_type="decision_record",
+        subject_id=created["id"],
+        changes=(
+            AuditChange(
+                field="owner_id",
+                before="maya-member",
+                after="zoe-admin",
+            ),
+        ),
+    )
+    store.record(
+        event_type=AuditEventType.COMMENT_DELETED,
+        actor=MOCK_IDENTITIES[0],
+        subject_type="decision_record",
+        subject_id="another-record",
+        changes=(AuditChange(field="content", before="text", after="[deleted]"),),
+    )
+
+    response = client.get(f"/api/decision-records/{created['id']}/audit-events")
+
+    assert response.status_code == 200
+    assert [event["id"] for event in response.json()["events"]] == [expected.id]
+    assert (
+        client.get("/api/decision-records/not-configured/audit-events").status_code
+        == 404
+    )
 
 
 def test_unknown_audit_event_returns_not_found(client: TestClient) -> None:

@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from app.audit import AuditChange, AuditEvent, AuditEventStore, AuditEventType
 from app.governance import (
+    change_approver_designation,
     designated_approver_ids,
     is_administrator,
     is_designated_approver,
@@ -256,9 +257,10 @@ def designate_approver(
             detail="The selected Mock identity does not exist.",
         )
 
-    if identity.id not in designated_approver_ids:
-        designated_approver_ids.add(identity.id)
-        get_audit_event_store(request).record(
+    change_approver_designation(
+        identity.id,
+        designated=True,
+        record_change=lambda: get_audit_event_store(request).record(
             event_type=AuditEventType.APPROVER_DESIGNATION_CHANGED,
             actor=administrator,
             subject_type="mock_identity",
@@ -270,7 +272,8 @@ def designate_approver(
                     after=True,
                 ),
             ),
-        )
+        ),
+    )
     return list_designated_approvers()
 
 
@@ -288,9 +291,10 @@ def remove_approver(
             detail="The selected Mock identity does not exist.",
         )
 
-    if identity_id in designated_approver_ids:
-        designated_approver_ids.remove(identity_id)
-        get_audit_event_store(request).record(
+    change_approver_designation(
+        identity_id,
+        designated=False,
+        record_change=lambda: get_audit_event_store(request).record(
             event_type=AuditEventType.APPROVER_DESIGNATION_CHANGED,
             actor=administrator,
             subject_type="mock_identity",
@@ -302,5 +306,6 @@ def remove_approver(
                     after=False,
                 ),
             ),
-        )
+        ),
+    )
     return list_designated_approvers()

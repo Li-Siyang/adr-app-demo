@@ -1,7 +1,9 @@
 from collections.abc import Iterable
 from datetime import datetime, timezone
 from enum import StrEnum
-from threading import Lock
+import json
+from pathlib import Path
+import sqlite3
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -55,10 +57,54 @@ class AuditEvent(BaseModel):
 
 
 class AuditEventStore:
-    def __init__(self) -> None:
-        self._events: list[AuditEvent] = []
-        self._events_by_id: dict[str, AuditEvent] = {}
-        self._lock = Lock()
+    def __init__(self, database_path: str | Path) -> None:
+        self._database_path = Path(database_path)
+        self._database_path.parent.mkdir(parents=True, exist_ok=True)
+        self._initialize()
+
+    def _connect(self) -> sqlite3.Connection:
+        connection = sqlite3.connect(self._database_path, timeout=30)
+        connection.row_factory = sqlite3.Row
+        return connection
+
+    def _initialize(self) -> None:
+        with self._connect() as connection:
+            connection.execute("PRAGMA journal_mode=WAL")
+            connection.execute(
+                """
+                CREATE TABLE IF NOT EXISTS audit_events (
+                    sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id TEXT NOT NULL UNIQUE,
+                    event_type TEXT NOT NULL,
+                    actor_id TEXT NOT NULL,
+                    actor_display_name TEXT NOT NULL,
+                    actor_roles TEXT NOT NULL,
+                    occurred_at TEXT NOT NULL,
+                    subject_type TEXT NOT NULL,
+                    subject_id TEXT NOT NULL,
+                    changes TEXT NOT NULL
+                )
+                """
+            )
+
+    @staticmethod
+    def _from_row(row: sqlite3.Row) -> AuditEvent:
+        return AuditEvent(
+            id=row["id"],
+            event_type=row["event_type"],
+            actor=AuditActor(
+                id=row["actor_id"],
+                display_name=row["actor_display_name"],
+                roles=tuple(Role(role) for role in json.loads(row["actor_roles"])),
+            ),
+            occurred_at=datetime.fromisoformat(row["occurred_at"]),
+            subject_type=row["subject_type"],
+            subject_id=row["subject_id"],
+            changes=tuple(
+                AuditChange.model_validate(change)
+                for change in json.loads(row["changes"])
+            ),
+        )
 
     def record(
         self,
@@ -82,9 +128,38 @@ class AuditEventStore:
             subject_id=subject_id,
             changes=tuple(changes),
         )
-        with self._lock:
-            self._events.append(event)
-            self._events_by_id[event.id] = event
+        with self._connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO audit_events (
+                    id,
+                    event_type,
+                    actor_id,
+                    actor_display_name,
+                    actor_roles,
+                    occurred_at,
+                    subject_type,
+                    subject_id,
+                    changes
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    event.id,
+                    event.event_type.value,
+                    event.actor.id,
+                    event.actor.display_name,
+                    json.dumps([role.value for role in event.actor.roles]),
+                    event.occurred_at.isoformat(),
+                    event.subject_type,
+                    event.subject_id,
+                    json.dumps(
+                        [
+                            change.model_dump(mode="json")
+                            for change in event.changes
+                        ]
+                    ),
+                ),
+            )
         return event
 
     def list(
@@ -93,16 +168,27 @@ class AuditEventStore:
         subject_type: str | None = None,
         subject_id: str | None = None,
     ) -> tuple[AuditEvent, ...]:
-        with self._lock:
-            events = tuple(self._events)
+        filters: list[str] = []
+        values: list[str] = []
         if subject_type is not None:
-            events = tuple(
-                event for event in events if event.subject_type == subject_type
-            )
+            filters.append("subject_type = ?")
+            values.append(subject_type)
         if subject_id is not None:
-            events = tuple(event for event in events if event.subject_id == subject_id)
-        return events
+            filters.append("subject_id = ?")
+            values.append(subject_id)
+
+        query = "SELECT * FROM audit_events"
+        if filters:
+            query += " WHERE " + " AND ".join(filters)
+        query += " ORDER BY sequence"
+        with self._connect() as connection:
+            rows = connection.execute(query, values).fetchall()
+        return tuple(self._from_row(row) for row in rows)
 
     def get(self, event_id: str) -> AuditEvent | None:
-        with self._lock:
-            return self._events_by_id.get(event_id)
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT * FROM audit_events WHERE id = ?",
+                (event_id,),
+            ).fetchone()
+        return self._from_row(row) if row is not None else None

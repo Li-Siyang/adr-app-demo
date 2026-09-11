@@ -1,9 +1,29 @@
-from collections.abc import Collection
+from collections.abc import Callable, Collection
+from threading import Lock
 
 from app.identities import MockIdentity, Role
 
 
 designated_approver_ids: set[str] = set()
+_approver_designation_lock = Lock()
+
+
+def change_approver_designation(
+    identity_id: str,
+    *,
+    designated: bool,
+    record_change: Callable[[], None],
+) -> bool:
+    with _approver_designation_lock:
+        currently_designated = identity_id in designated_approver_ids
+        if currently_designated == designated:
+            return False
+        record_change()
+        if designated:
+            designated_approver_ids.add(identity_id)
+        else:
+            designated_approver_ids.remove(identity_id)
+        return True
 
 
 def has_role(identity: MockIdentity, role: Role) -> bool:
