@@ -5,6 +5,11 @@ from app.identities import MockIdentity, Role
 
 
 designated_approver_ids: set[str] = set()
+
+# Designations are process-local demonstration state, matching the record
+# store. The lock makes each check-and-transition atomic within the single
+# supported application process; see backend/README.md for the single-worker
+# deployment constraint.
 _approver_designation_lock = Lock()
 
 

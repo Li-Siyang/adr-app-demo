@@ -128,6 +128,29 @@ def test_rejects_duplicate_tags_without_creating_draft(client: TestClient) -> No
     assert client.get("/api/decision-records").json() == {"records": []}
 
 
+def test_filters_decision_records_by_one_exact_tag(client: TestClient) -> None:
+    exact_match = complete_payload()
+    exact_match["title"] = "Exact architecture record"
+    exact_match["tags"] = ["architecture", "backend"]
+    partial_match = complete_payload()
+    partial_match["title"] = "Longer tag record"
+    partial_match["tags"] = ["architecture-review"]
+    unrelated = complete_payload()
+    unrelated["title"] = "Unrelated record"
+    unrelated["tags"] = ["frontend"]
+    for payload in (exact_match, partial_match, unrelated):
+        assert client.post("/api/decision-records", json=payload).status_code == 201
+
+    response = client.get(
+        "/api/decision-records",
+        params={"tag": "architecture"},
+    )
+
+    assert response.status_code == 200
+    records = response.json()["records"]
+    assert [record["title"] for record in records] == ["Exact architecture record"]
+
+
 def test_record_store_supports_concurrent_create_and_list() -> None:
     store = DecisionRecordStore()
     payload = DecisionRecordCreate(**complete_payload())

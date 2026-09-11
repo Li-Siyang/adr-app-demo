@@ -5,6 +5,12 @@ const recordForm = document.querySelector("#record-form");
 const recordOwner = document.querySelector("#record-owner");
 const recordFormMessage = document.querySelector("#record-form-message");
 const saveDraft = recordForm.querySelector('button[type="submit"]');
+const tagFilter = document.querySelector("#tag-filter");
+const recordList = document.querySelector("#record-list");
+const recordListMessage = document.querySelector("#record-list-message");
+
+let availableTags = [];
+let latestRecordRequest = 0;
 
 function roleName(role) {
   return role
@@ -37,6 +43,76 @@ function disableDraftAuthoring(message) {
   recordFormMessage.textContent = message;
 }
 
+function renderRecords(records) {
+  recordList.replaceChildren(
+    ...records.map((record) => {
+      const article = document.createElement("article");
+      article.className = "record-card";
+
+      const title = document.createElement("h3");
+      title.textContent = record.title;
+      const details = document.createElement("p");
+      details.textContent =
+        `${record.status} | Owner: ${record.owner.display_name} | ` +
+        `Decision date: ${record.decision_date}`;
+      const tags = document.createElement("p");
+      tags.textContent = `Tags: ${record.tags.join(", ")}`;
+      article.append(title, details, tags);
+      return article;
+    }),
+  );
+  recordListMessage.textContent =
+    records.length === 0 ? "No decision records found." : "";
+}
+
+function updateTagOptions(tags) {
+  const discoveredTags = [...new Set(tags)].sort();
+  availableTags = [...new Set([...availableTags, ...discoveredTags])].sort();
+  const selectedTag = tagFilter.value;
+  const allTagsOption = document.createElement("option");
+  allTagsOption.value = "";
+  allTagsOption.textContent = "All tags";
+  tagFilter.replaceChildren(
+    allTagsOption,
+    ...availableTags.map((tag) => {
+      const option = document.createElement("option");
+      option.value = tag;
+      option.textContent = tag;
+      return option;
+    }),
+  );
+  tagFilter.value = selectedTag;
+}
+
+async function loadRecords(tag = "") {
+  const requestId = ++latestRecordRequest;
+  recordListMessage.textContent = "Loading decision records...";
+  const query = tag ? `?tag=${encodeURIComponent(tag)}` : "";
+  try {
+    const response = await fetch(`/api/decision-records${query}`);
+    if (requestId !== latestRecordRequest) {
+      return;
+    }
+    if (!response.ok) {
+      recordList.replaceChildren();
+      recordListMessage.textContent = "Decision records could not be loaded.";
+      return;
+    }
+
+    const collection = await response.json();
+    if (requestId !== latestRecordRequest) {
+      return;
+    }
+    updateTagOptions(collection.records.flatMap((record) => record.tags));
+    renderRecords(collection.records);
+  } catch {
+    if (requestId === latestRecordRequest) {
+      recordList.replaceChildren();
+      recordListMessage.textContent = "Decision records could not be loaded.";
+    }
+  }
+}
+
 async function loadContext() {
   const sessionResponse = await fetch("/api/mock-session");
   const session = await sessionResponse.json();
@@ -53,6 +129,8 @@ async function loadContext() {
   const roles = document.createElement("p");
   roles.textContent = `Configured roles: ${identity.roles.map(roleName).join(", ")}`;
   identityContext.append(title, roles);
+
+  await loadRecords();
 
   const attributionResponse = await fetch("/api/attribution-preview");
   if (attributionResponse.ok) {
@@ -90,6 +168,10 @@ changeIdentity.addEventListener("click", async () => {
 
 loadContext();
 
+tagFilter.addEventListener("change", () => {
+  loadRecords(tagFilter.value);
+});
+
 recordForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   saveDraft.disabled = true;
@@ -118,9 +200,11 @@ recordForm.addEventListener("submit", async (event) => {
       return;
     }
 
+    updateTagOptions(payload.tags);
     recordForm.reset();
     recordFormMessage.className = "";
     recordFormMessage.textContent = "Draft saved.";
+    await loadRecords(tagFilter.value);
   } finally {
     saveDraft.disabled = false;
   }
