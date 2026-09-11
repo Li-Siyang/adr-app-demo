@@ -3,6 +3,12 @@ from typing import Annotated
 from fastapi import APIRouter, Cookie, HTTPException, Response, status
 from pydantic import BaseModel
 
+from app.governance import (
+    designated_approver_ids,
+    is_administrator,
+    is_designated_approver,
+    role_permissions,
+)
 from app.identities import MOCK_IDENTITIES, MockIdentity, find_mock_identity
 
 MOCK_IDENTITY_COOKIE = "adr_mock_identity"
@@ -23,6 +29,20 @@ class AttributionPreview(BaseModel):
     message: str
 
 
+class ApproverDesignation(BaseModel):
+    identity_id: str
+
+
+class ApproverList(BaseModel):
+    approvers: list[MockIdentity]
+
+
+class GovernancePermissions(BaseModel):
+    identity: MockIdentity
+    designated_approver: bool
+    permissions: list[str]
+
+
 SelectedIdentityCookie = Annotated[str | None, Cookie(alias=MOCK_IDENTITY_COOKIE)]
 
 
@@ -34,6 +54,15 @@ def require_selected_identity(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Choose a Mock identity before continuing.",
+        )
+    return identity
+
+
+def require_administrator(identity: MockIdentity) -> MockIdentity:
+    if not is_administrator(identity):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only an administrator Mock identity may perform this action.",
         )
     return identity
 
@@ -85,3 +114,58 @@ def get_attribution_preview(
         actor=identity,
         message=f"Demonstration actions use {identity.display_name} for attribution.",
     )
+
+
+@router.get("/governance/permissions", response_model=GovernancePermissions)
+def get_governance_permissions(
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> GovernancePermissions:
+    identity = require_selected_identity(selected_identity_id)
+    return GovernancePermissions(
+        identity=identity,
+        designated_approver=is_designated_approver(identity),
+        permissions=sorted(role_permissions(identity)),
+    )
+
+
+@router.get("/approvers", response_model=ApproverList)
+def list_designated_approvers() -> ApproverList:
+    approvers = [
+        identity for identity in MOCK_IDENTITIES if identity.id in designated_approver_ids
+    ]
+    return ApproverList(approvers=approvers)
+
+
+@router.post("/approvers", response_model=ApproverList)
+def designate_approver(
+    designation: ApproverDesignation,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> ApproverList:
+    administrator = require_selected_identity(selected_identity_id)
+    require_administrator(administrator)
+    identity = find_mock_identity(designation.identity_id)
+    if identity is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The selected Mock identity does not exist.",
+        )
+
+    designated_approver_ids.add(identity.id)
+    return list_designated_approvers()
+
+
+@router.delete("/approvers/{identity_id}", response_model=ApproverList)
+def remove_approver(
+    identity_id: str,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> ApproverList:
+    administrator = require_selected_identity(selected_identity_id)
+    require_administrator(administrator)
+    if find_mock_identity(identity_id) is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The selected Mock identity does not exist.",
+        )
+
+    designated_approver_ids.discard(identity_id)
+    return list_designated_approvers()
