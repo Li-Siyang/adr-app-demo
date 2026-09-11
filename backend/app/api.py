@@ -3,8 +3,10 @@ from typing import Annotated
 from fastapi import APIRouter, Cookie, HTTPException, Request, Response, status
 from pydantic import BaseModel
 
+from app.audit import AuditChange, AuditEvent, AuditEventStore, AuditEventType
 from app.governance import (
-    designated_approver_ids,
+    change_approver_designation,
+    designated_approver_snapshot,
     is_administrator,
     is_designated_approver,
     role_permissions,
@@ -32,6 +34,10 @@ class AttributionPreview(BaseModel):
 
 class DecisionRecordCollection(BaseModel):
     records: list[DecisionRecord]
+
+
+class AuditEventCollection(BaseModel):
+    events: list[AuditEvent]
 
 
 class ApproverDesignation(BaseModel):
@@ -74,6 +80,10 @@ def require_administrator(identity: MockIdentity) -> MockIdentity:
 
 def get_record_store(request: Request) -> DecisionRecordStore:
     return request.app.state.record_store
+
+
+def get_audit_event_store(request: Request) -> AuditEventStore:
+    return request.app.state.audit_event_store
 
 
 @router.get("/mock-identities", response_model=list[MockIdentity])
@@ -135,6 +145,57 @@ def list_decision_records(
     return DecisionRecordCollection(records=records)
 
 
+@router.get("/audit-events", response_model=AuditEventCollection)
+def list_audit_events(
+    request: Request,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> AuditEventCollection:
+    require_selected_identity(selected_identity_id)
+    return AuditEventCollection(events=list(get_audit_event_store(request).list()))
+
+
+@router.get("/audit-events/{event_id}", response_model=AuditEvent)
+def get_audit_event(
+    event_id: str,
+    request: Request,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> AuditEvent:
+    require_selected_identity(selected_identity_id)
+    event = get_audit_event_store(request).get(event_id)
+    if event is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The audit event does not exist.",
+        )
+    return event
+
+
+@router.get(
+    "/decision-records/{record_id}/audit-events",
+    response_model=AuditEventCollection,
+)
+def list_decision_record_audit_events(
+    record_id: str,
+    request: Request,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> AuditEventCollection:
+    require_selected_identity(selected_identity_id)
+    record = get_record_store(request).get(record_id)
+    if record is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The decision record does not exist.",
+        )
+    return AuditEventCollection(
+        events=list(
+            get_audit_event_store(request).list(
+                subject_type="decision_record",
+                subject_id=record_id,
+            )
+        )
+    )
+
+
 @router.get("/decision-records/{record_id}", response_model=DecisionRecord)
 def get_decision_record(record_id: str, request: Request) -> DecisionRecord:
     record = get_record_store(request).get(record_id)
@@ -180,8 +241,9 @@ def get_governance_permissions(
 
 @router.get("/approvers", response_model=ApproverList)
 def list_designated_approvers() -> ApproverList:
+    designated_ids = designated_approver_snapshot()
     approvers = [
-        identity for identity in MOCK_IDENTITIES if identity.id in designated_approver_ids
+        identity for identity in MOCK_IDENTITIES if identity.id in designated_ids
     ]
     return ApproverList(approvers=approvers)
 
@@ -189,6 +251,7 @@ def list_designated_approvers() -> ApproverList:
 @router.post("/approvers", response_model=ApproverList)
 def designate_approver(
     designation: ApproverDesignation,
+    request: Request,
     selected_identity_id: SelectedIdentityCookie = None,
 ) -> ApproverList:
     administrator = require_selected_identity(selected_identity_id)
@@ -200,13 +263,30 @@ def designate_approver(
             detail="The selected Mock identity does not exist.",
         )
 
-    designated_approver_ids.add(identity.id)
+    change_approver_designation(
+        identity.id,
+        designated=True,
+        record_change=lambda: get_audit_event_store(request).record(
+            event_type=AuditEventType.APPROVER_DESIGNATION_CHANGED,
+            actor=administrator,
+            subject_type="mock_identity",
+            subject_id=identity.id,
+            changes=(
+                AuditChange(
+                    field="designated_approver",
+                    before=False,
+                    after=True,
+                ),
+            ),
+        ),
+    )
     return list_designated_approvers()
 
 
 @router.delete("/approvers/{identity_id}", response_model=ApproverList)
 def remove_approver(
     identity_id: str,
+    request: Request,
     selected_identity_id: SelectedIdentityCookie = None,
 ) -> ApproverList:
     administrator = require_selected_identity(selected_identity_id)
@@ -217,5 +297,21 @@ def remove_approver(
             detail="The selected Mock identity does not exist.",
         )
 
-    designated_approver_ids.discard(identity_id)
+    change_approver_designation(
+        identity_id,
+        designated=False,
+        record_change=lambda: get_audit_event_store(request).record(
+            event_type=AuditEventType.APPROVER_DESIGNATION_CHANGED,
+            actor=administrator,
+            subject_type="mock_identity",
+            subject_id=identity_id,
+            changes=(
+                AuditChange(
+                    field="designated_approver",
+                    before=True,
+                    after=False,
+                ),
+            ),
+        ),
+    )
     return list_designated_approvers()
