@@ -1,13 +1,17 @@
 # ADR demonstration backend
 
 This FastAPI application implements the STORY-001 Mock identity entry flow and
-the STORY-003 structured Draft creation flow.
+the STORY-003 structured Draft creation flow. STORY-015 provides append-only
+audit-event storage and read-only retrieval for governed actions.
 Identity selection is intentionally not authentication and does not create an
 access-control boundary.
 
 Drafts are retained in the application process for this demonstration. They
 capture the selected Mock identity as author, a distinct configured owner,
 required decision context, one or more tags, and the demo-data boundary notice.
+Audit events retain the acting Mock identity, timestamp, subject, and immutable
+field-level changes. The existing approver designation flow records these
+events; later governed workflows can use the same audit store.
 
 ## Run locally
 

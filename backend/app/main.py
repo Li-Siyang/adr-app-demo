@@ -5,6 +5,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api import router as api_router
+from app.audit import AuditEventStore
 from app.records import DecisionRecordStore
 
 STATIC_DIR = Path(__file__).parent / "static"
@@ -12,6 +13,7 @@ STATIC_DIR = Path(__file__).parent / "static"
 
 def create_app() -> FastAPI:
     app = FastAPI(title="Internal Decision Record Application")
+    app.state.audit_event_store = AuditEventStore()
     app.state.record_store = DecisionRecordStore()
     app.include_router(api_router)
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
