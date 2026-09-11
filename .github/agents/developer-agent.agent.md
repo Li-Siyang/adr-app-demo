@@ -12,10 +12,10 @@ tools:
   - search
   - edit
   - execute
-  - Atlassian-Rovo-MCP-Server/getAccessibleAtlassianResources
-  - Atlassian-Rovo-MCP-Server/search
-  - Atlassian-Rovo-MCP-Server/searchJiraIssuesUsingJql
-  - Atlassian-Rovo-MCP-Server/getJiraIssue
+  - Atlassian Rovo MCP Server/getAccessibleAtlassianResources
+  - Atlassian Rovo MCP Server/search
+  - Atlassian Rovo MCP Server/searchJiraIssuesUsingJql
+  - Atlassian Rovo MCP Server/getJiraIssue
 user-invocable: true
 disable-model-invocation: false
 ---
