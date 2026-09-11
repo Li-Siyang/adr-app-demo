@@ -13,7 +13,6 @@ tools:
   - edit
   - execute
   - Atlassian Rovo MCP Server/getAccessibleAtlassianResources
-  - Atlassian Rovo MCP Server/search
   - Atlassian Rovo MCP Server/searchJiraIssuesUsingJql
   - Atlassian Rovo MCP Server/getJiraIssue
 user-invocable: true
@@ -34,7 +33,22 @@ The parent coordinating session owns session orchestration, task dispatch,
 status monitoring, result collection, and cross-branch coordination.
 
 When work finishes or blocks, provide a structured final result in the current
-session so the parent can retrieve it after this session becomes idle.
+session so the parent can retrieve it after this session becomes idle. Use
+exactly these fields:
+
+- Outcome: `COMPLETED`, `BLOCKED`, or `FAILED`
+- Story ID
+- Jira Story key
+- Branch
+- HEAD commit SHA, or `N/A`
+- Implementation summary
+- Test and validation summary
+- Blockers, or `None`
+- Next recommended action
+
+Do not rely on child-to-parent conversational messaging. Persist completed
+implementation through the feature branch and commits. After independent
+validation passes, persist the final completion summary in the Pull Request.
 
 The expected relationship is:
 
@@ -315,12 +329,15 @@ Follow this sequence.
 
 ## Step 1: Read the Jira Story
 
-If the Jira issue ID is not provided, use read-only Jira search to locate the
-issue by the exact stable Story ID, such as `STORY-004`.
+Use the Jira issue key supplied in the kickoff when available. Otherwise, use
+read-only Jira JQL search to locate the issue by the exact stable Story ID, such
+as `STORY-004`.
 
-Accept the result only when exactly one Jira Story unambiguously matches both
-the Story ID and approved Story title. Then read the issue details and any
-related implementation Tasks needed for traceability.
+For both supplied-key and search paths, read the issue and accept it only when
+it is a Jira Story and unambiguously matches both the exact Story ID and the
+approved Story title supplied in the kickoff. When searching, exactly one Jira
+Story must match. Then read any related implementation Tasks needed for
+traceability.
 
 If no match exists, multiple plausible matches exist, the issue is not a Story,
 or its execution state cannot be verified, stop and report:

@@ -19,8 +19,13 @@
   implement, test, commit, and push their assigned Story.
 - The parent session must retrieve results when a child becomes idle; child
   sessions are not required to have cross-session messaging capability.
-- Every child kickoff must include the Story ID, known Jira keys, approved
-  artifact paths, branch name, scope, dependencies, and Definition of Done.
+- Every child kickoff must include the Story ID, approved Story title, known
+  Jira keys, approved artifact paths, branch name, scope, dependencies, and
+  Definition of Done.
+- Child sessions must not rely on conversational messaging to the parent. They
+  must output a structured handoff before becoming idle and persist completed
+  work through the feature branch and commits. After independent validation,
+  the Pull Request must contain the final completion summary.
 
 
 # Engineering Principles
