@@ -225,7 +225,8 @@ next eligible Story using the following order:
 
 1. all dependencies must already be satisfied
 2. follow the approved Development Plan implementation order
-3. prefer higher-priority Stories
+3. use the priority defined by the approved Development Plan; Jira Priority
+   is a synchronized execution field and must not override the plan
 4. prefer foundational work before dependent work
 5. resolve the project's configured Jira status names or IDs to the canonical
    states before applying this gate; do not assume display names are universal
@@ -237,6 +238,11 @@ next eligible Story using the following order:
    `Ready for Review`, `In Review`, `Done`, or `Blocked` states
 
 Do not choose a Story merely because its numeric ID is smaller.
+
+If Jira Priority differs from the approved Development Plan priority, report
+the mismatch and use the Development Plan value for Story selection. Do not
+change Jira Priority from this workflow; priority synchronization belongs to
+the Jira Agent or an authorized human.
 
 If multiple Stories are equally eligible and no approved order exists,
 report the options instead of arbitrarily changing the delivery plan.
