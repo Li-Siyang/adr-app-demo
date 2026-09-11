@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Cookie, HTTPException, Response, status
+from fastapi import APIRouter, Cookie, HTTPException, Request, Response, status
 from pydantic import BaseModel
 
 from app.governance import (
@@ -10,6 +10,7 @@ from app.governance import (
     role_permissions,
 )
 from app.identities import MOCK_IDENTITIES, MockIdentity, find_mock_identity
+from app.records import DecisionRecord, DecisionRecordCreate, DecisionRecordStore
 
 MOCK_IDENTITY_COOKIE = "adr_mock_identity"
 
@@ -27,6 +28,10 @@ class MockSession(BaseModel):
 class AttributionPreview(BaseModel):
     actor: MockIdentity
     message: str
+
+
+class DecisionRecordCollection(BaseModel):
+    records: list[DecisionRecord]
 
 
 class ApproverDesignation(BaseModel):
@@ -65,6 +70,10 @@ def require_administrator(identity: MockIdentity) -> MockIdentity:
             detail="Only an administrator Mock identity may perform this action.",
         )
     return identity
+
+
+def get_record_store(request: Request) -> DecisionRecordStore:
+    return request.app.state.record_store
 
 
 @router.get("/mock-identities", response_model=list[MockIdentity])
@@ -114,6 +123,42 @@ def get_attribution_preview(
         actor=identity,
         message=f"Demonstration actions use {identity.display_name} for attribution.",
     )
+
+
+@router.get("/decision-records", response_model=DecisionRecordCollection)
+def list_decision_records(request: Request) -> DecisionRecordCollection:
+    return DecisionRecordCollection(records=get_record_store(request).list())
+
+
+@router.get("/decision-records/{record_id}", response_model=DecisionRecord)
+def get_decision_record(record_id: str, request: Request) -> DecisionRecord:
+    record = get_record_store(request).get(record_id)
+    if record is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The decision record does not exist.",
+        )
+    return record
+
+
+@router.post(
+    "/decision-records",
+    response_model=DecisionRecord,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_decision_record(
+    payload: DecisionRecordCreate,
+    request: Request,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> DecisionRecord:
+    author = require_selected_identity(selected_identity_id)
+    try:
+        return get_record_store(request).create(payload, author)
+    except ValueError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(error),
+        ) from error
 
 
 @router.get("/governance/permissions", response_model=GovernancePermissions)
