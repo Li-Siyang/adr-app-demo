@@ -248,11 +248,13 @@ def get_governance_permissions(
     selected_identity_id: SelectedIdentityCookie = None,
 ) -> GovernancePermissions:
     identity = require_selected_identity(selected_identity_id)
-    return GovernancePermissions(
-        identity=identity,
-        designated_approver=is_designated_approver(identity),
-        permissions=sorted(role_permissions(identity)),
-    )
+    # One locked snapshot keeps the flag and permission list consistent.
+    with governance_lock:
+        return GovernancePermissions(
+            identity=identity,
+            designated_approver=is_designated_approver(identity),
+            permissions=sorted(role_permissions(identity)),
+        )
 
 
 @router.get("/approvers", response_model=ApproverList)

@@ -153,29 +153,41 @@ function beginEdit(record) {
 
 async function submitDraft(record, submitButton) {
   submitButton.disabled = true;
+  let response;
   try {
-    const response = await fetch(`/api/decision-records/${record.id}/submit`, {
+    response = await fetch(`/api/decision-records/${record.id}/submit`, {
       method: "POST",
     });
-    if (!response.ok) {
-      const error = await response.json();
-      recordFormMessage.className = "error";
-      recordFormMessage.textContent = apiErrorMessage(
-        error,
-        "Draft could not be submitted.",
-      );
-      submitButton.disabled = false;
-      return;
-    }
-
-    recordFormMessage.className = "";
-    recordFormMessage.textContent = "Draft submitted for review.";
-    resetForm();
-    await loadRecords();
   } catch {
     submitButton.disabled = false;
     recordFormMessage.className = "error";
-    recordFormMessage.textContent = "Draft could not be submitted. Please try again.";
+    recordFormMessage.textContent =
+      "Draft could not be submitted. Please try again.";
+    return;
+  }
+
+  if (!response.ok) {
+    let message = "Draft could not be submitted.";
+    try {
+      message = apiErrorMessage(await response.json(), message);
+    } catch {
+      // Keep the generic message when the server response is not JSON.
+    }
+    submitButton.disabled = false;
+    recordFormMessage.className = "error";
+    recordFormMessage.textContent = message;
+    return;
+  }
+
+  recordFormMessage.className = "";
+  recordFormMessage.textContent = "Draft submitted for review.";
+  resetForm();
+  try {
+    await loadRecords();
+  } catch {
+    // The submission succeeded; only the list refresh failed.
+    recordFormMessage.textContent =
+      "Draft submitted for review. Reload the page to refresh the record list.";
   }
 }
 

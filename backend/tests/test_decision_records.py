@@ -1,15 +1,17 @@
 from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FutureTimeoutError
 from threading import Event
-from time import sleep
 
 import pytest
+import httpx
 from fastapi.testclient import TestClient
 
-from app.governance import designated_approver_ids, governance_lock
+from app.governance import designated_approver_ids
 from app.identities import MOCK_IDENTITIES, MockIdentity
 from app.main import create_app
 from app.records import (
+    DecisionRecord,
     DecisionRecordCreate,
     DecisionRecordStore,
     DecisionRecordUpdate,
@@ -313,30 +315,53 @@ def test_submitted_record_cannot_be_edited_or_submitted_again(
     assert resubmit.status_code == 409
 
 
-def test_submission_uses_current_approver_designation_atomically(
+def test_submission_and_approver_removal_are_serialized(
     client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """A designation change cannot interleave with an in-flight submission."""
     created = client.post("/api/decision-records", json=complete_payload()).json()
     designated_approver_ids.add("arun-approver")
-    request_started = Event()
 
-    def submit() -> object:
-        request_started.set()
-        return client.post(f"/api/decision-records/{created['id']}/submit")
+    entered_critical_section = Event()
+    release_submission = Event()
+    original_submit = DecisionRecordStore.submit
 
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        with governance_lock:
-            future = executor.submit(submit)
-            assert request_started.wait(timeout=1)
-            sleep(0.05)
-            assert not future.done()
-            designated_approver_ids.clear()
+    def synchronized_submit(
+        self: DecisionRecordStore,
+        *args: object,
+        **kwargs: object,
+    ) -> DecisionRecord:
+        # The endpoint holds governance_lock when the store submit runs.
+        entered_critical_section.set()
+        assert release_submission.wait(timeout=2)
+        return original_submit(self, *args, **kwargs)
 
-        response = future.result(timeout=1)
-    assert response.status_code == 422
-    assert "at least one designated approver" in (
-        response.json()["detail"]["approver"].lower()
-    )
+    monkeypatch.setattr(DecisionRecordStore, "submit", synchronized_submit)
+
+    admin = TestClient(client.app)
+    admin.post("/api/mock-session", json={"identity_id": "zoe-admin"})
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        submission = executor.submit(
+            lambda: client.post(f"/api/decision-records/{created['id']}/submit")
+        )
+        assert entered_critical_section.wait(timeout=2)
+
+        removal = executor.submit(
+            lambda: admin.delete("/api/approvers/arun-approver")
+        )
+        with pytest.raises(FutureTimeoutError):
+            removal.result(timeout=0.3)
+
+        release_submission.set()
+        submitted: httpx.Response = submission.result(timeout=2)
+        removed: httpx.Response = removal.result(timeout=2)
+
+    assert submitted.status_code == 200
+    assert submitted.json()["status"] == "Proposed"
+    assert removed.status_code == 200
+    assert removed.json() == {"approvers": []}
     assert client.get(f"/api/decision-records/{created['id']}").json()["status"] == (
-        "Draft"
+        "Proposed"
     )
