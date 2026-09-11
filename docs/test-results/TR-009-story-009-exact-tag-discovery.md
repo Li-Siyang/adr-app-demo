@@ -3,7 +3,8 @@
 **Test Run ID:** TR-009  
 **Mode:** VALIDATION MODE  
 **Execution date:** 2026-09-11  
-**Implementation commit:** `270e8c09e547032cdafef997170c3f644bd62884`  
+**Initial implementation commit:** `270e8c09e547032cdafef997170c3f644bd62884`  
+**Validated production commit:** `9184430`  
 **Source Requirement:** `docs/requirements/requirement-definition.md`, Version 1.3, Approved  
 **Source Development Plan:** `docs/planning/PLAN-001-internal-decision-record-mvp.md`, Version 1.1  
 **Source Test Design:** `docs/test-design/TEST-001-internal-decision-record-mvp.md`, Version 2.0, Approved
@@ -41,6 +42,9 @@ does not block STORY-009.
 | STORY-009 and related STORY-003 acceptance | `python -m pytest -q tests\acceptance\test_story_009_exact_tag_discovery.py tests\acceptance\test_story_003_complete_draft.py` | 35 passed, 1 approved deferred skip |
 | Full regression | `python -m pytest -q` | 82 passed, 1 approved deferred skip |
 | Frontend JavaScript syntax | `node --check backend\app\static\app.js` | Passed |
+
+The full regression and frontend syntax checks were repeated after the
+review-driven UI fixes in production commit `9184430`.
 
 Four dependency deprecation warnings were reported by FastAPI, Starlette,
 AnyIO, and HTTPX integrations. They did not affect test outcomes.
