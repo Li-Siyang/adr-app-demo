@@ -7,12 +7,17 @@ Preserve this traceability chain throughout planning and delivery:
 ```text
 Requirement
   -> Plan
+  -> Epic
   -> Story
   -> Task
   -> Implementation
   -> Test Design
   -> Validation Result
 ```
+
+When an Epic is not meaningful for a small change, the approved Plan may
+explicitly omit the Epic layer and link the Requirement directly to its
+Stories.
 
 ## Identifier rules
 
