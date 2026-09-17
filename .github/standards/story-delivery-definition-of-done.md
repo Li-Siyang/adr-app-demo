@@ -1,4 +1,4 @@
-# Definition of Done
+# Story Delivery Definition of Done
 
 A Story is complete only when all applicable conditions are satisfied:
 
