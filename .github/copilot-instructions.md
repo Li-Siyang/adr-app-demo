@@ -11,7 +11,7 @@ Follow the applicable repository standards before making changes:
 - [Branching standard](standards/branching-standard.md)
 - [Documentation standard](standards/documentation-standard.md)
 - [Traceability standard](standards/traceability-standard.md)
-- [Definition of Done](standards/definition-of-done.md)
+- [Story delivery Definition of Done](standards/story-delivery-definition-of-done.md)
 
 ## Agent responsibilities
 
