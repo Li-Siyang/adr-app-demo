@@ -11,6 +11,7 @@ Follow the applicable repository standards before making changes:
 - [Branching standard](standards/branching-standard.md)
 - [Documentation standard](standards/documentation-standard.md)
 - [Traceability standard](standards/traceability-standard.md)
+- [Testing standard](standards/testing-standard.md)
 - [Story delivery Definition of Done](standards/story-delivery-definition-of-done.md)
 
 ## Agent responsibilities
@@ -20,7 +21,8 @@ Use the role-specific instructions in `.github/agents/`:
 - `requirement-agent.agent.md` owns requirement clarification and definitions.
 - `planning-agent.agent.md` owns plans, Epics, Stories, and engineering Tasks.
 - `developer-agent.agent.md` owns implementation for one approved Story.
-- `test-agent.agent.md` owns test design and independent validation.
+- `test-design-agent.agent.md` owns test design before implementation.
+- `validation-agent.agent.md` owns independent implementation validation.
 - `jira-agent.agent.md` owns Jira execution tracking and synchronization.
 
 Do not duplicate role-specific workflows in this file.

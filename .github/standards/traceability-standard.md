@@ -34,6 +34,9 @@ Stories.
 - Requirement Definitions define product intent and acceptance criteria.
 - Development Plans define approved Epics, Stories, Tasks, dependencies, and
   priorities.
-- Test Designs define planned validation coverage after approval.
+- Test Designs define planned validation coverage after approval and are owned
+  by the Test Design Agent.
+- Validation Results define actual validation outcomes and are owned by the
+  Validation Agent.
 - Jira represents execution state and mappings; it does not redefine approved
   requirements or test expectations.
