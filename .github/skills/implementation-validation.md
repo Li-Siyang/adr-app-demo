@@ -16,6 +16,14 @@ Verify that:
 
 If these conditions are not met, report the appropriate blocker.
 
+If a required Story dependency is not available, do not claim the Story is
+validated. Produce a `BLOCKED` Test Result Report naming the dependency and
+the affected validation scope. If the Story can be isolated using approved
+fixtures, mocks, or stubs, validate only that explicitly identified scope and
+record the untested integration scenarios. After the dependency becomes
+available, rerun all affected acceptance, integration, state-transition, and
+regression cases before recommending review.
+
 ### 2. Map approved Test Cases to execution
 
 For each approved Test Case, classify it as:
@@ -61,6 +69,18 @@ Never report a test as passed unless it was actually executed successfully.
 
 For each Test Case, compare the approved Expected Result with the Actual Result.
 Do not adjust Expected Result merely because implementation behaves differently.
+
+## Validation and PR status
+
+Validation status controls PR readiness:
+
+- `PASSED` for the current tested commit permits a Ready for Review request.
+- `FAILED`, `BLOCKED`, missing validation evidence, or a stale tested commit
+  prohibits Ready for Review.
+- A Draft PR may be opened for collaboration while validation is blocked, but
+  it must identify the blocker and remain a Draft.
+- Any production change after a passing validation requires validation of the
+  new commit before review.
 
 ## Failure classification use
 
