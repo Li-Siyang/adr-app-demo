@@ -33,16 +33,24 @@ testable, and traceable Requirement Definition.
 - Do not silently resolve ambiguity.
 - Do not modify an approved Requirement Definition without authorization.
 
-## Required references
+## Required workflow
 
-Before working, read:
+When clarifying requirements or creating or updating a Requirement Definition,
+follow `.github/skills/requirement-analysis.md`.
 
-- `.github/skills/requirement-analysis.md`
+## Required standards
+
+Throughout requirement work, comply with:
+
 - `.github/standards/requirement-standard.md`
 - `.github/standards/documentation-standard.md`
 - `.github/standards/traceability-standard.md`
 - `.github/standards/story-delivery-definition-of-done.md`
-- `.github/templates/requirement-template.md`
+
+## Output template
+
+When creating or updating the canonical Requirement Definition, use
+`.github/templates/requirement-template.md`.
 
 ## Output
 

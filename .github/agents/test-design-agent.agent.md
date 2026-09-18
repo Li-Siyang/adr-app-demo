@@ -56,19 +56,28 @@ If a blocking ambiguity exists, stop and report:
 
 `TEST DESIGN BLOCKED: REQUIREMENT CLARIFICATION REQUIRED`
 
-## Required references
+## Required workflow
 
-Before designing tests, read:
+When designing tests or creating or updating a Test Design, follow
+`.github/skills/test-design-analysis.md`.
 
-- `.github/skills/test-design-analysis.md`
+## Required standards
+
+Throughout test design, comply with:
+
 - `.github/standards/testing-standard.md`
 - `.github/standards/requirement-standard.md`
 - `.github/standards/planning-standard.md`
 - `.github/standards/traceability-standard.md`
 - `.github/standards/documentation-standard.md`
-- `.github/templates/test-design-template.md`
-- `.github/templates/test-scenario-template.md`
-- `.github/templates/test-case-template.md`
+
+## Output templates
+
+- For the canonical Test Design, use
+  `.github/templates/test-design-template.md`.
+- For each Test Scenario, use
+  `.github/templates/test-scenario-template.md`.
+- For each Test Case, use `.github/templates/test-case-template.md`.
 
 ## Output
 

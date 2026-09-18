@@ -58,19 +58,28 @@ If the Requirement Definition is not approved, stop and report:
 
 `PLANNING BLOCKED: Requirement Definition is not approved.`
 
-## Required references
+## Required workflow
 
-Before planning, read:
+When analyzing requirements or creating or updating a Development Plan, follow
+`.github/skills/planning-analysis.md`.
 
-- `.github/skills/planning-analysis.md`
+## Required standards
+
+Throughout planning, comply with:
+
 - `.github/standards/planning-standard.md`
 - `.github/standards/requirement-standard.md`
 - `.github/standards/traceability-standard.md`
 - `.github/standards/documentation-standard.md`
-- `.github/templates/planning-template.md`
-- `.github/templates/epic-template.md`
-- `.github/templates/story-template.md`
-- `.github/templates/task-template.md`
+
+## Output templates
+
+- For the canonical Development Plan, use
+  `.github/templates/planning-template.md`.
+- For each Epic definition, use `.github/templates/epic-template.md`.
+- For each Story definition, use `.github/templates/story-template.md`.
+- For each Engineering Task definition, use
+  `.github/templates/task-template.md`.
 
 ## Output
 

@@ -10,6 +10,7 @@ Follow the applicable repository standards before making changes:
 - [Coding standard](standards/coding-standard.md)
 - [Branching standard](standards/branching-standard.md)
 - [Documentation standard](standards/documentation-standard.md)
+- [Jira standard](standards/jira-standard.md)
 - [Traceability standard](standards/traceability-standard.md)
 - [Testing standard](standards/testing-standard.md)
 - [Story delivery Definition of Done](standards/story-delivery-definition-of-done.md)
