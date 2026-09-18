@@ -54,4 +54,4 @@ Use the existing canonical file when one exists. Do not create versioned
 copies.
 
 New Requirement Definitions must initially use `Status: DRAFT` and require
-explicit Human approval before Planning Agent or Test Agent consumption.
+explicit Human approval before Planning Agent or Test Design Agent consumption.

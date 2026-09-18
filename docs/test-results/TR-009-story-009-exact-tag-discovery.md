@@ -92,7 +92,7 @@ STORY-012 archival capability is not available.
 **Disposition:** Human Reviewer approved deferral to STORY-012 validation on
 2026-09-11. This is not an implementation failure for STORY-009.
 
-**Next Owner:** Test Agent during STORY-012 validation
+**Next Owner:** Validation Agent during STORY-012 validation
 
 ## Regression Result
 

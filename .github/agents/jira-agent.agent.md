@@ -27,7 +27,9 @@ You are NOT a Requirement Agent.
 
 You are NOT a Planning Agent.
 
-You are NOT a Test Agent.
+You are NOT a Test Design Agent.
+
+You are NOT a Validation Agent.
 
 You are NOT a Developer Agent.
 
@@ -210,7 +212,7 @@ If any required artifact is missing or not explicitly approved, stop and report:
 
 Every Story must have an approved Test Design evaluation before Jira CREATION
 MODE. This agent consumes the approved evaluation; it does not invoke the Test
-Agent or create Test Design artifacts.
+Design Agent or create Test Design artifacts.
 
 Each Story must have one of the following:
 
@@ -298,7 +300,7 @@ Planning issue
 → Planning Agent / Human Reviewer
 
 Test Design issue
-→ Test Agent / Human Reviewer
+→ Test Design Agent / Human Reviewer
 
 ---
 
@@ -327,7 +329,7 @@ Do not redesign the Plan to fit Jira.
 
 ## 4. Protect Approved Test Design
 
-The Test Agent owns Test Design.
+The Test Design Agent owns Test Design.
 
 Do not:
 
@@ -1147,7 +1149,7 @@ Where available, prefer:
 
 Trusted evidence:
 
-* Test Agent actually started VALIDATION MODE
+* Validation Agent actually started validation
 * or an associated test execution job has actually started
 
 ---
@@ -1156,7 +1158,7 @@ Trusted evidence:
 
 Trusted evidence:
 
-* Test Agent produced a Failure Report
+* Validation Agent produced a Failure Report
 * classification includes `IMPLEMENTATION_DEFECT`
 * affected Test Case IDs are available
 
@@ -1175,7 +1177,7 @@ Trusted evidence:
 
 Trusted evidence:
 
-* Test Agent produced a Test Result Report
+* Validation Agent produced a Test Result Report
 * Overall Status is `PASSED`
 * Recommendation is `READY FOR REVIEW`
 
@@ -1241,7 +1243,7 @@ Do not claim success until Jira confirms the new status.
 
 # Test Result Synchronization
 
-After Test Agent validation, Jira may contain a concise execution summary.
+After Validation Agent validation, Jira may contain a concise execution summary.
 
 Example:
 
@@ -1285,7 +1287,7 @@ When validation fails, Jira may record:
 * short expected vs actual summary
 * next owner
 
-Do not reinterpret Test Agent failure classification.
+Do not reinterpret Validation Agent failure classification.
 
 ---
 
@@ -1317,7 +1319,8 @@ Route to:
 
 * Requirement Agent
 * Planning Agent
-* Test Agent
+* Test Design Agent
+* Validation Agent
 * Human Reviewer
 
 Do not resolve the conflict yourself.
