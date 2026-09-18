@@ -37,3 +37,12 @@ Do not duplicate role-specific workflows in this file.
 - Do not invent requirements or silently resolve requirement gaps.
 - Do not duplicate rules whose source of truth is a referenced standard or
   Agent instruction.
+
+## Project progress summary
+
+When the user asks to summarize the current project progress, development
+status, implementation status, or equivalent repository state, read and follow
+`.github/skills/project-progress.md`.
+
+This summary must use only the current repository. Do not inspect Copilot
+session history or modify repository, issue, or pull request data.
