@@ -8,6 +8,7 @@ delivery work in this repository.
 Follow the applicable repository standards before making changes:
 
 - [Coding standard](standards/coding-standard.md)
+- [Development standard](standards/development-standard.md)
 - [Branching standard](standards/branching-standard.md)
 - [Documentation standard](standards/documentation-standard.md)
 - [Jira standard](standards/jira-standard.md)
