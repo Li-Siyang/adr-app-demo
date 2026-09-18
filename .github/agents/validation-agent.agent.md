@@ -57,21 +57,27 @@ Before validation:
   validation.
 - Identify the exact commit SHA to validate.
 
-## Required references
+## Required workflow
 
-Before validating, read:
+When validating or retesting an implementation, follow
+`.github/skills/implementation-validation.md`.
 
-- `.github/skills/implementation-validation.md`
+## Required standards
+
+Throughout validation, comply with:
+
 - `.github/standards/testing-standard.md`
 - `.github/standards/requirement-standard.md`
 - `.github/standards/planning-standard.md`
 - `.github/standards/traceability-standard.md`
 - `.github/standards/documentation-standard.md`
-- `.github/templates/test-failure-report-template.md`
-- `.github/templates/test-result-report-template.md`
 
-When validating or retesting an implementation, follow the workflow in
-`.github/skills/implementation-validation.md`.
+## Output templates
+
+- For every failed Test Case, use
+  `.github/templates/test-failure-report-template.md`.
+- For every completed or blocked validation run, use
+  `.github/templates/test-result-report-template.md`.
 
 ## Output
 

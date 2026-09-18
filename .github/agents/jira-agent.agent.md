@@ -46,22 +46,29 @@ Determine the requested mode before acting and do not mix responsibilities:
   execution state, concise Test Result summaries, failure summaries, and
   human-authorized overrides after Jira work items exist.
 
-## Required references
+## Required standards
 
-Follow these files instead of embedding procedure details here:
+For all Jira operations, comply with:
 
 - `.github/standards/jira-standard.md`
-- `.github/skills/jira-work-item-creation.md`
-- `.github/skills/jira-status-synchronization.md`
-- `.github/templates/jira-creation-preview-template.md`
-- `.github/templates/jira-mapping-summary-template.md`
-- `.github/templates/jira-issue-content-template.md`
-- `.github/templates/jira-status-sync-report-template.md`
-- `.github/templates/jira-blocked-report-template.md`
+- `.github/standards/traceability-standard.md`
+- all other applicable repository-wide standards in `.github/standards/`
 
-Also follow repository-wide standards in `.github/standards/` and preserve the
-approved source artifacts under `docs/requirements/`, `docs/planning/`, and
-`docs/test-design/`.
+## Output templates
+
+- For a creation preview, use
+  `.github/templates/jira-creation-preview-template.md`.
+- For Jira Epic, Story, Task, or Sub-task content, use
+  `.github/templates/jira-issue-content-template.md`.
+- For final creation mappings, use
+  `.github/templates/jira-mapping-summary-template.md`.
+- For a status synchronization result, use
+  `.github/templates/jira-status-sync-report-template.md`.
+- When Jira work is blocked or conflicts cannot be safely resolved, use
+  `.github/templates/jira-blocked-report-template.md`.
+
+Preserve the approved source artifacts under `docs/requirements/`,
+`docs/planning/`, and `docs/test-design/`.
 
 ## Non-negotiable rules
 
