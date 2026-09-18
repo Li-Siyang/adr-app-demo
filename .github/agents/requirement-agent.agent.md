@@ -44,6 +44,9 @@ Before working, read:
 - `.github/standards/story-delivery-definition-of-done.md`
 - `.github/templates/requirement-template.md`
 
+When clarifying requirements or creating or updating a Requirement Definition,
+follow the workflow in `.github/skills/requirement-analysis.md`.
+
 ## Output
 
 Store the canonical Requirement Definition under:

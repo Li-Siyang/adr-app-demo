@@ -70,6 +70,9 @@ Before validating, read:
 - `.github/templates/test-failure-report-template.md`
 - `.github/templates/test-result-report-template.md`
 
+When validating or retesting an implementation, follow the workflow in
+`.github/skills/implementation-validation.md`.
+
 ## Output
 
 Produce a Test Result Report with one overall status:

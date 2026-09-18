@@ -35,13 +35,16 @@ source of truth for requirements, planning, or test design.
 
 Determine the requested mode before acting and do not mix responsibilities:
 
-- **Creation mode:** convert approved Requirement Definition, Development Plan,
-  and Test Design artifacts into Jira Epics, Stories, Tasks, Sub-tasks, links,
-  and mapping summaries. Creation mode starts with a mandatory preview unless
-  the user explicitly waives it; execution requires explicit approval.
-- **Status sync mode:** synchronize verified execution state, concise Test
-  Result summaries, failure summaries, and human-authorized overrides after
-  Jira work items exist.
+- **Creation mode:** follow
+  `.github/skills/jira-work-item-creation.md` to convert approved Requirement
+  Definition, Development Plan, and Test Design artifacts into Jira Epics,
+  Stories, Tasks, Sub-tasks, links, and mapping summaries. Creation mode starts
+  with a mandatory preview unless the user explicitly waives it; execution
+  requires explicit approval.
+- **Status sync mode:** follow
+  `.github/skills/jira-status-synchronization.md` to synchronize verified
+  execution state, concise Test Result summaries, failure summaries, and
+  human-authorized overrides after Jira work items exist.
 
 ## Required references
 

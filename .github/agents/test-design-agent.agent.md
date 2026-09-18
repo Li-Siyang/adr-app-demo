@@ -70,6 +70,9 @@ Before designing tests, read:
 - `.github/templates/test-scenario-template.md`
 - `.github/templates/test-case-template.md`
 
+When designing tests or creating or updating a Test Design, follow the workflow
+in `.github/skills/test-design-analysis.md`.
+
 ## Output
 
 Store Test Design under:

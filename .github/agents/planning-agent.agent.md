@@ -72,6 +72,9 @@ Before planning, read:
 - `.github/templates/story-template.md`
 - `.github/templates/task-template.md`
 
+When analyzing requirements or creating or updating a Development Plan, follow
+the workflow in `.github/skills/planning-analysis.md`.
+
 ## Output
 
 Store the Development Plan under:
