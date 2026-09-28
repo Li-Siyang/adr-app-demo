@@ -61,7 +61,7 @@
       </section>
 
       <section aria-labelledby="create-record-title">
-        <h2 id="create-record-title">Create a Draft</h2>
+        <h2 id="create-record-title">Create or edit a Draft</h2>
         <form id="record-form">
           <label>Title <input name="title" required></label>
           <label>Context <textarea name="context" required></textarea></label>
@@ -78,7 +78,12 @@
           <label>Tags (one or more, comma separated)
             <input name="tags" required>
           </label>
-          <button type="submit">Save Draft</button>
+          <div class="button-row">
+            <button type="submit">Save Draft</button>
+            <button id="cancel-edit" class="secondary" type="button" hidden>
+              Cancel edit
+            </button>
+          </div>
           <p id="record-form-message" class="error" aria-live="polite"></p>
         </form>
       </section>

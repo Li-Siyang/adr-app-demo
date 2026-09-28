@@ -7,12 +7,21 @@ from app.audit import AuditChange, AuditEvent, AuditEventStore, AuditEventType
 from app.governance import (
     change_approver_designation,
     designated_approver_snapshot,
+    governance_lock,
     is_administrator,
     is_designated_approver,
     role_permissions,
 )
 from app.identities import MOCK_IDENTITIES, MockIdentity, find_mock_identity
-from app.records import DecisionRecord, DecisionRecordCreate, DecisionRecordStore
+from app.records import (
+    DecisionRecord,
+    DecisionRecordCreate,
+    DecisionRecordStore,
+    DecisionRecordUpdate,
+    DraftSubmissionError,
+    RecordActionError,
+    RecordNotFoundError,
+)
 
 MOCK_IDENTITY_COOKIE = "adr_mock_identity"
 
@@ -207,6 +216,25 @@ def get_decision_record(record_id: str, request: Request) -> DecisionRecord:
     return record
 
 
+def raise_record_action_error(error: Exception) -> None:
+    if isinstance(error, RecordNotFoundError):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The decision record does not exist.",
+        ) from error
+    if isinstance(error, PermissionError):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(error),
+        ) from error
+    if isinstance(error, RecordActionError):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(error),
+        ) from error
+    raise error
+
+
 @router.post(
     "/decision-records",
     response_model=DecisionRecord,
@@ -227,16 +255,72 @@ def create_decision_record(
         ) from error
 
 
+@router.put("/decision-records/{record_id}", response_model=DecisionRecord)
+def update_decision_record(
+    record_id: str,
+    payload: DecisionRecordUpdate,
+    request: Request,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> DecisionRecord:
+    author = require_selected_identity(selected_identity_id)
+    try:
+        return get_record_store(request).update(record_id, payload, author)
+    except ValueError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(error),
+        ) from error
+    except (RecordNotFoundError, PermissionError, RecordActionError) as error:
+        raise_record_action_error(error)
+
+
+@router.post(
+    "/decision-records/{record_id}/submit",
+    response_model=DecisionRecord,
+)
+def submit_decision_record(
+    record_id: str,
+    request: Request,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> DecisionRecord:
+    author = require_selected_identity(selected_identity_id)
+    try:
+        with governance_lock:
+            return get_record_store(request).submit(
+                record_id,
+                author,
+                has_designated_approver=bool(designated_approver_snapshot()),
+            )
+    except DraftSubmissionError as error:
+        detail: dict[str, object] = {
+            "message": "The Draft cannot be submitted.",
+            "missing_fields": error.missing_fields,
+        }
+        if error.approver_required:
+            detail["approver"] = (
+                "At least one designated approver must be designated before "
+                "submitting this Draft."
+            )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=detail,
+        ) from error
+    except (RecordNotFoundError, PermissionError, RecordActionError) as error:
+        raise_record_action_error(error)
+
+
 @router.get("/governance/permissions", response_model=GovernancePermissions)
 def get_governance_permissions(
     selected_identity_id: SelectedIdentityCookie = None,
 ) -> GovernancePermissions:
     identity = require_selected_identity(selected_identity_id)
-    return GovernancePermissions(
-        identity=identity,
-        designated_approver=is_designated_approver(identity),
-        permissions=sorted(role_permissions(identity)),
-    )
+    # One locked snapshot keeps the flag and permission list consistent.
+    with governance_lock:
+        return GovernancePermissions(
+            identity=identity,
+            designated_approver=is_designated_approver(identity),
+            permissions=sorted(role_permissions(identity)),
+        )
 
 
 @router.get("/approvers", response_model=ApproverList)
