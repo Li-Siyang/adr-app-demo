@@ -85,21 +85,35 @@ Validation status controls PR readiness:
 ## Test Result Report output
 
 For every completed or blocked validation run, create and save the
-Test Result Report in `docs/test-results/` using
+Test Result Report in `docs/test-results/story-NNN/details/` using
 `.github/templates/test-result-report-template.md`. Do not leave the report
 only in the chat response.
 
 Name each report
 `TR-NNN-story-NNN-<short-scope>.md`, where the first `NNN` is the next
-unused, zero-padded Test Run ID in `docs/test-results/`, the second `NNN` is
-the Story ID, and `<short-scope>` is a concise kebab-case description. For
-example: `docs/test-results/TR-010-story-012-archive-restore.md`.
+unused, zero-padded Test Run ID across `docs/test-results/`, the second
+`NNN` is the Story ID, and `<short-scope>` is a concise kebab-case
+description. For example:
+`docs/test-results/story-012/details/TR-014-story-012-archive-restore.md`.
 
 Include the Test Run ID, Story ID, overall status, recommendation, and exact
 validated commit SHA in the report. If validation is blocked before a commit
 can be identified, record the available branch/commit information and state
 why no exact SHA could be validated. Link or report the saved file path in the
 validation handoff so PR delivery can verify the evidence.
+
+Maintain a stable per-Story entry point at
+`docs/test-results/story-NNN/STORY-NNN-validation-status.md` alongside the
+individual run reports in `details/`. When saving a new report, update this
+page with the latest run's status, recommendation, exact validated commit,
+report link, and a chronological history of report links and outcomes. Keep
+all prior reports unchanged. Distinguish the result of the last run from
+whether it still applies to the current production code: if production code
+changes after a passing run, mark review readiness as pending independent
+retest until a new run passes. Do not infer validity merely from a report's
+filename or a later documentation-only commit; compare the production
+changes against the validated commit. Link the stable entry point in the
+validation handoff.
 
 ## Failure classification use
 
