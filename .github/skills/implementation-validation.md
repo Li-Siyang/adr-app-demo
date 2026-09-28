@@ -101,6 +101,18 @@ can be identified, record the available branch/commit information and state
 why no exact SHA could be validated. Link or report the saved file path in the
 validation handoff so PR delivery can verify the evidence.
 
+Maintain a stable per-Story entry point at
+`docs/test-results/STORY-NNN-validation-status.md` alongside the individual
+run reports. When saving a new report, update this page with the latest run's
+status, recommendation, exact validated commit, report link, and a chronological
+history of report links and outcomes. Keep all prior reports unchanged.
+Distinguish the result of the last run from whether it still applies to the
+current production code: if production code changes after a passing run, mark
+review readiness as pending independent retest until a new run passes. Do not
+infer validity merely from a report's filename or a later documentation-only
+commit; compare the production changes against the validated commit. Link the
+stable entry point in the validation handoff.
+
 ## Failure classification use
 
 Classify every failed Test Case using the classifications defined in
