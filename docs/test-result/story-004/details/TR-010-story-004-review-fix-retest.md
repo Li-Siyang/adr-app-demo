@@ -3,7 +3,7 @@
 **Test Run ID:** TR-010
 **Story:** STORY-004
 **Validated commit:** `74d79c06f1580edf1cabcb5adf4a57ab94827022`
-**Report path:** `docs/test-results/TR-010-story-004-review-fix-retest.md`
+**Report path:** `docs/test-result/story-004/details/TR-010-story-004-review-fix-retest.md`
 
 ## Overall Status
 

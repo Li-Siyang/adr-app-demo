@@ -3,7 +3,7 @@
 **Test Run ID:** TR-012
 **Story:** STORY-004
 **Validated commit:** `68d316139717a6cf00a29f3fb698bf9d65a10427`
-**Report path:** `docs/test-results/TR-012-story-004-browser-validation.md`
+**Report path:** `docs/test-result/story-004/details/TR-012-story-004-browser-validation.md`
 
 ## Overall Status
 
