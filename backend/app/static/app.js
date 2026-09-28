@@ -9,13 +9,16 @@ const requiredFields = [...recordForm.querySelectorAll("[required]")];
 const tagFilter = document.querySelector("#tag-filter");
 const recordList = document.querySelector("#record-list");
 const recordListMessage = document.querySelector("#record-list-message");
+const decisionMessage = document.querySelector("#decision-message");
 const cancelEdit = document.querySelector("#cancel-edit");
 
 let availableTags = [];
 let latestRecordRequest = 0;
 let selectedIdentityId = null;
+let selectedCanDecideProposals = false;
 let editingRecordId = null;
 let editingOwnerId = null;
+let editingStatus = null;
 
 function roleName(role) {
   return role
@@ -82,6 +85,7 @@ function setEditingMode(isEditing) {
 function resetForm() {
   editingRecordId = null;
   editingOwnerId = null;
+  editingStatus = null;
   recordForm.reset();
   setEditingMode(false);
   cancelEdit.hidden = true;
@@ -91,6 +95,7 @@ function resetForm() {
 function beginEdit(record) {
   editingRecordId = record.id;
   editingOwnerId = record.owner.id;
+  editingStatus = record.status;
   setEditingMode(true);
   for (const field of [
     "title",
@@ -147,6 +152,42 @@ async function submitDraft(record, submitButton) {
   await loadRecords(tagFilter.value);
 }
 
+async function decideProposal(record, outcome, decisionButton) {
+  decisionButton.disabled = true;
+  decisionMessage.className = "";
+  decisionMessage.textContent = "";
+  try {
+    const response = await fetch(
+      `/api/decision-records/${record.id}/decision`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ outcome }),
+      },
+    );
+    if (!response.ok) {
+      let message = `Proposal could not be ${outcome.toLowerCase()}.`;
+      try {
+        message = apiErrorMessage(await response.json(), message);
+      } catch {
+        // Keep the generic message when the server response is not JSON.
+      }
+      decisionMessage.className = "error";
+      decisionMessage.textContent = message;
+      decisionButton.disabled = false;
+      return;
+    }
+
+    decisionMessage.textContent = `Proposal ${outcome.toLowerCase()}.`;
+    await loadRecords(tagFilter.value);
+  } catch {
+    decisionMessage.className = "error";
+    decisionMessage.textContent =
+      `Proposal could not be ${outcome.toLowerCase()}. Please try again.`;
+    decisionButton.disabled = false;
+  }
+}
+
 function renderRecords(records) {
   recordList.replaceChildren(
     ...records.map((record) => {
@@ -166,7 +207,7 @@ function renderRecords(records) {
 
       const editable =
         record.author.id === selectedIdentityId &&
-        record.status === "Draft" &&
+        ["Draft", "Proposed"].includes(record.status) &&
         !record.abandoned;
       if (editable) {
         const actions = document.createElement("div");
@@ -174,13 +215,33 @@ function renderRecords(records) {
         const edit = document.createElement("button");
         edit.type = "button";
         edit.className = "secondary";
-        edit.textContent = "Edit Draft";
+        edit.textContent =
+          record.status === "Proposed" ? "Edit proposal" : "Edit Draft";
         edit.addEventListener("click", () => beginEdit(record));
-        const submit = document.createElement("button");
-        submit.type = "button";
-        submit.textContent = "Submit Draft";
-        submit.addEventListener("click", () => submitDraft(record, submit));
-        actions.append(edit, submit);
+        actions.append(edit);
+        if (record.status === "Draft") {
+          const submit = document.createElement("button");
+          submit.type = "button";
+          submit.textContent = "Submit Draft";
+          submit.addEventListener("click", () => submitDraft(record, submit));
+          actions.append(submit);
+        }
+        article.append(actions);
+      }
+      if (record.status === "Proposed" && selectedCanDecideProposals) {
+        const actions = document.createElement("div");
+        actions.className = "record-actions";
+        for (const outcome of ["Accepted", "Rejected"]) {
+          const decide = document.createElement("button");
+          decide.type = "button";
+          decide.textContent = outcome === "Accepted"
+            ? "Accept proposal"
+            : "Reject proposal";
+          decide.addEventListener("click", () =>
+            decideProposal(record, outcome, decide),
+          );
+          actions.append(decide);
+        }
         article.append(actions);
       }
       return article;
@@ -256,6 +317,16 @@ async function loadContext() {
   roles.textContent = `Configured roles: ${identity.roles.map(roleName).join(", ")}`;
   identityContext.append(title, roles);
 
+  const permissionResponse = await fetch("/api/governance/permissions");
+  if (permissionResponse.ok) {
+    const permissions = await permissionResponse.json();
+    selectedCanDecideProposals = permissions.designated_approver;
+  } else {
+    decisionMessage.className = "error";
+    decisionMessage.textContent =
+      "Review permissions could not be loaded; decision actions are unavailable.";
+  }
+
   await loadRecords();
 
   const attributionResponse = await fetch("/api/attribution-preview");
@@ -310,6 +381,7 @@ recordForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   saveDraft.disabled = true;
   recordFormMessage.textContent = "";
+  const restartedReview = editingStatus === "Proposed";
   const formData = new FormData(recordForm);
   const payload = Object.fromEntries(formData.entries());
   payload.tags = payload.tags.split(",").map((tag) => tag.trim());
@@ -341,7 +413,9 @@ recordForm.addEventListener("submit", async (event) => {
     updateTagOptions(payload.tags);
     resetForm();
     recordFormMessage.className = "";
-    recordFormMessage.textContent = "Draft saved.";
+    recordFormMessage.textContent = restartedReview
+      ? "Proposal changes saved. It returned to Draft and must be resubmitted for review."
+      : "Draft saved.";
     await loadRecords(tagFilter.value);
   } finally {
     saveDraft.disabled = false;

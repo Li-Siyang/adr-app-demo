@@ -2,7 +2,8 @@
 
 This FastAPI application implements the STORY-001 Mock identity entry flow,
 the STORY-003 structured Draft creation flow, the STORY-004 author editing
-and guarded Draft submission flow, and STORY-009 exact-tag record discovery.
+and guarded Draft submission flow, STORY-005 proposal decisions and review
+restart after author edits, and STORY-009 exact-tag record discovery.
 STORY-015 provides append-only audit-event storage and read-only retrieval for
 governed actions.
 Identity selection is intentionally not authentication and does not create an
@@ -11,9 +12,11 @@ access-control boundary.
 Drafts are retained in the application process for this demonstration. They
 capture the selected Mock identity as author, a distinct configured owner,
 required decision context, one or more tags, and the demo-data boundary notice.
-Authors can edit their own eligible Drafts. Submission changes a complete,
-non-abandoned Draft to Proposed only when at least one designated approver
-exists.
+Authors can edit their own eligible Drafts and Proposed records. Editing a
+Proposed record returns it to Draft and requires resubmission. Only designated
+approvers can accept or reject a Proposed record, including when they authored
+it; Rejected records are immutable. Decisions and review restarts are serialized
+with approver changes and recorded as attributed lifecycle audit events.
 Users operating under a selected Mock identity can list all retained records or
 apply one exact tag filter. Tag discovery does not exclude records based on
 lifecycle or archival condition.

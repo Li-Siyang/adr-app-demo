@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeoutError
+from pathlib import Path
 from threading import Event
 
 import pytest
@@ -20,9 +21,9 @@ from app.records import (
 
 
 @pytest.fixture
-def client() -> Iterator[TestClient]:
+def client(tmp_path: Path) -> Iterator[TestClient]:
     designated_approver_ids.clear()
-    with TestClient(create_app()) as test_client:
+    with TestClient(create_app(tmp_path / "audit.sqlite3")) as test_client:
         test_client.post("/api/mock-session", json={"identity_id": "maya-member"})
         yield test_client
     designated_approver_ids.clear()
@@ -318,7 +319,7 @@ def test_draft_edit_cannot_transfer_ownership(client: TestClient) -> None:
     assert retained["owner"] == created["owner"]
 
 
-def test_submitted_record_cannot_be_edited_or_submitted_again(
+def test_submitted_record_cannot_be_resubmitted_without_an_edit(
     client: TestClient,
 ) -> None:
     created = client.post("/api/decision-records", json=complete_payload()).json()
@@ -330,12 +331,16 @@ def test_submitted_record_cannot_be_edited_or_submitted_again(
 
     edit = client.put(
         f"/api/decision-records/{created['id']}",
-        json={"title": "Changed after submission"},
+        json={},
     )
     resubmit = client.post(f"/api/decision-records/{created['id']}/submit")
 
-    assert edit.status_code == 409
+    assert edit.status_code == 200
+    assert edit.json()["status"] == "Proposed"
     assert resubmit.status_code == 409
+    assert client.get(f"/api/decision-records/{created['id']}").json()["status"] == (
+        "Proposed"
+    )
 
 
 def test_submission_and_approver_removal_are_serialized(
@@ -388,3 +393,266 @@ def test_submission_and_approver_removal_are_serialized(
     assert client.get(f"/api/decision-records/{created['id']}").json()["status"] == (
         "Proposed"
     )
+
+
+def propose_record(client: TestClient) -> dict[str, object]:
+    created = client.post("/api/decision-records", json=complete_payload()).json()
+    designated_approver_ids.add("arun-approver")
+    submitted = client.post(f"/api/decision-records/{created['id']}/submit")
+    assert submitted.status_code == 200
+    return submitted.json()
+
+
+@pytest.mark.parametrize("outcome", ["Accepted", "Rejected"])
+def test_designated_approver_can_decide_and_transition_is_audited(
+    client: TestClient,
+    outcome: str,
+) -> None:
+    proposed = propose_record(client)
+    client.post("/api/mock-session", json={"identity_id": "arun-approver"})
+
+    response = client.post(
+        f"/api/decision-records/{proposed['id']}/decision",
+        json={"outcome": outcome},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == outcome
+    events = client.get(
+        f"/api/decision-records/{proposed['id']}/audit-events"
+    ).json()["events"]
+    lifecycle_event = next(
+        event for event in events if event["changes"][0]["field"] == "status"
+    )
+    assert lifecycle_event["actor"]["id"] == "arun-approver"
+    assert lifecycle_event["changes"][0] == {
+        "field": "status",
+        "before": "Proposed",
+        "after": outcome,
+    }
+
+
+@pytest.mark.parametrize("outcome", ["Accepted", "Rejected"])
+def test_non_approver_cannot_decide_a_proposal(
+    client: TestClient,
+    outcome: str,
+) -> None:
+    proposed = propose_record(client)
+
+    response = client.post(
+        f"/api/decision-records/{proposed['id']}/decision",
+        json={"outcome": outcome},
+    )
+
+    assert response.status_code == 403
+    assert client.get(f"/api/decision-records/{proposed['id']}").json() == proposed
+
+
+def test_non_author_cannot_edit_a_proposed_record(client: TestClient) -> None:
+    proposed = propose_record(client)
+    client.post("/api/mock-session", json={"identity_id": "arun-approver"})
+
+    response = client.put(
+        f"/api/decision-records/{proposed['id']}",
+        json={"title": "Unauthorized proposal edit"},
+    )
+
+    assert response.status_code == 403
+    assert client.get(f"/api/decision-records/{proposed['id']}").json() == proposed
+
+
+def test_decision_requires_a_selected_identity_and_supported_outcome(
+    client: TestClient,
+) -> None:
+    proposed = propose_record(client)
+    with TestClient(client.app) as anonymous:
+        missing_identity = anonymous.post(
+            f"/api/decision-records/{proposed['id']}/decision",
+            json={"outcome": "Accepted"},
+        )
+    invalid_outcome = client.post(
+        f"/api/decision-records/{proposed['id']}/decision",
+        json={"outcome": "Pending"},
+    )
+
+    assert missing_identity.status_code == 400
+    assert invalid_outcome.status_code == 422
+    assert client.get(f"/api/decision-records/{proposed['id']}").json() == proposed
+
+
+@pytest.mark.parametrize("outcome", ["Accepted", "Rejected"])
+def test_author_may_decide_their_proposal_when_designated(
+    client: TestClient,
+    outcome: str,
+) -> None:
+    proposed = client.post("/api/decision-records", json=complete_payload()).json()
+    designated_approver_ids.add("maya-member")
+    assert (
+        client.post(f"/api/decision-records/{proposed['id']}/submit").status_code
+        == 200
+    )
+
+    response = client.post(
+        f"/api/decision-records/{proposed['id']}/decision",
+        json={"outcome": outcome},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == outcome
+
+
+def test_proposed_author_edit_restarts_review_and_allows_resubmission(
+    client: TestClient,
+) -> None:
+    proposed = propose_record(client)
+    response = client.put(
+        f"/api/decision-records/{proposed['id']}",
+        json={"title": "Revised service boundary"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["title"] == "Revised service boundary"
+    assert response.json()["status"] == "Draft"
+
+    client.post("/api/mock-session", json={"identity_id": "arun-approver"})
+    blocked_decision = client.post(
+        f"/api/decision-records/{proposed['id']}/decision",
+        json={"outcome": "Accepted"},
+    )
+    assert blocked_decision.status_code == 409
+
+    client.post("/api/mock-session", json={"identity_id": "maya-member"})
+    resubmitted = client.post(f"/api/decision-records/{proposed['id']}/submit")
+    assert resubmitted.status_code == 200
+    assert resubmitted.json()["status"] == "Proposed"
+    client.post("/api/mock-session", json={"identity_id": "arun-approver"})
+    accepted = client.post(
+        f"/api/decision-records/{proposed['id']}/decision",
+        json={"outcome": "Accepted"},
+    )
+    assert accepted.status_code == 200
+    events = client.get(
+        f"/api/decision-records/{proposed['id']}/audit-events"
+    ).json()["events"]
+    restart = next(
+        event
+        for event in events
+        if any(
+            change == {
+                "field": "status",
+                "before": "Proposed",
+                "after": "Draft",
+            }
+            for change in event["changes"]
+        )
+    )
+    assert restart["actor"]["id"] == "maya-member"
+    assert {
+        "field": "title",
+        "before": "Adopt the service boundary",
+        "after": "Revised service boundary",
+    } in restart["changes"]
+
+
+@pytest.mark.parametrize("terminal_status", ["Rejected", "Superseded"])
+def test_terminal_record_is_immutable_for_every_mock_identity(
+    client: TestClient,
+    terminal_status: str,
+) -> None:
+    proposed = propose_record(client)
+    if terminal_status == "Rejected":
+        client.post("/api/mock-session", json={"identity_id": "arun-approver"})
+        terminal = client.post(
+            f"/api/decision-records/{proposed['id']}/decision",
+            json={"outcome": "Rejected"},
+        ).json()
+    else:
+        store = client.app.state.record_store
+        record = store.get(str(proposed["id"]))
+        assert record is not None
+        store._records[record.id] = record.model_copy(update={"status": "Superseded"})
+        terminal = client.get(f"/api/decision-records/{proposed['id']}").json()
+
+    for identity in MOCK_IDENTITIES:
+        client.post("/api/mock-session", json={"identity_id": identity.id})
+        update = client.put(
+            f"/api/decision-records/{proposed['id']}",
+            json={"title": "Forbidden change"},
+        )
+        submit = client.post(f"/api/decision-records/{proposed['id']}/submit")
+        decide = client.post(
+            f"/api/decision-records/{proposed['id']}/decision",
+            json={"outcome": "Accepted"},
+        )
+        assert update.status_code == 409
+        assert submit.status_code == 409
+        assert decide.status_code in (403, 409)
+        assert client.get(f"/api/decision-records/{proposed['id']}").json() == terminal
+
+
+def test_concurrent_conflicting_decisions_commit_one_outcome(
+    client: TestClient,
+) -> None:
+    proposed = propose_record(client)
+    designated_approver_ids.add("lee-admin-approver")
+
+    def decide(identity_id: str, outcome: str) -> httpx.Response:
+        with TestClient(client.app) as actor_client:
+            actor_client.post(
+                "/api/mock-session",
+                json={"identity_id": identity_id},
+            )
+            return actor_client.post(
+                f"/api/decision-records/{proposed['id']}/decision",
+                json={"outcome": outcome},
+            )
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        accepted = executor.submit(decide, "arun-approver", "Accepted")
+        rejected = executor.submit(decide, "lee-admin-approver", "Rejected")
+        responses = [accepted.result(), rejected.result()]
+
+    assert sorted(response.status_code for response in responses) == [200, 409]
+    record = client.get(f"/api/decision-records/{proposed['id']}").json()
+    assert record["status"] in ("Accepted", "Rejected")
+    assert sum(
+        event["changes"][0]["field"] == "status"
+        and event["changes"][0]["before"] == "Proposed"
+        for event in client.get(
+            f"/api/decision-records/{proposed['id']}/audit-events"
+        ).json()["events"]
+    ) == 1
+
+
+@pytest.mark.parametrize("action", ["edit", "decision"])
+def test_audit_failure_does_not_commit_proposal_transition(
+    action: str,
+) -> None:
+    store = DecisionRecordStore()
+    author = MOCK_IDENTITIES[0]
+    record = store.create(DecisionRecordCreate(**complete_payload()), author)
+    proposed = store.submit(
+        record.id,
+        author,
+        has_designated_approver=True,
+    )
+
+    def fail_audit(*_: object) -> None:
+        raise OSError("audit store unavailable")
+
+    with pytest.raises(OSError, match="audit store unavailable"):
+        if action == "edit":
+            store.update(
+                record.id,
+                DecisionRecordUpdate(title="Edited proposal"),
+                author,
+                record_change=fail_audit,
+            )
+        else:
+            store.decide(
+                record.id,
+                "Accepted",
+                record_change=fail_audit,
+            )
+
+    assert store.get(record.id) == proposed
