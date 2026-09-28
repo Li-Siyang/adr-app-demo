@@ -3,7 +3,7 @@
 **Test Run ID:** TR-011
 **Story:** STORY-004
 **Validated commit:** `37737fe520551d332f9625bd54e99bb3da6300ac`
-**Report path:** `docs/test-result/story-004/details/TR-011-story-004-review-fix-retest.md`
+**Report path:** `docs/test-results/story-004/details/TR-011-story-004-review-fix-retest.md`
 
 ## Overall Status
 

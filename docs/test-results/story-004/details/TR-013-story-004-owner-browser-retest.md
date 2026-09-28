@@ -3,7 +3,7 @@
 **Test Run ID:** TR-013
 **Story:** STORY-004
 **Validated commit:** `660d896898b359492e74d73140accfb208233f82`
-**Report path:** `docs/test-result/story-004/details/TR-013-story-004-owner-browser-retest.md`
+**Report path:** `docs/test-results/story-004/details/TR-013-story-004-owner-browser-retest.md`
 
 ## Overall Status
 
