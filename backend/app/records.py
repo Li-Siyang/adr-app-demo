@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import date, datetime, timezone
 from threading import Lock
 from typing import Literal
@@ -195,6 +196,8 @@ class DecisionRecordStore:
         record_id: str,
         payload: DecisionRecordUpdate,
         actor: MockIdentity,
+        *,
+        record_change: Callable[[DecisionRecord, DecisionRecord], None] | None = None,
     ) -> DecisionRecord:
         updates = payload.model_dump(exclude_unset=True)
 
@@ -203,9 +206,35 @@ class DecisionRecordStore:
             if record is None:
                 raise RecordNotFoundError
             self._require_editable_by_author(record, actor)
+            restart_review = record.status == "Proposed" and bool(updates)
+            if restart_review:
+                updates["status"] = "Draft"
             updated = record.model_copy(update=updates)
+            if restart_review and record_change is not None:
+                record_change(record, updated)
             self._records[record_id] = updated
             return updated
+
+    def decide(
+        self,
+        record_id: str,
+        outcome: Literal["Accepted", "Rejected"],
+        *,
+        record_change: Callable[[DecisionRecord, DecisionRecord], None],
+    ) -> DecisionRecord:
+        with self._lock:
+            record = self._records.get(record_id)
+            if record is None:
+                raise RecordNotFoundError
+            if record.status != "Proposed":
+                raise RecordActionError(
+                    "Only a Proposed record can be accepted or rejected."
+                )
+
+            decided = record.model_copy(update={"status": outcome})
+            record_change(record, decided)
+            self._records[record_id] = decided
+            return decided
 
     def submit(
         self,
@@ -218,6 +247,10 @@ class DecisionRecordStore:
             record = self._records.get(record_id)
             if record is None:
                 raise RecordNotFoundError
+            if record.status != "Draft":
+                if record.status == "Rejected":
+                    raise RecordActionError("Rejected records are immutable.")
+                raise RecordActionError("Only a Draft can be submitted.")
             self._require_editable_by_author(record, actor)
 
             missing_fields = [
@@ -244,10 +277,14 @@ class DecisionRecordStore:
             raise RecordActionError(
                 "An Abandoned replacement Draft cannot be edited or submitted."
             )
-        if record.status != "Draft":
-            raise RecordActionError("Only a Draft can be edited or submitted.")
+        if record.status == "Rejected":
+            raise RecordActionError("Rejected records are immutable.")
+        if record.status not in ("Draft", "Proposed"):
+            raise RecordActionError("Only a Draft or Proposed record can be edited.")
         if record.author.id != actor.id:
-            raise PermissionError("Only the Draft author may perform this action.")
+            raise PermissionError(
+                "Only the record author may edit a Draft or Proposed record."
+            )
 
     @staticmethod
     def _is_missing(value: object) -> bool:

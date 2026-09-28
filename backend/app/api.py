@@ -1,4 +1,6 @@
-from typing import Annotated
+from datetime import date
+import json
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Cookie, HTTPException, Request, Response, status
 from pydantic import BaseModel
@@ -53,6 +55,10 @@ class ApproverDesignation(BaseModel):
     identity_id: str
 
 
+class DecisionSubmission(BaseModel):
+    outcome: Literal["Accepted", "Rejected"]
+
+
 class ApproverList(BaseModel):
     approvers: list[MockIdentity]
 
@@ -93,6 +99,47 @@ def get_record_store(request: Request) -> DecisionRecordStore:
 
 def get_audit_event_store(request: Request) -> AuditEventStore:
     return request.app.state.audit_event_store
+
+
+def audit_value(value: object) -> str | bool | None:
+    if value is None or isinstance(value, (str, bool)):
+        return value
+    if isinstance(value, date):
+        return value.isoformat()
+    if isinstance(value, list):
+        return json.dumps(value)
+    return str(value)
+
+
+def record_lifecycle_transition(
+    request: Request,
+    actor: MockIdentity,
+    before: DecisionRecord,
+    after: DecisionRecord,
+    *,
+    changed_fields: tuple[str, ...] = (),
+) -> None:
+    changes = [
+        AuditChange(field="status", before=before.status, after=after.status)
+    ]
+    for field in changed_fields:
+        before_value = getattr(before, field)
+        after_value = getattr(after, field)
+        if before_value != after_value:
+            changes.append(
+                AuditChange(
+                    field=field,
+                    before=audit_value(before_value),
+                    after=audit_value(after_value),
+                )
+            )
+    get_audit_event_store(request).record(
+        event_type=AuditEventType.LIFECYCLE_TRANSITIONED,
+        actor=actor,
+        subject_type="decision_record",
+        subject_id=before.id,
+        changes=changes,
+    )
 
 
 @router.get("/mock-identities", response_model=list[MockIdentity])
@@ -264,7 +311,21 @@ def update_decision_record(
 ) -> DecisionRecord:
     author = require_selected_identity(selected_identity_id)
     try:
-        return get_record_store(request).update(record_id, payload, author)
+        with governance_lock:
+            return get_record_store(request).update(
+                record_id,
+                payload,
+                author,
+                record_change=lambda before, after: record_lifecycle_transition(
+                    request,
+                    author,
+                    before,
+                    after,
+                    changed_fields=tuple(
+                        payload.model_dump(exclude_unset=True).keys()
+                    ),
+                ),
+            )
     except ValueError as error:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -272,6 +333,38 @@ def update_decision_record(
         ) from error
     except (RecordNotFoundError, PermissionError, RecordActionError) as error:
         raise_record_action_error(error)
+
+
+@router.post(
+    "/decision-records/{record_id}/decision",
+    response_model=DecisionRecord,
+)
+def decide_decision_record(
+    record_id: str,
+    decision: DecisionSubmission,
+    request: Request,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> DecisionRecord:
+    actor = require_selected_identity(selected_identity_id)
+    with governance_lock:
+        if not is_designated_approver(actor):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only a designated approver may decide a Proposed record.",
+            )
+        try:
+            return get_record_store(request).decide(
+                record_id,
+                decision.outcome,
+                record_change=lambda before, after: record_lifecycle_transition(
+                    request,
+                    actor,
+                    before,
+                    after,
+                ),
+            )
+        except (RecordNotFoundError, PermissionError, RecordActionError) as error:
+            raise_record_action_error(error)
 
 
 @router.post(
