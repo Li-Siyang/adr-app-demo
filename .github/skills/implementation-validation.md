@@ -82,6 +82,25 @@ Validation status controls PR readiness:
 - Any production change after a passing validation requires validation of the
   new commit before review.
 
+## Test Result Report output
+
+For every completed or blocked validation run, create and save the
+Test Result Report in `docs/test-results/` using
+`.github/templates/test-result-report-template.md`. Do not leave the report
+only in the chat response.
+
+Name each report
+`TR-NNN-story-NNN-<short-scope>.md`, where the first `NNN` is the next
+unused, zero-padded Test Run ID in `docs/test-results/`, the second `NNN` is
+the Story ID, and `<short-scope>` is a concise kebab-case description. For
+example: `docs/test-results/TR-010-story-012-archive-restore.md`.
+
+Include the Test Run ID, Story ID, overall status, recommendation, and exact
+validated commit SHA in the report. If validation is blocked before a commit
+can be identified, record the available branch/commit information and state
+why no exact SHA could be validated. Link or report the saved file path in the
+validation handoff so PR delivery can verify the evidence.
+
 ## Failure classification use
 
 Classify every failed Test Case using the classifications defined in
