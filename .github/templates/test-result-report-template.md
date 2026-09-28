@@ -1,5 +1,10 @@
 # Test Result Report
 
+**Test Run ID:** TR-NNN
+**Story:** STORY-NNN
+**Validated commit:** `<full commit SHA>`
+**Report path:** `docs/test-results/TR-NNN-story-NNN-<short-scope>.md`
+
 ## Overall Status
 
 PASSED / FAILED / BLOCKED

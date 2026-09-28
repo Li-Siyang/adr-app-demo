@@ -16,6 +16,14 @@ Verify that:
 
 If these conditions are not met, report the appropriate blocker.
 
+If a required Story dependency is not available, do not claim the Story is
+validated. Produce a `BLOCKED` Test Result Report naming the dependency and
+the affected validation scope. If the Story can be isolated using approved
+fixtures, mocks, or stubs, validate only that explicitly identified scope and
+record the untested integration scenarios. After the dependency becomes
+available, rerun all affected acceptance, integration, state-transition, and
+regression cases before recommending review.
+
 ### 2. Map approved Test Cases to execution
 
 For each approved Test Case, classify it as:
@@ -61,6 +69,37 @@ Never report a test as passed unless it was actually executed successfully.
 
 For each Test Case, compare the approved Expected Result with the Actual Result.
 Do not adjust Expected Result merely because implementation behaves differently.
+
+## Validation and PR status
+
+Validation status controls PR readiness:
+
+- `PASSED` for the current tested commit permits a Ready for Review request.
+- `FAILED`, `BLOCKED`, missing validation evidence, or a stale tested commit
+  prohibits Ready for Review.
+- A Draft PR may be opened for collaboration while validation is blocked, but
+  it must identify the blocker and remain a Draft.
+- Any production change after a passing validation requires validation of the
+  new commit before review.
+
+## Test Result Report output
+
+For every completed or blocked validation run, create and save the
+Test Result Report in `docs/test-results/` using
+`.github/templates/test-result-report-template.md`. Do not leave the report
+only in the chat response.
+
+Name each report
+`TR-NNN-story-NNN-<short-scope>.md`, where the first `NNN` is the next
+unused, zero-padded Test Run ID in `docs/test-results/`, the second `NNN` is
+the Story ID, and `<short-scope>` is a concise kebab-case description. For
+example: `docs/test-results/TR-010-story-012-archive-restore.md`.
+
+Include the Test Run ID, Story ID, overall status, recommendation, and exact
+validated commit SHA in the report. If validation is blocked before a commit
+can be identified, record the available branch/commit information and state
+why no exact SHA could be validated. Link or report the saved file path in the
+validation handoff so PR delivery can verify the evidence.
 
 ## Failure classification use
 

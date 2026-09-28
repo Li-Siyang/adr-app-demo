@@ -22,6 +22,11 @@ The lifecycle is:
 
 `Approved Requirement → Approved Plan → Approved Test Design → Jira baseline → Development → Unit Tests → Independent Validation → Fix/Retest → Validation PASS → PR → Reviewer → Human Review → Merge`
 
+PR delivery is validation-gated. A Draft PR may be opened for early
+collaboration when necessary, but it must remain a Draft and identify any
+validation or dependency blocker. Do not create or mark a PR Ready for Review
+without a `PASSED` Validation Agent report for the exact current commit.
+
 The parent/coordinator owns dispatch and cross-branch coordination; do not create, fork, delete, archive, or coordinate sessions. Never redefine approved product intent.
 
 # Explicit bindings
