@@ -1,4 +1,4 @@
-"""Test-Agent-owned acceptance tests for STORY-009 (TS-009).
+"""Validation-Agent-owned acceptance tests for STORY-009 (TS-009).
 
 Expected behavior is derived from the approved Requirement Definition and
 TEST-001 Test Design, not from the implementation.

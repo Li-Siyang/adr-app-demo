@@ -3,6 +3,8 @@
 This FastAPI application implements the STORY-001 Mock identity entry flow,
 the STORY-003 structured Draft creation flow, the STORY-004 author editing
 and guarded Draft submission flow, and STORY-009 exact-tag record discovery.
+STORY-015 provides append-only audit-event storage and read-only retrieval for
+governed actions.
 Identity selection is intentionally not authentication and does not create an
 access-control boundary.
 
@@ -15,6 +17,15 @@ exists.
 Users operating under a selected Mock identity can list all retained records or
 apply one exact tag filter. Tag discovery does not exclude records based on
 lifecycle or archival condition.
+Audit events are durably retained in `backend/data/audit.sqlite3` with the
+acting Mock identity, timestamp, subject, and immutable field-level changes.
+The existing approver designation flow records these events; later governed
+workflows can use the same audit store.
+
+Decision records and approver designations are process-local demonstration
+state, so this MVP must run as a single application process (the default
+`uvicorn app.main:app` invocation). Do not deploy multiple workers: governance
+state would diverge between workers even though audit history is shared.
 
 ## Run locally
 
