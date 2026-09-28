@@ -9,6 +9,7 @@ from collections.abc import Iterator
 import pytest
 from fastapi.testclient import TestClient
 
+from app.governance import designated_approver_ids
 from app.main import create_app
 
 AUTHOR = "maya-member"
@@ -36,6 +37,7 @@ PROHIBITED_DATA_PHRASES = (
 
 @pytest.fixture
 def client() -> Iterator[TestClient]:
+    designated_approver_ids.clear()
     with TestClient(create_app()) as test_client:
         assert (
             test_client.post(
@@ -44,6 +46,7 @@ def client() -> Iterator[TestClient]:
             == 200
         )
         yield test_client
+    designated_approver_ids.clear()
 
 
 def complete_draft() -> dict[str, object]:
@@ -160,6 +163,79 @@ def test_tc_003_02_every_missing_required_field_is_reported_together(
     }
     assert set(omitted).issubset(reported)
     assert stored_records(client) == []
+
+
+@pytest.mark.parametrize(
+    ("record_field", "missing_value"),
+    (
+        ("title", ""),
+        ("context", ""),
+        ("decision", ""),
+        ("rationale", ""),
+        ("alternatives_considered", ""),
+        ("consequences", ""),
+        ("owner", None),
+        ("decision_date", None),
+        ("tags", []),
+    ),
+)
+def test_tc_003_02_submission_rejects_each_incomplete_draft(
+    client: TestClient, record_field: str, missing_value: object
+) -> None:
+    """TC-003-02 / AC-004: an incomplete retained Draft cannot be submitted."""
+    created = client.post("/api/decision-records", json=complete_draft())
+    assert created.status_code == 201
+    record_id = str(created.json()["id"])
+    store = client.app.state.record_store
+    original = store.get(record_id)
+    assert original is not None
+
+    incomplete = original.model_copy(update={record_field: missing_value})
+    with store._lock:
+        store._records[record_id] = incomplete
+    designated_approver_ids.add("arun-approver")
+
+    response = client.post(f"/api/decision-records/{record_id}/submit")
+
+    assert response.status_code == 422
+    assert response.json()["detail"]["missing_fields"] == [record_field]
+    retained = store.get(record_id)
+    assert retained is not None
+    assert retained.status == "Draft"
+    assert getattr(retained, record_field) == missing_value
+
+
+def test_tc_003_02_submission_reports_all_missing_draft_fields_together(
+    client: TestClient,
+) -> None:
+    """TC-003-02 / AC-004: multiple omissions are reported without transition."""
+    created = client.post("/api/decision-records", json=complete_draft())
+    assert created.status_code == 201
+    record_id = str(created.json()["id"])
+    store = client.app.state.record_store
+    original = store.get(record_id)
+    assert original is not None
+
+    omitted = {
+        "title": "",
+        "rationale": "",
+        "owner": None,
+        "tags": [],
+    }
+    incomplete = original.model_copy(update=omitted)
+    with store._lock:
+        store._records[record_id] = incomplete
+    designated_approver_ids.add("arun-approver")
+
+    response = client.post(f"/api/decision-records/{record_id}/submit")
+
+    assert response.status_code == 422
+    assert set(response.json()["detail"]["missing_fields"]) == set(omitted)
+    retained = store.get(record_id)
+    assert retained is not None
+    assert retained.status == "Draft"
+    for field, value in omitted.items():
+        assert getattr(retained, field) == value
 
 
 @pytest.mark.parametrize("blank_field", ("title", "context", "decision", "rationale"))
