@@ -15,6 +15,7 @@ let availableTags = [];
 let latestRecordRequest = 0;
 let selectedIdentityId = null;
 let editingRecordId = null;
+let editingOwnerId = null;
 
 function roleName(role) {
   return role
@@ -80,6 +81,7 @@ function setEditingMode(isEditing) {
 
 function resetForm() {
   editingRecordId = null;
+  editingOwnerId = null;
   recordForm.reset();
   setEditingMode(false);
   cancelEdit.hidden = true;
@@ -88,6 +90,7 @@ function resetForm() {
 
 function beginEdit(record) {
   editingRecordId = record.id;
+  editingOwnerId = record.owner.id;
   setEditingMode(true);
   for (const field of [
     "title",
@@ -100,7 +103,7 @@ function beginEdit(record) {
   ]) {
     recordForm.elements[field].value = record[field];
   }
-  recordForm.elements.owner_id.value = record.owner.id;
+  recordOwner.value = editingOwnerId;
   recordForm.elements.tags.value = record.tags.join(", ");
   cancelEdit.hidden = false;
   saveDraft.textContent = "Save changes";
@@ -280,6 +283,9 @@ async function loadContext() {
       return option;
     }),
   );
+  if (editingOwnerId !== null) {
+    recordOwner.value = editingOwnerId;
+  }
   setEditingMode(editingRecordId !== null);
   saveDraft.disabled = false;
 }
