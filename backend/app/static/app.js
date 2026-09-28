@@ -5,6 +5,7 @@ const recordForm = document.querySelector("#record-form");
 const recordOwner = document.querySelector("#record-owner");
 const recordFormMessage = document.querySelector("#record-form-message");
 const saveDraft = recordForm.querySelector('button[type="submit"]');
+const requiredFields = [...recordForm.querySelectorAll("[required]")];
 const tagFilter = document.querySelector("#tag-filter");
 const recordList = document.querySelector("#record-list");
 const recordListMessage = document.querySelector("#record-list-message");
@@ -70,16 +71,24 @@ function disableDraftAuthoring(message) {
   recordFormMessage.textContent = message;
 }
 
+function setEditingMode(isEditing) {
+  for (const field of requiredFields) {
+    field.required = !isEditing;
+  }
+  recordOwner.disabled = isEditing;
+}
+
 function resetForm() {
   editingRecordId = null;
   recordForm.reset();
-  recordOwner.disabled = false;
+  setEditingMode(false);
   cancelEdit.hidden = true;
   saveDraft.textContent = "Save Draft";
 }
 
 function beginEdit(record) {
   editingRecordId = record.id;
+  setEditingMode(true);
   for (const field of [
     "title",
     "context",
@@ -92,7 +101,6 @@ function beginEdit(record) {
     recordForm.elements[field].value = record[field];
   }
   recordForm.elements.owner_id.value = record.owner.id;
-  recordOwner.disabled = true;
   recordForm.elements.tags.value = record.tags.join(", ");
   cancelEdit.hidden = false;
   saveDraft.textContent = "Save changes";
@@ -272,7 +280,7 @@ async function loadContext() {
       return option;
     }),
   );
-  recordOwner.disabled = false;
+  setEditingMode(editingRecordId !== null);
   saveDraft.disabled = false;
 }
 
