@@ -1,6 +1,7 @@
 # Test Result: STORY-009 Exact Tag Discovery
 
 **Test Run ID:** TR-009  
+**Report path:** `docs/test-results/story-009/details/TR-009-story-009-exact-tag-discovery.md`
 **Mode:** VALIDATION MODE  
 **Execution date:** 2026-09-11  
 **Initial implementation commit:** `270e8c09e547032cdafef997170c3f644bd62884`
