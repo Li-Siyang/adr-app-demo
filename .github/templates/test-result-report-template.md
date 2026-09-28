@@ -3,7 +3,7 @@
 **Test Run ID:** TR-NNN
 **Story:** STORY-NNN
 **Validated commit:** `<full commit SHA>`
-**Report path:** `docs/test-results/TR-NNN-story-NNN-<short-scope>.md`
+**Report path:** `docs/test-result/story-NNN/details/TR-NNN-story-NNN-<short-scope>.md`
 
 ## Overall Status
 
