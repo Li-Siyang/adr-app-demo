@@ -8,6 +8,7 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.governance import is_administrator
 from app.identities import MockIdentity, find_mock_identity
 
 
@@ -235,6 +236,40 @@ class DecisionRecordStore:
             record_change(record, decided)
             self._records[record_id] = decided
             return decided
+
+    def transfer_owner(
+        self,
+        record_id: str,
+        owner_id: str,
+        actor: MockIdentity,
+        *,
+        record_change: Callable[[DecisionRecord, DecisionRecord], None],
+    ) -> DecisionRecord:
+        with self._lock:
+            record = self._records.get(record_id)
+            if record is None:
+                raise RecordNotFoundError
+            if record.abandoned or record.status not in ("Draft", "Proposed"):
+                raise RecordActionError(
+                    "Only a non-Abandoned Draft or Proposed record can change owner."
+                )
+            if actor.id not in (record.author.id, record.owner.id) and not (
+                is_administrator(actor)
+            ):
+                raise PermissionError(
+                    "Only the author, owner, or an administrator may transfer ownership."
+                )
+            owner = find_mock_identity(owner_id)
+            if owner is None:
+                raise ValueError("The selected owner does not exist.")
+            if owner.id == record.owner.id:
+                raise RecordActionError(
+                    "Select a different owner to transfer ownership."
+                )
+            updated = record.model_copy(update={"owner": owner})
+            record_change(record, updated)
+            self._records[record_id] = updated
+            return updated
 
     def submit(
         self,

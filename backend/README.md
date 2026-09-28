@@ -3,7 +3,8 @@
 This FastAPI application implements the STORY-001 Mock identity entry flow,
 the STORY-003 structured Draft creation flow, the STORY-004 author editing
 and guarded Draft submission flow, STORY-005 proposal decisions and review
-restart after author edits, and STORY-009 exact-tag record discovery.
+restart after author edits, STORY-006 ownership transfer, and STORY-009
+exact-tag record discovery.
 STORY-015 provides append-only audit-event storage and read-only retrieval for
 governed actions.
 Identity selection is intentionally not authentication and does not create an
@@ -20,6 +21,13 @@ with approver changes and recorded as attributed lifecycle audit events.
 Users operating under a selected Mock identity can list all retained records or
 apply one exact tag filter. Tag discovery does not exclude records based on
 lifecycle or archival condition.
+The author, current owner, or administrator Mock identity may transfer an
+ordinary Draft or Proposed record to a different configured owner. The author
+remains unchanged, and the transfer is recorded with its acting identity and
+previous/new owner in the audit store. Terminal and Abandoned records cannot
+change owner. If an author leaves the modeled team, their record and author
+attribution remain; neither the owner nor administrator receives author-only
+editing permission as a result.
 Audit events are durably retained in `backend/data/audit.sqlite3` with the
 acting Mock identity, timestamp, subject, and immutable field-level changes.
 The existing approver designation flow records these events; later governed

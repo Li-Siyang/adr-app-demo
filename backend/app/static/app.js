@@ -10,12 +10,16 @@ const tagFilter = document.querySelector("#tag-filter");
 const recordList = document.querySelector("#record-list");
 const recordListMessage = document.querySelector("#record-list-message");
 const decisionMessage = document.querySelector("#decision-message");
+const transferMessage = document.querySelector("#transfer-message");
 const cancelEdit = document.querySelector("#cancel-edit");
 
 let availableTags = [];
+let availableOwners = [];
 let latestRecordRequest = 0;
 let selectedIdentityId = null;
 let selectedCanDecideProposals = false;
+let selectedIsAdministrator = false;
+let selectedPermissionsLoaded = false;
 let editingRecordId = null;
 let editingOwnerId = null;
 let editingStatus = null;
@@ -188,6 +192,41 @@ async function decideProposal(record, outcome, decisionButton) {
   }
 }
 
+async function transferOwner(record, ownerSelect, transferButton) {
+  transferButton.disabled = true;
+  transferMessage.className = "";
+  transferMessage.textContent = "";
+  try {
+    const response = await fetch(
+      `/api/decision-records/${record.id}/owner`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ owner_id: ownerSelect.value }),
+      },
+    );
+    if (!response.ok) {
+      let message = "Ownership could not be transferred.";
+      try {
+        message = apiErrorMessage(await response.json(), message);
+      } catch {
+        // Keep the generic message when the server response is not JSON.
+      }
+      transferMessage.className = "error";
+      transferMessage.textContent = message;
+      transferButton.disabled = false;
+      return;
+    }
+    transferMessage.textContent = "Record ownership transferred.";
+    await loadRecords(tagFilter.value);
+  } catch {
+    transferMessage.className = "error";
+    transferMessage.textContent =
+      "Ownership could not be transferred. Please try again.";
+    transferButton.disabled = false;
+  }
+}
+
 function renderRecords(records) {
   recordList.replaceChildren(
     ...records.map((record) => {
@@ -204,6 +243,41 @@ function renderRecords(records) {
       const tags = document.createElement("p");
       tags.textContent = `Tags: ${record.tags.join(", ")}`;
       article.append(title, details, tags);
+
+      const transferable =
+        selectedPermissionsLoaded &&
+        (record.author.id === selectedIdentityId ||
+          record.owner.id === selectedIdentityId ||
+          selectedIsAdministrator) &&
+        ["Draft", "Proposed"].includes(record.status) &&
+        !record.abandoned;
+      if (transferable && availableOwners.length) {
+        const actions = document.createElement("div");
+        actions.className = "record-actions";
+        const label = document.createElement("label");
+        label.textContent = "New owner ";
+        const ownerSelect = document.createElement("select");
+        ownerSelect.setAttribute("aria-label", `New owner for ${record.title}`);
+        ownerSelect.replaceChildren(
+          ...availableOwners
+            .filter((owner) => owner.id !== record.owner.id)
+            .map((owner) => {
+              const option = document.createElement("option");
+              option.value = owner.id;
+              option.textContent = owner.label;
+              return option;
+            }),
+        );
+        const transfer = document.createElement("button");
+        transfer.type = "button";
+        transfer.textContent = "Transfer ownership";
+        transfer.addEventListener("click", () =>
+          transferOwner(record, ownerSelect, transfer),
+        );
+        label.append(ownerSelect);
+        actions.append(label, transfer);
+        article.append(actions);
+      }
 
       const editable =
         record.author.id === selectedIdentityId &&
@@ -321,10 +395,16 @@ async function loadContext() {
   if (permissionResponse.ok) {
     const permissions = await permissionResponse.json();
     selectedCanDecideProposals = permissions.designated_approver;
+    selectedIsAdministrator =
+      permissions.identity.roles.includes("administrator");
+    selectedPermissionsLoaded = true;
   } else {
     decisionMessage.className = "error";
     decisionMessage.textContent =
       "Review permissions could not be loaded; decision actions are unavailable.";
+    transferMessage.className = "error";
+    transferMessage.textContent =
+      "Transfer permissions could not be loaded; transfer actions are unavailable.";
   }
 
   await loadRecords();
@@ -346,6 +426,7 @@ async function loadContext() {
   }
 
   const identities = await identitiesResponse.json();
+  availableOwners = identities;
   recordOwner.replaceChildren(
     ...identities.map((owner) => {
       const option = document.createElement("option");
@@ -359,6 +440,7 @@ async function loadContext() {
   }
   setEditingMode(editingRecordId !== null);
   saveDraft.disabled = false;
+  await loadRecords(tagFilter.value);
 }
 
 changeIdentity.addEventListener("click", async () => {
