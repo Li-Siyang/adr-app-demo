@@ -2,7 +2,8 @@
 
 **Plan ID:** PLAN-001
 **Version:** 1.2
-**Status:** DRAFT
+**Status:** APPROVED
+**Approval date:** 2026-09-29
 
 ## 1. Source Requirement
 
