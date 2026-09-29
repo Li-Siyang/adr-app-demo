@@ -2,7 +2,8 @@
 
 **Test Design ID:** TEST-001
 **Version:** 2.1
-**Status:** DRAFT
+**Status:** APPROVED
+**Approval date:** 2026-09-29
 **Mode:** DESIGN MODE
 **Design Date:** 2026-09-29
 **Source Requirement:** `docs/requirements/requirement-definition.md`, Version 1.3, Approved
