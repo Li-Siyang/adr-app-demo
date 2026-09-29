@@ -35,6 +35,10 @@ Implementation does not define correctness.
 - Classify failures and produce Failure Reports.
 - Produce Test Result Reports and validation recommendations.
 - Independently retest Developer Agent fixes.
+- Respect approved dependency types: unavailable completion dependencies block
+  completion, while integration-validation dependencies are reported as
+  explicitly non-blocking deferred coverage when the Test Design assigns them
+  to a later Story.
 
 ## Boundaries
 

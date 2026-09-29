@@ -77,7 +77,18 @@ The approved Test Design remains authoritative.
 
 ### Dependencies
 
-Use approved Development Plan dependencies.
+Use approved Development Plan dependencies. Preserve for each dependency:
+
+- source Story or Task;
+- dependency type: Start, Completion, or Integration-validation;
+- required capability or outcome;
+- satisfaction evidence; and
+- Jira representation.
+
+Only a Completion dependency may be represented as a hard `blocks` link.
+For a legacy approved Plan without dependency types, record
+`Legacy dependency migration required`; do not create or reinterpret a
+dependency link until the Plan is migrated and approved.
 
 ### Priority
 
@@ -114,8 +125,19 @@ This is an execution policy, not a new product requirement.
 - Parent Story:
 - Related Story IDs for independent Tasks:
 - Purpose:
-- Dependencies:
 - Completion criteria:
 - Source Development Plan:
+
+### Task Dependencies
+
+For each dependency, include:
+
+- source Story or Task;
+- dependency type: Start, Completion, or Integration-validation;
+- required capability or outcome;
+- satisfaction evidence; and
+- Jira representation.
+
+Only a Completion dependency may be represented as a hard `blocks` link.
 
 Do not introduce implementation scope beyond the approved Plan.

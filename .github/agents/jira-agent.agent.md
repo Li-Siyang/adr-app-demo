@@ -46,6 +46,12 @@ Determine the requested mode before acting and do not mix responsibilities:
   execution state, concise Test Result summaries, failure summaries, and
   human-authorized overrides after Jira work items exist.
 
+Preserve the dependency type defined by the approved Plan. Map only completion
+dependencies to Jira relationships that enforce a hard `blocks` gate. Represent
+start and integration-validation dependencies without implying that the source
+Story must be Done, or report `JIRA MAPPING BLOCKED` when the project cannot
+represent that distinction safely.
+
 ## Required standards
 
 For all Jira operations, comply with:

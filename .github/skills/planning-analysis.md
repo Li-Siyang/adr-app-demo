@@ -66,7 +66,9 @@ For each Story:
 - preserve its source Requirement mapping;
 - map source Acceptance Criteria without weakening or rewriting them;
 - record an Acceptance Criteria Gap when no source criterion exists;
-- record dependencies and priority; and
+- record each dependency's type, required capability or outcome, satisfaction
+  evidence;
+- record Story priority separately from dependencies; and
 - keep the Story small enough to implement and review independently where
   practical.
 
@@ -86,7 +88,8 @@ documentation.
 
 Keep Tasks implementation-oriented without prescribing detailed technical
 solutions unless the Requirement Definition explicitly requires them. Every
-Task must identify its parent Story, purpose, and dependencies.
+Task must identify its parent Story, purpose, and dependencies. Classify Task
+dependencies using the same dependency types as Stories.
 
 ### 6. Check requirement and acceptance coverage
 
@@ -106,6 +109,41 @@ Identify necessary dependencies between Stories and highlight anything that
 could block parallel development. Recommend an implementation order using
 dependencies, business value, technical foundations, risk, and incremental
 testability. The recommended order is not a new product requirement.
+
+Classify every dependency:
+
+- `Start dependency`: a named capability or artifact must be available before
+  development starts; it never requires the predecessor Story to be Done. If
+  Done is also required, record a separate Completion dependency.
+- `Completion dependency`: the predecessor Story must satisfy its Definition
+  of Done before the dependent Story can complete. Use this only when partial
+  delivery cannot safely support the dependent work.
+- `Integration-validation dependency`: another Story's capability is needed
+  only for later integration, end-to-end, or regression validation. It must not
+  block development start.
+
+For each dependency, state the concrete satisfaction evidence. Do not use an
+unqualified Story dependency when the required capability can be named.
+
+### 8. Check dependency and validation consistency
+
+Read the approved Test Design when updating an existing plan, or require this
+check before the Plan and Test Design are treated as jointly
+implementation-ready. Verify that:
+
+- the dependency graph is acyclic for both Story start and Story completion;
+- every Story in the recommended order can start when its start dependencies
+  are met;
+- every Story can reach its Definition of Done without requiring a capability
+  assigned only to a later Story;
+- a later Story's capability is not used as a blocking completion test for an
+  earlier Story; and
+- integration-validation dependencies are explicitly non-blocking for
+  development start.
+
+If the Plan and Test Design create a cycle, contradictory dependency semantics,
+or no executable completion path, report a `Blocking Gap`. Do not rely on Jira
+status overrides to make the plan executable.
 
 ## Blocking output
 

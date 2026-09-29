@@ -27,7 +27,11 @@ clear, traceable, and implementation-ready Development Plan.
 - Decompose Epics into independently understandable User Stories.
 - Decompose Stories into Engineering Tasks when doing so adds planning value.
 - Preserve Requirement -> Plan -> Epic -> Story -> Task traceability.
-- Identify dependencies, risks, and a recommended implementation order.
+- Classify dependencies as start, completion, or integration-validation
+  dependencies and identify risks and a recommended implementation order.
+- Verify that the dependency model and mapped validation scope do not create a
+  cycle that prevents any Story from starting or reaching its Definition of
+  Done.
 - Produce or update the canonical Development Plan.
 
 ## Boundaries

@@ -15,7 +15,8 @@ A Development Plan must:
 - identify blocking and non-blocking planning gaps;
 - preserve Requirement -> Plan -> Epic -> Story -> Task traceability;
 - keep source Acceptance Criteria unchanged;
-- record dependencies, risks, and recommended implementation order;
+- record typed dependencies, their satisfaction evidence, risks, and
+  recommended implementation order;
 - avoid undocumented product behavior and implementation-specific decisions;
 - include a Requirement Traceability Matrix; and
 - contain no implementation code.
@@ -44,13 +45,17 @@ Each Story must include:
 - related Requirement IDs;
 - source Acceptance Criteria mapping;
 - Acceptance Criteria Gap, when applicable;
-- dependencies;
+- dependencies classified as start, completion, or integration-validation,
+  including the required capability or outcome and satisfaction evidence;
 - priority; and
 - Story Delivery Definition of Done reference.
 
 Stories must be independently understandable and should be independently
-implementable and reviewable where practical. They must not introduce product
-behavior or create replacement Acceptance Criteria.
+implementable and reviewable where practical. A Story must have an executable
+path to its Definition of Done in the recommended order. It must not require a
+capability assigned only to a later Story for blocking completion validation.
+Stories must not introduce product behavior or create replacement Acceptance
+Criteria.
 
 ## Task quality
 
@@ -60,7 +65,7 @@ Each Task must include:
 - title;
 - parent Story;
 - purpose; and
-- dependencies.
+- typed dependencies with satisfaction evidence.
 
 Tasks must not force a specific library, framework, database, or architecture
 unless the approved Requirement Definition makes it an explicit constraint.
@@ -74,6 +79,10 @@ A Development Plan is ready for Human Review only when:
 - every source Acceptance Criterion has been evaluated for Story mapping;
 - blocking gaps are explicitly identified;
 - dependencies and planning risks have been recorded;
+- the combined dependency and validation model has no start or completion
+  cycle;
+- every Story can start and reach its Definition of Done in the recommended
+  implementation order;
 - no undocumented product requirements have been introduced;
 - a Requirement Traceability Matrix exists;
 - a recommended implementation order is included; and

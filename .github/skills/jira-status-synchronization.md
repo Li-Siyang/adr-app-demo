@@ -30,9 +30,10 @@ Trusted evidence by canonical state:
 - **In Review:** a Pull Request actually exists and the PR reference can be
   verified.
 - **Done:** Pull Request exists, required review and Human approval exist,
-  Pull Request is merged, required validation passed, and no known blocking
-  execution item remains. Do not mark Done solely because implementation was
-  written.
+  Pull Request is merged, required validation passed, every approved Completion
+  dependency's predecessor satisfies its Definition of Done, and no known
+  blocking execution item remains. Do not mark Done solely because
+  implementation was written.
 
 Actual Jira transition names depend on project configuration. Resolve project
 status names or IDs to canonical states before acting.
@@ -43,6 +44,13 @@ status names or IDs to canonical states before acting.
 
 Read the evidence source and verify it is sufficient for the requested
 canonical state. Do not fabricate missing automated evidence.
+
+For a transition to Done, read the approved Plan and verify every Completion
+dependency and its predecessor's Definition of Done evidence. A Jira `blocks`
+link is not sufficient evidence by itself. If the Plan is a legacy approved
+artifact without dependency types, do not infer Completion dependencies; require
+the Planning migration recorded by the development compatibility path before
+transitioning the dependent Story to Done.
 
 ### 2. Verify Jira tooling and mapping
 
@@ -80,6 +88,7 @@ After Validation Agent validation, Jira may contain a concise execution summary:
 - Test Run ID
 - approved Test Case count
 - passed, failed, and blocked counts
+- deferred non-blocking integration-validation count and owning Story IDs
 - Recommendation
 
 Do not copy large logs into Jira. Detailed evidence belongs in CI, test reports,

@@ -22,7 +22,9 @@ So that ...
 
 **Dependencies**
 
-...
+| Story | Type | Required capability or outcome | Satisfaction evidence |
+| --- | --- | --- | --- |
+| STORY-XXX | Start / Completion / Integration-validation | ... | ... |
 
 **Priority**
 

@@ -21,9 +21,9 @@ Use `.github/templates/test-case-template.md` for each Test Case.
 
 ## Test Traceability Matrix
 
-| Requirement | Acceptance Criterion | Story | Scenario | Test Case | Coverage |
-| --- | --- | --- | --- | --- | --- |
-| ... | ... | ... | ... | ... | Covered / Partially Covered / Not Covered / Blocked |
+| Requirement | Acceptance Criterion | Coverage Story or Stories | Execution-owning Story | Execution designation | Scenario | Test Case | Coverage |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| ... | ... | ... | ... | Blocking completion / Non-blocking integration-validation | ... | ... | Covered / Partially Covered / Not Covered / Blocked |
 
 ## Test Design Gaps
 

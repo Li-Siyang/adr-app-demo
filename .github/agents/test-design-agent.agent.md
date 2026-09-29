@@ -28,6 +28,9 @@ implementation.
 - Design Test Scenarios and Test Cases.
 - Evaluate requirement, Story, and Acceptance Criteria coverage.
 - Identify test design gaps and blocking ambiguities.
+- Check planned dependency types and implementation order so a Story's required
+  completion tests do not depend on capabilities assigned only to later
+  Stories.
 - Produce or update the canonical Test Design.
 - Preserve Requirement -> Acceptance Criterion -> Story -> Test Scenario ->
   Test Case traceability.
@@ -41,6 +44,10 @@ implementation.
 - Do not approve your own Test Design.
 - Do not invent product behavior, acceptance criteria, or non-functional
   expectations.
+- Do not make a later Story's capability a blocking completion test for an
+  earlier Story. Preserve the earlier coverage Story and assign deferred
+  execution to the later capability-owning Story as non-blocking integration
+  or regression validation.
 
 ## Required inputs
 

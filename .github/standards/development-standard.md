@@ -20,7 +20,27 @@ Use one Story, one dedicated feature branch, and one PR. Create from the configu
 
 ## Implementation and checkpoints
 
-Confirm approved Requirement, Plan, Test Design, Jira Story, satisfied dependencies, unblocked scope, access, and safe branch before production changes. Inspect architecture, conventions, related code, configuration, and tests. Stay within scope; avoid unrelated refactoring and speculative abstractions. Make implementation-level decisions only within the approved scope and existing architecture.
+Confirm approved Requirement, Plan, Test Design, Jira Story, satisfied start
+dependencies, unblocked scope, access, and safe branch before production
+changes. Evaluate dependencies by their approved type and evidence; do not
+infer that every Jira blocking link requires a predecessor Story to be Done.
+An integration-validation dependency affects final validation rather than
+development start. For an approved legacy Plan without dependency types, do
+not infer a Completion dependency. A dependency narrative that names a
+concrete prerequisite capability or artifact may be provisionally treated as a
+Start dependency only when observable evidence proves it available; record
+`LEGACY DEPENDENCY INTERPRETATION` and require Plan migration before creating
+new Jira links or reporting the dependent Story complete. Stop and report
+`PLANNING GAP` when the prerequisite or evidence is missing or ambiguous, Jira
+conflicts with the Plan, or the Plan and Test Design still create a cycle.
+For a legacy Test Design, a case that explicitly requires a capability assigned
+to a later Story is not a development start gate; preserve its original Story
+as coverage, record `LEGACY DEFERRED EXECUTION INTERPRETATION`, and require Test
+Design migration before affected validation or completion.
+Inspect architecture, conventions, related code, configuration, and tests.
+Stay within scope; avoid unrelated refactoring and speculative abstractions.
+Make implementation-level decisions only within the approved scope and
+existing architecture.
 
 Write meaningful Unit Tests for relevant internal behavior, normal/invalid/boundary cases, and regressions. Iterate `Implement → Unit Test → analyze → fix`. Commit coherent logical checkpoints with meaningful messages (prefer Story IDs), verify relevant checks and intended files first, and push every meaningful checkpoint to the feature branch. Do not commit known broken intermediate states unless explicitly required, and do not push noise.
 

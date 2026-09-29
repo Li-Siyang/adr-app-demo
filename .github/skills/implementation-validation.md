@@ -16,13 +16,29 @@ Verify that:
 
 If these conditions are not met, report the appropriate blocker.
 
-If a required Story dependency is not available, do not claim the Story is
-validated. Produce a `BLOCKED` Test Result Report naming the dependency and
-the affected validation scope. If the Story can be isolated using approved
-fixtures, mocks, or stubs, validate only that explicitly identified scope and
-record the untested integration scenarios. After the dependency becomes
-available, rerun all affected acceptance, integration, state-transition, and
-regression cases before recommending review.
+Evaluate dependencies by their approved type:
+
+- an unavailable completion dependency blocks validation completion;
+- an unavailable start dependency indicates an invalid validation handoff and
+  blocks validation;
+- an unavailable integration-validation dependency does not block the current
+  Story when the approved Test Design assigns that coverage to a later Story.
+
+For a blocking dependency, produce a `BLOCKED` Test Result Report naming the
+dependency and affected validation scope. If the Story can be isolated using
+approved fixtures, mocks, or stubs, validate only that explicitly identified
+scope and record the untested integration scenarios. For approved non-blocking
+integration-validation coverage, record the owning later Story and required
+regression scope without changing the current Story's result. After the
+dependency becomes available, run the affected integration, state-transition,
+and regression cases under the owning Story.
+
+For an approved legacy Test Design with only one Story field, honor a recorded
+`LEGACY DEFERRED EXECUTION INTERPRETATION` only to preserve coverage and
+execution ownership in a `BLOCKED` or partial result. Do not issue
+`READY FOR REVIEW` for an affected Story until Test Design Agent migration and
+Human approval establish the coverage Story, execution-owning Story, and
+execution designation.
 
 ### 2. Map approved Test Cases to execution
 

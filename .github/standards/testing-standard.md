@@ -59,6 +59,11 @@ Requirement-driven tests must:
 - clearly state execution status; and
 - be reported as passed only after successful execution.
 
+Tests required to complete a Story must be executable from that Story's scope
+and satisfied approved dependencies. A capability assigned only to a later
+Story may be covered by non-blocking integration or regression validation, but
+must not prevent the earlier Story from reaching its Definition of Done.
+
 ## Failure classifications
 
 Use exactly one classification for each failed Test Case:
@@ -88,6 +93,9 @@ Test Design is ready for Human Review only when:
 - relevant Acceptance Criteria have been evaluated for coverage;
 - important Business Rules are covered;
 - important negative and boundary behavior has been considered;
+- the Plan and Test Design contain no dependency/validation cycle;
+- blocking Story tests do not require capabilities assigned only to later
+  Stories;
 - a Test Traceability Matrix exists;
 - Test Design is stored as `Status: DRAFT`;
 - no Jira dependency was required; and
