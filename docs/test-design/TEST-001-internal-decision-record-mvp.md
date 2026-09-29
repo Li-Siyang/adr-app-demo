@@ -1,21 +1,29 @@
 # Test Design: Internal Decision Record MVP
 
 **Test Design ID:** TEST-001
-**Version:** 2.0
-**Status:** APPROVED
+**Version:** 2.1
+**Status:** DRAFT
 **Mode:** DESIGN MODE
+**Design Date:** 2026-09-29
 **Source Requirement:** `docs/requirements/requirement-definition.md`, Version 1.3, Approved
-**Source Development Plan:** `docs/planning/PLAN-001-internal-decision-record-mvp.md`, Version 1.1, approved by Human Reviewer in merged PR #3
+**Source Development Plan:** `docs/planning/PLAN-001-internal-decision-record-mvp.md`, Version 1.2, Approved on 2026-09-29
 **Scope:** STORY-001 through STORY-016
 
 ## Readiness Assessment
 
 - Requirement Version 1.3 is explicitly Approved.
-- Development Plan Version 1.1 was explicitly approved by the Human Reviewer
-  and merged in PR #3.
+- Development Plan Version 1.2 is explicitly Approved and defines typed Story
+  and Task dependencies, satisfaction evidence, and non-blocking
+  integration-validation relationships.
 - Every planned Story maps to active Requirements and Acceptance Criteria.
 - All 38 active Acceptance Criteria are observable and testable.
 - No unresolved product question blocks test design.
+- Every blocking-completion case can execute from its coverage Story's scope
+  and satisfied Start dependencies.
+- Cases requiring capabilities assigned to later Stories retain their original
+  coverage traceability and are designated non-blocking integration validation
+  under the later execution-owning Story.
+- The combined Plan and Test Design have no Start or Completion cycle.
 - Expected behavior comes only from the approved Requirement and Development
   Plan. Production implementation and Jira were not inspected.
 
@@ -39,6 +47,32 @@
 | TS-014 | Enforce demo-data and deployed HTTPS boundaries | STORY-014 | CR-SCP-003; CR-FR-023; CR-NFR-005; CR-BR-010 | AC-032, AC-037 | Verify required data-use notices and HTTPS application traffic in deployed environments. | Acceptance / Configuration / E2E | High |
 | TS-015 | Audit and permanently retain governed events | STORY-015 | CR-FR-014, CR-FR-019–021, CR-FR-030; CR-NFR-007–008 | AC-013, AC-018, AC-033–034, AC-046 | Verify complete event coverage, actor/time attribution, immutability, and no expiry or deletion. | Integration / Audit / Retention | High |
 | TS-016 | Meet approved capacity and browser compatibility | STORY-016 | CR-SCP-002; CR-NFR-004, CR-NFR-011 | AC-031, AC-036 | Verify all in-scope functions at 25 Mock users and 1,000 records in supported browser versions without a response-time assertion. | Non-functional / Compatibility / E2E | High |
+
+### Scenario Execution Profiles
+
+Each scenario preserves its existing coverage Story. A `Split` profile means
+the scenario contains both completion-blocking core cases and explicitly
+deferred integration cases; the Test Case Execution Ownership Matrix is
+authoritative for each individual case.
+
+| Scenario | Coverage Story or Stories | Execution-owning Story or Stories | Execution designation |
+|---|---|---|---|
+| TS-001 | STORY-001 | STORY-001 | Blocking completion |
+| TS-002 | STORY-002; STORY-005 | STORY-002; STORY-005; STORY-012 | Split: blocking core / non-blocking integration-validation |
+| TS-003 | STORY-003; STORY-004 | STORY-003; STORY-004 | Split: blocking core / non-blocking integration-validation |
+| TS-004 | STORY-004; STORY-007 | STORY-004; STORY-007 | Split: blocking core / non-blocking integration-validation |
+| TS-005 | STORY-005; STORY-008 | STORY-005; STORY-007 | Split: blocking core / non-blocking integration-validation |
+| TS-006 | STORY-006; STORY-007 | STORY-006; STORY-007 | Split: blocking core / non-blocking integration-validation |
+| TS-007 | STORY-007 | STORY-007 | Blocking completion |
+| TS-008 | STORY-008 | STORY-008 | Blocking completion |
+| TS-009 | STORY-009 | STORY-009; STORY-012 | Split: blocking core / non-blocking integration-validation |
+| TS-010 | STORY-010 | STORY-010 | Blocking completion |
+| TS-011 | STORY-011 | STORY-011 | Blocking completion |
+| TS-012 | STORY-012 | STORY-012 | Blocking completion |
+| TS-013 | STORY-013 | STORY-012 | Non-blocking integration-validation |
+| TS-014 | STORY-014 | STORY-014 | Blocking completion |
+| TS-015 | STORY-015 and governed-action Stories | STORY-007; STORY-012 | Non-blocking integration-validation |
+| TS-016 | STORY-016 | STORY-016 | Blocking completion |
 
 ## Test Cases
 
@@ -84,8 +118,9 @@
 |---|---|---|---|---|---|---|---|---|---|
 | TC-005-01 | TS-005 | STORY-005 | CR-FR-008–010 | AC-006–007 | Equivalent proposals exist for a designated approver and non-approver. | Have each actor attempt Accept and Reject. | The designated approver completes each selected outcome; the non-approver is denied. | High | API |
 | TC-005-02 | TS-005 | STORY-005 | CR-FR-006, CR-FR-008; CR-BR-003 | AC-008 | Authored Proposed record has prior or in-progress review. | Save an author edit; attempt a decision before resubmission; then resubmit. | Save atomically returns it to Draft and invalidates review; decision is blocked until it is resubmitted to Proposed. | High | Integration |
-| TC-005-03 | TS-005 | STORY-005 | CR-FR-014; CR-BR-004 | AC-038 | Rejected and Superseded records exist. | Attempt content, lifecycle-data, and version-content changes as all roles. | Every change is denied; only separately governed archival condition changes remain possible. | High | API |
+| TC-005-03 | TS-005 | STORY-005 | CR-FR-014; CR-BR-004 | AC-038 | A Superseded record exists. | Attempt content, lifecycle-data, and version-content changes as all roles. | Every change is denied; only separately governed archival condition changes remain possible. | High | API |
 | TC-005-04 | TS-005 | STORY-005 | CR-FR-008 | — | One Proposed record is available to two approvers concurrently. | Initiate conflicting Accept and Reject actions. | Exactly one outcome is committed and the record cannot become both Accepted and Rejected. | High | Integration |
+| TC-005-05 | TS-005 | STORY-005 | CR-FR-014; CR-BR-004 | AC-038 | A Rejected record exists. | Attempt content, lifecycle-data, and version-content changes as all roles. | Every change is denied; only separately governed archival condition changes remain possible. | High | API |
 
 ### STORY-006 — Transfer Record Ownership
 
@@ -179,7 +214,47 @@
 | TC-016-01 | TS-016 | STORY-016 | CR-SCP-002; CR-NFR-004 | AC-031 | 25 preconfigured Mock users and 1,000 representative decision records exist. | Exercise every in-scope functional Acceptance Criterion against the approved-capacity dataset and identities. | Every applicable functional Acceptance Criterion remains satisfied; no response-time assertion is made. | High | Integration / E2E |
 | TC-016-02 | TS-016 | STORY-016 | CR-NFR-011 | AC-036 | Current and immediately prior major Chrome and Edge versions are identified at execution time. | Run all in-scope acceptance workflows on each of the four browser/version combinations. | Every in-scope function is supported in each required browser/version combination. | High | E2E |
 
+## Test Case Execution Ownership Matrix
+
+This matrix is part of each Test Case definition. Test Cases not deferred to a
+later Story remain blocking completion validation for their coverage Story.
+Deferred cases preserve the earlier Requirement and Acceptance Criterion
+coverage but cannot block that earlier Story's Definition of Done.
+
+| Test Case | Coverage Story or Stories | Execution-owning Story | Execution designation | Rationale |
+|---|---|---|---|---|
+| TC-001-01–03 | STORY-001 | STORY-001 | Blocking completion | Executable from STORY-001 scope. |
+| TC-002-01, TC-002-05 | STORY-002 | STORY-002 | Blocking completion | Executable from role and approver administration scope. |
+| TC-002-02 | STORY-002; STORY-007; STORY-012 | STORY-012 | Non-blocking integration-validation | The full administrator-only matrix requires replacement, abandonment, archive, and restore capabilities. |
+| TC-002-03–04 | STORY-002; STORY-005 | STORY-005 | Non-blocking integration-validation | Accept and Reject actions are supplied by STORY-005. |
+| TC-003-01, TC-003-03 | STORY-003 | STORY-003 | Blocking completion | Executable from Draft creation scope. |
+| TC-003-02 | STORY-003; STORY-004 | STORY-004 | Non-blocking integration-validation | Missing-field behavior is exercised through submission supplied by STORY-004. |
+| TC-004-01–04 | STORY-004 | STORY-004 | Blocking completion | Executable from Draft editing and submission scope. |
+| TC-004-05 | STORY-004; STORY-007 | STORY-007 | Non-blocking integration-validation | Requires an Abandoned replacement Draft supplied by STORY-007. |
+| TC-005-01–02, TC-005-04–05 | STORY-005 | STORY-005 | Blocking completion | Executable from proposal decision scope, including Rejected-record immutability. |
+| TC-005-03 | STORY-005; STORY-008 | STORY-007 | Non-blocking integration-validation | The Superseded fixture is created by replacement acceptance in STORY-007. |
+| TC-006-01, TC-006-03 | STORY-006 | STORY-006 | Blocking completion | Executable from ownership-transfer scope. |
+| TC-006-02 | STORY-006; STORY-007 | STORY-007 | Non-blocking integration-validation | The complete denial matrix requires an Abandoned replacement Draft. |
+| TC-007-01–08 | STORY-007 | STORY-007 | Blocking completion | Executable from replacement-governance scope and satisfied Start dependencies. |
+| TC-008-01–04 | STORY-008 | STORY-008 | Blocking completion | Executable from history and navigation scope. |
+| TC-009-01 | STORY-009 | STORY-012 | Non-blocking integration-validation | Complete exact-tag coverage requires archived fixtures supplied by STORY-012. |
+| TC-009-02 | STORY-009 | STORY-009 | Blocking completion | Exact-match behavior is executable from STORY-009 scope. |
+| TC-010-01–02 | STORY-010 | STORY-010 | Blocking completion | Executable from tag creation and association scope. |
+| TC-011-01–04 | STORY-011 | STORY-011 | Blocking completion | Executable from comment and reusable audit-foundation scope. |
+| TC-012-01–05 | STORY-012 | STORY-012 | Blocking completion | Executable from archive and restore scope. |
+| TC-013-01–02 | STORY-013 | STORY-012 | Non-blocking integration-validation | Full deletion-denial coverage requires replacement, Abandoned, archived, and restore conditions; STORY-012 is the last planned capability. |
+| TC-014-01–02 | STORY-014 | STORY-014 | Blocking completion | Executable from data-boundary and deployed-HTTPS scope. |
+| TC-015-01 | STORY-015; STORY-005–STORY-007; STORY-011–STORY-012 | STORY-012 | Non-blocking integration-validation | Full event-category coverage requires the later governed workflows, ending with archive and restore. |
+| TC-015-02 | STORY-015; STORY-007; STORY-011 | STORY-007 | Non-blocking integration-validation | Requires both comment deletion and replacement abandonment; STORY-007 is later in the approved order. |
+| TC-015-03 | STORY-015; STORY-012 | STORY-012 | Non-blocking integration-validation | Archived-record retention evidence requires STORY-012. |
+| TC-016-01–02 | STORY-016 | STORY-016 | Blocking completion | Capacity and browser validation are the delivered scope of STORY-016. |
+
 ## Test Traceability Matrix
+
+The Requirement/Acceptance Criterion rows below combine with the Test Case
+Execution Ownership Matrix above to form the canonical trace:
+Requirement -> Acceptance Criterion -> Coverage Story -> Execution-owning
+Story -> Execution designation -> Scenario -> Test Case.
 
 | Requirement | Acceptance Criterion | Story | Scenario | Test Case | Coverage |
 |---|---|---|---|---|---|
@@ -214,7 +289,7 @@
 | CR-NFR-008 | AC-034 | STORY-012, STORY-015 | TS-012, TS-015 | TC-012-01, TC-015-03 | Covered |
 | CR-NFR-011 | AC-036 | STORY-016 | TS-016 | TC-016-02 | Covered |
 | CR-FR-023; CR-BR-010 | AC-037 | STORY-001, STORY-003, STORY-014 | TS-001, TS-003, TS-014 | TC-001-03, TC-003-03, TC-014-01 | Covered |
-| CR-FR-014; CR-BR-004 | AC-038 | STORY-005, STORY-008 | TS-005, TS-008 | TC-005-03, TC-008-04 | Covered |
+| CR-FR-014; CR-BR-004 | AC-038 | STORY-005, STORY-008 | TS-005, TS-008 | TC-005-03, TC-005-05, TC-008-04 | Covered |
 | CR-FR-012; CR-BR-014 | AC-039 | STORY-007 | TS-007 | TC-007-04–06 | Covered |
 | CR-FR-027–028; CR-BR-018 | AC-043 | STORY-001 | TS-001 | TC-001-01 | Covered |
 | CR-NFR-013; CR-BR-018 | AC-044 | STORY-001 | TS-001 | TC-001-02 | Covered |
@@ -227,7 +302,7 @@
 | Business Rule | Direct Test Cases | Coverage |
 |---|---|---|
 | CR-BR-001–002 | TC-002-01, TC-002-04 | Covered |
-| CR-BR-003–004 | TC-004-01–02, TC-005-02–03, TC-007-01, TC-008-04 | Covered |
+| CR-BR-003–004 | TC-004-01–02, TC-005-02–03, TC-005-05, TC-007-01, TC-008-04 | Covered |
 | CR-BR-005–006 | TC-007-01–02, TC-007-04 | Covered |
 | CR-BR-007 | TC-012-01–03 | Covered |
 | CR-BR-009–010 | TC-003-03, TC-008-04, TC-009-01, TC-014-01 | Covered |
@@ -250,6 +325,8 @@
 ## Test Design Gaps and Execution Constraints
 
 - No requirement ambiguity blocks this design.
+- No planning correction is required. All later-capability cases are explicitly
+  non-blocking for their earlier coverage Stories.
 - Permanent retention cannot be proven by waiting forever. Validation must
   combine the absence of expiry and permanent-delete behavior with applicable
   retention-control evidence and repeated retrieval.
@@ -282,6 +359,14 @@ are deferred to VALIDATION MODE without changing expected behavior.
 - All 38 active Acceptance Criteria are evaluated and Covered.
 - All 17 explicit Business Rules have direct coverage.
 - Every STORY-001 through STORY-016 has a scenario and executable test cases.
+- Every Test Case records its coverage Story or Stories, execution-owning
+  Story, and execution designation.
+- TC-002-02–04, TC-003-02, TC-004-05, TC-005-03, TC-006-02, TC-009-01,
+  TC-013-01–02, and TC-015-01–03 are non-blocking integration validation and
+  cannot prevent their earlier coverage Stories from reaching Done.
+- Blocking-completion cases require no capability assigned only to a later
+  Story.
+- The combined Plan and Test Design contain no Start or Completion cycle.
 - Important happy, negative, boundary, business-rule, state-transition,
   concurrency, integration, E2E, regression, and approved non-functional risks
   are covered where applicable.
