@@ -16,6 +16,17 @@ ADMINISTRATOR = "zoe-admin"
 ORDINARY_MEMBER = "maya-member"
 APPROVER_CANDIDATE = "arun-approver"
 ADMIN_AND_APPROVER = "lee-admin-approver"
+RECORD_FIELDS = {
+    "title": "Define the deployment boundary",
+    "context": "The demonstration needs a clear operational boundary.",
+    "decision": "Run one application process.",
+    "rationale": "Governance state is process-local.",
+    "alternatives_considered": "Run multiple workers.",
+    "consequences": "Horizontal scaling is out of scope.",
+    "owner_id": ORDINARY_MEMBER,
+    "decision_date": "2026-09-28",
+    "tags": ["operations"],
+}
 
 ADMINISTRATOR_ONLY_PERMISSIONS = (
     "administer_approvers",
@@ -51,6 +62,26 @@ def permissions(client: TestClient) -> list[str]:
     response = client.get("/api/governance/permissions")
     assert response.status_code == 200
     return response.json()["permissions"]
+
+
+def create_proposed(
+    client: TestClient, author_id: str, approver_id: str
+) -> dict[str, object]:
+    select(client, ADMINISTRATOR)
+    designated = client.post(
+        "/api/approvers", json={"identity_id": approver_id}
+    )
+    assert designated.status_code == 200
+
+    select(client, author_id)
+    created = client.post("/api/decision-records", json=RECORD_FIELDS)
+    assert created.status_code == 201
+    submitted = client.post(
+        f"/api/decision-records/{created.json()['id']}/submit"
+    )
+    assert submitted.status_code == 200
+    assert submitted.json()["status"] == "Proposed"
+    return submitted.json()
 
 
 def test_tc_002_01_only_administrators_change_approver_designations(
@@ -121,6 +152,25 @@ def test_tc_002_03_non_approver_holds_no_decision_permission(
     assert permission not in permissions(client)
 
 
+def test_tc_002_03_non_approvers_cannot_accept_or_reject_proposals(
+    client: TestClient,
+) -> None:
+    """TC-002-03 / AC-006: denied decisions leave Proposed records unchanged."""
+    proposed = create_proposed(client, ORDINARY_MEMBER, APPROVER_CANDIDATE)
+
+    for identity_id in (ORDINARY_MEMBER, ADMINISTRATOR):
+        select(client, identity_id)
+        for outcome in ("Accepted", "Rejected"):
+            response = client.post(
+                f"/api/decision-records/{proposed['id']}/decision",
+                json={"outcome": outcome},
+            )
+            assert response.status_code == 403
+            assert client.get(
+                f"/api/decision-records/{proposed['id']}"
+            ).json() == proposed
+
+
 def test_tc_002_04_designated_author_approver_keeps_decision_authority(
     client: TestClient,
 ) -> None:
@@ -133,6 +183,23 @@ def test_tc_002_04_designated_author_approver_keeps_decision_authority(
     assert client.get("/api/governance/permissions").json()["designated_approver"]
     for permission in APPROVER_ONLY_PERMISSIONS:
         assert permission in granted
+
+
+@pytest.mark.parametrize("outcome", ["Accepted", "Rejected"])
+def test_tc_002_04_designated_author_can_decide_own_proposal(
+    client: TestClient, outcome: str
+) -> None:
+    """TC-002-04 / AC-007: a designated author may choose either outcome."""
+    proposed = create_proposed(client, APPROVER_CANDIDATE, APPROVER_CANDIDATE)
+
+    select(client, APPROVER_CANDIDATE)
+    response = client.post(
+        f"/api/decision-records/{proposed['id']}/decision",
+        json={"outcome": outcome},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == outcome
 
 
 def test_tc_002_05_roles_are_additive_and_never_revoke_each_other(
@@ -153,6 +220,15 @@ def test_tc_002_05_roles_are_additive_and_never_revoke_each_other(
     assert ordinary.isdisjoint(APPROVER_ONLY_PERMISSIONS)
     assert ordinary.issubset(combined)
 
+    proposed = create_proposed(client, ADMIN_AND_APPROVER, ADMIN_AND_APPROVER)
+    select(client, ADMIN_AND_APPROVER)
+    decided = client.post(
+        f"/api/decision-records/{proposed['id']}/decision",
+        json={"outcome": "Accepted"},
+    )
+    assert decided.status_code == 200
+    assert decided.json()["status"] == "Accepted"
+
 
 def test_tc_002_05_undesignated_administrator_cannot_decide(
     client: TestClient,
@@ -163,6 +239,15 @@ def test_tc_002_05_undesignated_administrator_cannot_decide(
 
     assert set(ADMINISTRATOR_ONLY_PERMISSIONS).issubset(granted)
     assert granted.isdisjoint(APPROVER_ONLY_PERMISSIONS)
+    proposed = create_proposed(client, ORDINARY_MEMBER, APPROVER_CANDIDATE)
+
+    select(client, ADMIN_AND_APPROVER)
+    response = client.post(
+        f"/api/decision-records/{proposed['id']}/decision",
+        json={"outcome": "Accepted"},
+    )
+    assert response.status_code == 403
+    assert client.get(f"/api/decision-records/{proposed['id']}").json() == proposed
 
 
 def test_governed_administration_requires_a_selected_mock_identity(
