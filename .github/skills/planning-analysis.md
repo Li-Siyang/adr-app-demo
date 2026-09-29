@@ -67,7 +67,8 @@ For each Story:
 - map source Acceptance Criteria without weakening or rewriting them;
 - record an Acceptance Criteria Gap when no source criterion exists;
 - record each dependency's type, required capability or outcome, satisfaction
-  evidence, and priority; and
+  evidence;
+- record Story priority separately from dependencies; and
 - keep the Story small enough to implement and review independently where
   practical.
 

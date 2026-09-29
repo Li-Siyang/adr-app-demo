@@ -51,7 +51,9 @@ Jira coordination must not:
 
 Dependency semantics must be preserved:
 
-- only completion dependencies may use a hard Jira `blocks` relationship;
+- only completion dependencies may use a hard Jira `blocks` relationship,
+  meaning an Agent-enforced completion-state gate rather than a development
+  start gate;
 - start dependencies must identify the capability or artifact needed to begin
   and must not imply that the predecessor Story is Done;
 - integration-validation dependencies must not block development start; and

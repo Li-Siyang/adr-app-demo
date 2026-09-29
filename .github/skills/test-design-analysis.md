@@ -55,10 +55,17 @@ expectations that are not approved requirements.
 Create Test Scenarios from Stories, Requirements, and Acceptance Criteria.
 Create Test Cases from Test Scenarios with observable expected results.
 
-Assign each Test Case to the Story that owns the capability needed to execute
-it. When a case verifies an earlier capability across a later workflow, record
-it as non-blocking integration or regression coverage for the later Story
-rather than making the earlier Story wait for future implementation.
+For each Test Case, record both:
+
+- the coverage Story or Stories whose Requirements or Acceptance Criteria the
+  case verifies; and
+- the execution-owning Story that supplies the last capability required to run
+  the case.
+
+These may be the same Story. When a case verifies an earlier capability across
+a later workflow, preserve the earlier coverage Story and assign execution to
+the later capability-owning Story as non-blocking integration or regression
+coverage. Do not make the earlier Story wait for future implementation.
 
 Recommended automation levels may include:
 

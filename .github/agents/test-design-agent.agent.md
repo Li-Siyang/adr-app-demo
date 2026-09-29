@@ -45,8 +45,9 @@ implementation.
 - Do not invent product behavior, acceptance criteria, or non-functional
   expectations.
 - Do not make a later Story's capability a blocking completion test for an
-  earlier Story. Assign such coverage to the capability-owning Story or record
-  it as non-blocking integration or regression validation.
+  earlier Story. Preserve the earlier coverage Story and assign deferred
+  execution to the later capability-owning Story as non-blocking integration
+  or regression validation.
 
 ## Required inputs
 

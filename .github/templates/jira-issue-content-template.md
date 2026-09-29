@@ -122,8 +122,19 @@ This is an execution policy, not a new product requirement.
 - Parent Story:
 - Related Story IDs for independent Tasks:
 - Purpose:
-- Typed dependencies and satisfaction evidence:
 - Completion criteria:
 - Source Development Plan:
+
+### Task Dependencies
+
+For each dependency, include:
+
+- source Story or Task;
+- dependency type: Start, Completion, or Integration-validation;
+- required capability or outcome;
+- satisfaction evidence; and
+- Jira representation.
+
+Only a Completion dependency may be represented as a hard `blocks` link.
 
 Do not introduce implementation scope beyond the approved Plan.

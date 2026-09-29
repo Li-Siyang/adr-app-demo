@@ -49,9 +49,10 @@ Apply these standards to the work:
 
 During preflight, evaluate dependencies by their approved type. Do not equate
 every Jira `blocks` link with a requirement that the predecessor Story be Done.
-Stop on an unsatisfied completion dependency, but allow a satisfied start
-dependency when its named capability is available with traceable evidence.
-Integration-validation dependencies affect final validation, not development
-start. Report ambiguous or cyclic dependency semantics as `PLANNING GAP`.
+Stop before development only for an unsatisfied start dependency. An
+unsatisfied completion dependency permits development but prevents the Story
+from being reported complete. Integration-validation dependencies affect later
+validation, not development start. Report ambiguous or cyclic dependency
+semantics as `PLANNING GAP`.
 
 The linked skills contain the full rules formerly embedded in this agent. Do not replace them with a generic references list: use the named binding at the corresponding lifecycle step, and preserve the exact outcome fields and blocker markers in the handoff template.

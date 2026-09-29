@@ -2,7 +2,11 @@
 
 Parent Scenario:
 
-Related Story:
+Coverage Story or Stories:
+
+Execution-owning Story:
+
+Execution designation: Blocking completion / Non-blocking integration-validation
 
 Related Requirements:
 

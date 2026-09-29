@@ -121,8 +121,8 @@ Use `.github/templates/jira-creation-preview-template.md`. For each source item
 show source ID, proposed Jira type, proposed title, `CREATE` or `REUSE`, existing
 Jira ID when reused, Requirement IDs, Acceptance Criteria IDs, Engineering Task
 IDs, Test Design ID, Test Design evaluation, Test Scenario IDs where applicable,
-typed dependencies and satisfaction evidence, parent relationship, and
-priority.
+typed dependencies, satisfaction evidence, proposed Jira representation,
+parent relationship, and priority.
 
 Do not create or modify Jira work items during the Preview Phase.
 
@@ -175,7 +175,9 @@ Before creating a link, verify whether the equivalent link already exists. Do
 not create duplicate relationships. Never map a start or
 integration-validation dependency to a hard `blocks` link. If Jira cannot
 represent the distinction without changing its meaning, report
-`JIRA MAPPING BLOCKED`.
+`JIRA MAPPING BLOCKED`. A hard `blocks` link is an Agent-enforced
+completion-state gate; it does not prevent development start unless the Plan
+also defines a start dependency.
 
 ### 10. Verify final Jira state
 

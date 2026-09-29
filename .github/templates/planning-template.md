@@ -47,8 +47,8 @@ Use `.github/templates/task-template.md` for each Task.
 
 ## 8. Story Dependency Map
 
-Describe important dependencies between Stories. Classify each dependency and
-state how it is satisfied.
+List every Story dependency in this canonical map. Classify each dependency and
+state how it is satisfied; do not omit dependencies as unimportant.
 
 | Story | Depends on | Type | Required capability or outcome | Satisfaction evidence |
 | --- | --- | --- | --- | --- |
