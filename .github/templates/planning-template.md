@@ -57,6 +57,19 @@ state how it is satisfied; do not omit dependencies as unimportant.
 Confirm that the combined dependency and validation model has no start or
 completion cycle.
 
+## 8.1 Task Dependency Map
+
+List every Task dependency in this canonical map. Classify each dependency and
+state how it is satisfied; do not omit dependencies as unimportant.
+
+| Parent Story | Task | Depends on | Type | Required capability or outcome | Satisfaction evidence |
+| --- | --- | --- | --- | --- | --- |
+| STORY-XXX | TASK-XXX | TASK-YYY / STORY-YYY | Start / Completion / Integration-validation | ... | ... |
+
+Confirm that each parent Story's Task start and completion graphs are acyclic,
+every Task has an executable path, and at least one Task order can complete the
+parent Story.
+
 ## 9. Recommended Implementation Order
 
 1. STORY-XXX
