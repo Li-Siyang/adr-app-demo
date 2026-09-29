@@ -113,8 +113,8 @@ testability. The recommended order is not a new product requirement.
 Classify every dependency:
 
 - `Start dependency`: a named capability or artifact must be available before
-  development starts; the predecessor Story need not be Done unless explicitly
-  required.
+  development starts; it never requires the predecessor Story to be Done. If
+  Done is also required, record a separate Completion dependency.
 - `Completion dependency`: the predecessor Story must satisfy its Definition
   of Done before the dependent Story can complete. Use this only when partial
   delivery cannot safely support the dependent work.

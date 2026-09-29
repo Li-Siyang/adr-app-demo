@@ -33,6 +33,13 @@ regression scope without changing the current Story's result. After the
 dependency becomes available, run the affected integration, state-transition,
 and regression cases under the owning Story.
 
+For an approved legacy Test Design with only one Story field, honor a recorded
+`LEGACY DEFERRED EXECUTION INTERPRETATION` only to preserve coverage and
+execution ownership in a `BLOCKED` or partial result. Do not issue
+`READY FOR REVIEW` for an affected Story until Test Design Agent migration and
+Human approval establish the coverage Story, execution-owning Story, and
+execution designation.
+
 ### 2. Map approved Test Cases to execution
 
 For each approved Test Case, classify it as:

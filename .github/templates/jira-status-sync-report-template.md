@@ -17,6 +17,13 @@
 - Human override: `Yes` / `No`
 - Override reason:
 
+## Dependency Gate
+
+- Dependency model: `Typed` / `Legacy migration required`
+- Completion dependencies checked:
+- Unsatisfied Completion dependencies:
+- Predecessor Definition of Done evidence:
+
 ## Jira Operation
 
 - Transition used:
@@ -34,6 +41,8 @@ Use when synchronizing validation results.
 - Passed:
 - Failed:
 - Blocked:
+- Deferred non-blocking integration-validation:
+- Execution-owning Story IDs:
 - Recommendation:
 
 ## Failure Summary

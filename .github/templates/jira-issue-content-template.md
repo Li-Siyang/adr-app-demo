@@ -86,6 +86,9 @@ Use approved Development Plan dependencies. Preserve for each dependency:
 - Jira representation.
 
 Only a Completion dependency may be represented as a hard `blocks` link.
+For a legacy approved Plan without dependency types, record
+`Legacy dependency migration required`; do not create or reinterpret a
+dependency link until the Plan is migrated and approved.
 
 ### Priority
 

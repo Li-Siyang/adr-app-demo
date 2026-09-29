@@ -80,6 +80,12 @@ completion cycle. Report `JIRA CREATION BLOCKED: CYCLIC DEPENDENCY MODEL`
 instead of creating links that make the approved implementation order
 unexecutable.
 
+For an approved legacy Plan without dependency types, existing verified Jira
+items may be reused, but do not create or change dependency links. Report
+`JIRA MAPPING BLOCKED: LEGACY DEPENDENCY MIGRATION REQUIRED` for those links
+until Planning Agent migration and Human approval provide the missing types,
+capabilities, and satisfaction evidence.
+
 Do not split, merge, add, remove, or re-prioritize approved Stories or Tasks.
 
 ### 5. Search existing Jira mappings

@@ -17,11 +17,38 @@ Evaluate dependencies using the approved Plan:
 - an integration-validation dependency does not block development start, but
   must be included in the validation plan.
 
+For an approved legacy Plan created before typed dependencies were required,
+apply this compatibility path:
+
+- do not infer a Completion dependency or require the predecessor Story to be
+  Done;
+- when the Plan's dependency narrative names a concrete prerequisite
+  capability or artifact and observable evidence shows it is available, record
+  `LEGACY DEPENDENCY INTERPRETATION` and provisionally treat it as a Start
+  dependency for development selection and start only;
+- list the source Plan text and evidence in the Developer handoff; and
+- require Planning Agent migration before creating new Jira dependency links
+  or reporting the dependent Story complete.
+
+If the legacy Plan does not name a concrete prerequisite or the evidence is
+missing or ambiguous, stop with `PLANNING GAP`. This compatibility path does
+not modify the approved Plan, create a Completion dependency, or waive any
+validation.
+
+For an approved legacy Test Design with only one Story field, a Test Case that
+explicitly requires a capability assigned by the approved Plan to a later
+Story does not become a start gate. Preserve its existing Story as the coverage
+Story, record `LEGACY DEFERRED EXECUTION INTERPRETATION`, and provisionally
+identify the later capability-owning Story as execution owner. Require Test
+Design migration before validating the affected deferred case or reporting
+either affected Story complete. If ownership is not explicit from the approved
+artifacts, stop with `PLANNING GAP`.
+
 Do not treat every Jira `blocks` link as proof that the predecessor Story must
 be Done. If Jira loses the approved dependency type, conflicts with the Plan,
-or the combined Plan and Test Design create a cycle, stop with `PLANNING GAP`
-and identify the exact dependency requiring Planning Agent or Human
-correction.
+or the combined Plan and Test Design create a cycle after applying the legacy
+compatibility path, stop with `PLANNING GAP` and identify the exact dependency
+requiring Planning Agent or Human correction.
 
 Verify repository, base integration branch (normally `dev`), current state, and
 dependencies. Search for and reuse one unambiguous Story branch; report
