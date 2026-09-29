@@ -403,6 +403,17 @@ def propose_record(client: TestClient) -> dict[str, object]:
     return submitted.json()
 
 
+def accept_record(client: TestClient) -> dict[str, object]:
+    proposed = propose_record(client)
+    client.post("/api/mock-session", json={"identity_id": "arun-approver"})
+    accepted = client.post(
+        f"/api/decision-records/{proposed['id']}/decision",
+        json={"outcome": "Accepted"},
+    )
+    assert accepted.status_code == 200
+    return accepted.json()
+
+
 @pytest.mark.parametrize("outcome", ["Accepted", "Rejected"])
 def test_designated_approver_can_decide_and_transition_is_audited(
     client: TestClient,
@@ -656,3 +667,497 @@ def test_audit_failure_does_not_commit_proposal_transition(
             )
 
     assert store.get(record.id) == proposed
+
+
+def accepted_record_in_store() -> tuple[DecisionRecordStore, DecisionRecord]:
+    store = DecisionRecordStore()
+    author = MOCK_IDENTITIES[0]
+    record = store.create(DecisionRecordCreate(**complete_payload()), author)
+    proposed = store.submit(
+        record.id,
+        author,
+        has_designated_approver=True,
+    )
+    accepted = store.decide(
+        proposed.id,
+        "Accepted",
+        record_change=lambda *_: None,
+    )
+    return store, accepted
+
+
+@pytest.mark.parametrize("actor", MOCK_IDENTITIES)
+def test_accepted_record_cannot_be_edited_by_any_identity(
+    client: TestClient,
+    actor: MockIdentity,
+) -> None:
+    accepted = accept_record(client)
+    client.post("/api/mock-session", json={"identity_id": actor.id})
+
+    response = client.put(
+        f"/api/decision-records/{accepted['id']}",
+        json={"title": "Directly edited Accepted record"},
+    )
+
+    assert response.status_code == 409
+    assert client.get(f"/api/decision-records/{accepted['id']}").json() == accepted
+
+
+def test_only_administrator_can_create_replacement(client: TestClient) -> None:
+    accepted = accept_record(client)
+
+    response = client.post(
+        f"/api/decision-records/{accepted['id']}/replacements"
+    )
+
+    assert response.status_code == 403
+    assert client.get(f"/api/decision-records/{accepted['id']}").json() == accepted
+    assert client.get("/api/decision-records").json()["records"] == [accepted]
+
+
+@pytest.mark.parametrize(
+    ("target_status", "outcome"),
+    [
+        ("Draft", None),
+        ("Proposed", None),
+        ("Rejected", "Rejected"),
+        ("Superseded", None),
+    ],
+)
+def test_replacement_creation_rejects_non_accepted_targets(
+    target_status: str,
+    outcome: str | None,
+) -> None:
+    store = DecisionRecordStore()
+    author = MOCK_IDENTITIES[0]
+    record = store.create(DecisionRecordCreate(**complete_payload()), author)
+    if target_status != "Draft":
+        proposed = store.submit(
+            record.id,
+            author,
+            has_designated_approver=True,
+        )
+        if outcome is not None:
+            store.decide(
+                proposed.id,
+                outcome,
+                record_change=lambda *_: None,
+            )
+        if target_status == "Superseded":
+            current = store.get(record.id)
+            assert current is not None
+            store._records[record.id] = current.model_copy(
+                update={"status": "Superseded"}
+            )
+
+    before = store.get(record.id)
+    assert before is not None
+    with pytest.raises(RecordActionError, match="Accepted"):
+        store.create_replacement(
+            record.id,
+            MOCK_IDENTITIES[2],
+            record_change=lambda _: None,
+        )
+    assert store.get(record.id) == before
+
+
+def test_replacement_creation_is_linked_and_allows_only_one_active_version() -> None:
+    store, original = accepted_record_in_store()
+
+    def try_create() -> DecisionRecord | None:
+        try:
+            return store.create_replacement(
+                original.id,
+                MOCK_IDENTITIES[2],
+                record_change=lambda _: None,
+            )
+        except RecordActionError:
+            return None
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        replacements = list(executor.map(lambda _: try_create(), range(2)))
+
+    created = [replacement for replacement in replacements if replacement]
+    assert len(created) == 1
+    replacement = created[0]
+    assert replacement.status == "Draft"
+    assert replacement.abandoned is False
+    assert replacement.replaces_record_id == original.id
+    assert replacement.replacement_record_ids == []
+    assert replacement.author == MOCK_IDENTITIES[2]
+    assert replacement.owner == original.owner
+    retained_original = store.get(original.id)
+    assert retained_original is not None
+    assert retained_original.status == "Accepted"
+    assert retained_original.replacement_record_ids == [replacement.id]
+
+
+def test_rejected_replacement_ends_active_interval_and_allows_another() -> None:
+    store, original = accepted_record_in_store()
+    replacement = store.create_replacement(
+        original.id,
+        MOCK_IDENTITIES[2],
+        record_change=lambda _: None,
+    )
+    proposed = store.submit(
+        replacement.id,
+        replacement.author,
+        has_designated_approver=True,
+    )
+    rejected = store.decide(
+        proposed.id,
+        "Rejected",
+        record_change=lambda *_: None,
+    )
+
+    new_replacement = store.create_replacement(
+        original.id,
+        MOCK_IDENTITIES[2],
+        record_change=lambda _: None,
+    )
+
+    assert rejected.status == "Rejected"
+    assert new_replacement.status == "Draft"
+    retained_original = store.get(original.id)
+    assert retained_original is not None
+    assert retained_original.status == "Accepted"
+    assert retained_original.replacement_record_ids == [
+        replacement.id,
+        new_replacement.id,
+    ]
+
+
+def test_replacement_acceptance_atomically_supersedes_original() -> None:
+    store, original = accepted_record_in_store()
+    replacement = store.create_replacement(
+        original.id,
+        MOCK_IDENTITIES[2],
+        record_change=lambda _: None,
+    )
+    proposed = store.submit(
+        replacement.id,
+        replacement.author,
+        has_designated_approver=True,
+    )
+    recorded_transitions: list[
+        tuple[
+            DecisionRecord,
+            DecisionRecord,
+            tuple[DecisionRecord, DecisionRecord] | None,
+        ]
+    ] = []
+
+    accepted = store.decide(
+        proposed.id,
+        "Accepted",
+        record_change=lambda before, after, related: recorded_transitions.append(
+            (before, after, related)
+        ),
+    )
+
+    superseded = store.get(original.id)
+    assert superseded is not None
+    assert accepted.status == "Accepted"
+    assert accepted.replaces_record_id == original.id
+    assert superseded.status == "Superseded"
+    assert superseded.replacement_record_ids == [replacement.id]
+    related_transition = recorded_transitions[0][2]
+    assert related_transition is not None
+    assert related_transition[0].status == "Accepted"
+    assert related_transition[0].replacement_record_ids == [replacement.id]
+    assert related_transition[1] == superseded
+
+
+def test_replacement_transition_does_not_commit_when_audit_fails() -> None:
+    store, original = accepted_record_in_store()
+    replacement = store.create_replacement(
+        original.id,
+        MOCK_IDENTITIES[2],
+        record_change=lambda _: None,
+    )
+    proposed = store.submit(
+        replacement.id,
+        replacement.author,
+        has_designated_approver=True,
+    )
+
+    def fail_audit(*_: object) -> None:
+        raise OSError("audit store unavailable")
+
+    with pytest.raises(OSError, match="audit store unavailable"):
+        store.decide(
+            proposed.id,
+            "Accepted",
+            record_change=fail_audit,
+        )
+
+    assert store.get(original.id) == original.model_copy(
+        update={"replacement_record_ids": [replacement.id]}
+    )
+    assert store.get(replacement.id) == proposed
+
+
+def test_replacement_create_and_abandon_do_not_commit_when_audit_fails() -> None:
+    store, original = accepted_record_in_store()
+
+    def fail_audit(*_: object) -> None:
+        raise OSError("audit store unavailable")
+
+    with pytest.raises(OSError, match="audit store unavailable"):
+        store.create_replacement(
+            original.id,
+            MOCK_IDENTITIES[2],
+            record_change=fail_audit,
+        )
+    assert store.get(original.id) == original
+
+    replacement = store.create_replacement(
+        original.id,
+        MOCK_IDENTITIES[2],
+        record_change=lambda _: None,
+    )
+    with pytest.raises(OSError, match="audit store unavailable"):
+        store.abandon_replacement(
+            replacement.id,
+            MOCK_IDENTITIES[2],
+            record_change=fail_audit,
+        )
+
+    assert store.get(original.id) == original.model_copy(
+        update={"replacement_record_ids": [replacement.id]}
+    )
+    assert store.get(replacement.id) == replacement
+
+
+def test_replacement_acceptance_route_audits_both_atomic_status_changes(
+    client: TestClient,
+) -> None:
+    original = accept_record(client)
+    client.post("/api/mock-session", json={"identity_id": "zoe-admin"})
+    replacement = client.post(
+        f"/api/decision-records/{original['id']}/replacements"
+    ).json()
+    proposed = client.post(
+        f"/api/decision-records/{replacement['id']}/submit"
+    ).json()
+    client.post("/api/mock-session", json={"identity_id": "arun-approver"})
+
+    accepted = client.post(
+        f"/api/decision-records/{proposed['id']}/decision",
+        json={"outcome": "Accepted"},
+    )
+
+    assert accepted.status_code == 200
+    assert accepted.json()["status"] == "Accepted"
+    superseded = client.get(
+        f"/api/decision-records/{original['id']}"
+    ).json()
+    assert superseded["status"] == "Superseded"
+    events = client.get(
+        f"/api/decision-records/{replacement['id']}/audit-events"
+    ).json()["events"]
+    related_status_field = f"related_record.{original['id']}.status"
+    transition = next(
+        event
+        for event in events
+        if any(
+            change["field"] == related_status_field
+            for change in event["changes"]
+        )
+    )
+    assert transition["actor"]["id"] == "arun-approver"
+    assert {
+        "field": "status",
+        "before": "Proposed",
+        "after": "Accepted",
+    } in transition["changes"]
+    assert {
+        "field": related_status_field,
+        "before": "Accepted",
+        "after": "Superseded",
+    } in transition["changes"]
+
+
+def test_abandonment_retains_and_audits_draft_and_allows_new_replacement(
+    client: TestClient,
+) -> None:
+    original = accept_record(client)
+    client.post("/api/mock-session", json={"identity_id": "zoe-admin"})
+    response = client.post(
+        f"/api/decision-records/{original['id']}/replacements"
+    )
+    assert response.status_code == 201
+    replacement = response.json()
+
+    abandoned = client.post(
+        f"/api/decision-records/{replacement['id']}/abandon"
+    )
+
+    assert abandoned.status_code == 200
+    assert abandoned.json()["status"] == "Draft"
+    assert abandoned.json()["abandoned"] is True
+    assert abandoned.json()["replaces_record_id"] == original["id"]
+    retained_original = client.get(
+        f"/api/decision-records/{original['id']}"
+    ).json()
+    assert retained_original["status"] == "Accepted"
+    assert retained_original["replacement_record_ids"] == [replacement["id"]]
+
+    events = client.get(
+        f"/api/decision-records/{replacement['id']}/audit-events"
+    ).json()["events"]
+    abandonment = next(
+        event
+        for event in events
+        if event["event_type"] == "replacement_draft_abandoned"
+    )
+    assert abandonment["actor"]["id"] == "zoe-admin"
+    assert abandonment["occurred_at"]
+    assert abandonment["changes"] == [
+        {"field": "abandoned", "before": False, "after": True}
+    ]
+
+    next_replacement = client.post(
+        f"/api/decision-records/{original['id']}/replacements"
+    )
+    assert next_replacement.status_code == 201
+    assert next_replacement.json()["id"] != replacement["id"]
+    assert client.get(f"/api/decision-records/{original['id']}").json()[
+        "replacement_record_ids"
+    ] == [replacement["id"], next_replacement.json()["id"]]
+
+
+def test_only_administrator_can_abandon_replacement(client: TestClient) -> None:
+    original = accept_record(client)
+    client.post("/api/mock-session", json={"identity_id": "zoe-admin"})
+    replacement = client.post(
+        f"/api/decision-records/{original['id']}/replacements"
+    ).json()
+    client.post("/api/mock-session", json={"identity_id": "maya-member"})
+
+    response = client.post(
+        f"/api/decision-records/{replacement['id']}/abandon"
+    )
+
+    assert response.status_code == 403
+    retained = client.get(
+        f"/api/decision-records/{replacement['id']}"
+    ).json()
+    assert retained["status"] == "Draft"
+    assert retained["abandoned"] is False
+    events = client.get(
+        f"/api/decision-records/{replacement['id']}/audit-events"
+    ).json()["events"]
+    assert not any(
+        event["event_type"] == "replacement_draft_abandoned"
+        for event in events
+    )
+
+
+@pytest.mark.parametrize(
+    ("target_kind", "expected_status"),
+    [
+        ("ordinary_draft", "Draft"),
+        ("proposed_replacement", "Proposed"),
+        ("accepted", "Accepted"),
+        ("rejected", "Rejected"),
+        ("superseded", "Superseded"),
+    ],
+)
+def test_abandonment_rejects_invalid_targets(
+    target_kind: str,
+    expected_status: str,
+) -> None:
+    store, original = accepted_record_in_store()
+    if target_kind == "ordinary_draft":
+        target = store.create(
+            DecisionRecordCreate(**complete_payload()),
+            MOCK_IDENTITIES[0],
+        )
+    elif target_kind == "proposed_replacement":
+        target = store.create_replacement(
+            original.id,
+            MOCK_IDENTITIES[2],
+            record_change=lambda _: None,
+        )
+        target = store.submit(
+            target.id,
+            target.author,
+            has_designated_approver=True,
+        )
+    elif target_kind == "accepted":
+        target = original
+    else:
+        proposed = store.create(
+            DecisionRecordCreate(**complete_payload()),
+            MOCK_IDENTITIES[0],
+        )
+        proposed = store.submit(
+            proposed.id,
+            proposed.author,
+            has_designated_approver=True,
+        )
+        target = store.decide(
+            proposed.id,
+            "Rejected",
+            record_change=lambda *_: None,
+        )
+        if target_kind == "superseded":
+            target = target.model_copy(update={"status": "Superseded"})
+            store._records[target.id] = target
+
+    before = store.get(target.id)
+    assert before is not None
+    assert before.status == expected_status
+    with pytest.raises(RecordActionError, match="active replacement Draft"):
+        store.abandon_replacement(
+            target.id,
+            MOCK_IDENTITIES[2],
+            record_change=lambda *_: None,
+        )
+    assert store.get(target.id) == before
+
+
+def test_abandoned_replacement_is_permanently_immutable() -> None:
+    store, original = accepted_record_in_store()
+    replacement = store.create_replacement(
+        original.id,
+        MOCK_IDENTITIES[2],
+        record_change=lambda _: None,
+    )
+    abandoned = store.abandon_replacement(
+        replacement.id,
+        MOCK_IDENTITIES[2],
+        record_change=lambda *_: None,
+    )
+
+    with pytest.raises(RecordActionError, match="Abandoned"):
+        store.update(
+            replacement.id,
+            DecisionRecordUpdate(title="Changed"),
+            replacement.author,
+        )
+    with pytest.raises(RecordActionError, match="Abandoned"):
+        store.submit(
+            replacement.id,
+            replacement.author,
+            has_designated_approver=True,
+        )
+    with pytest.raises(RecordActionError, match="Abandoned"):
+        store.transfer_owner(
+            replacement.id,
+            "maya-member",
+            MOCK_IDENTITIES[2],
+            record_change=lambda *_: None,
+        )
+    with pytest.raises(RecordActionError, match="active replacement Draft"):
+        store.abandon_replacement(
+            replacement.id,
+            MOCK_IDENTITIES[2],
+            record_change=lambda *_: None,
+        )
+    assert store.get(replacement.id) == abandoned
+    retained_original = store.get(original.id)
+    assert retained_original is not None
+    assert retained_original.status == "Accepted"
+    assert retained_original.replacement_record_ids == [replacement.id]

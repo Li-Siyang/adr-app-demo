@@ -122,6 +122,7 @@ def record_lifecycle_transition(
     after: DecisionRecord,
     *,
     changed_fields: tuple[str, ...] = (),
+    related_transition: tuple[DecisionRecord, DecisionRecord] | None = None,
 ) -> None:
     changes = [
         AuditChange(field="status", before=before.status, after=after.status)
@@ -137,6 +138,15 @@ def record_lifecycle_transition(
                     after=audit_value(after_value),
                 )
             )
+    if related_transition is not None:
+        related_before, related_after = related_transition
+        changes.append(
+            AuditChange(
+                field=f"related_record.{related_before.id}.status",
+                before=related_before.status,
+                after=related_after.status,
+            )
+        )
     get_audit_event_store(request).record(
         event_type=AuditEventType.LIFECYCLE_TRANSITIONED,
         actor=actor,
@@ -360,15 +370,96 @@ def decide_decision_record(
             return get_record_store(request).decide(
                 record_id,
                 decision.outcome,
-                record_change=lambda before, after: record_lifecycle_transition(
-                    request,
-                    actor,
-                    before,
-                    after,
+                record_change=lambda before, after, related_transition: (
+                    record_lifecycle_transition(
+                        request,
+                        actor,
+                        before,
+                        after,
+                        related_transition=related_transition,
+                    )
                 ),
             )
         except (RecordNotFoundError, PermissionError, RecordActionError) as error:
             raise_record_action_error(error)
+
+
+@router.post(
+    "/decision-records/{record_id}/replacements",
+    response_model=DecisionRecord,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_replacement_version(
+    record_id: str,
+    request: Request,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> DecisionRecord:
+    administrator = require_selected_identity(selected_identity_id)
+    require_administrator(administrator)
+    try:
+        with governance_lock:
+            return get_record_store(request).create_replacement(
+                record_id,
+                administrator,
+                record_change=lambda replacement: get_audit_event_store(
+                    request
+                ).record(
+                    event_type=AuditEventType.LIFECYCLE_TRANSITIONED,
+                    actor=administrator,
+                    subject_type="decision_record",
+                    subject_id=replacement.id,
+                    changes=(
+                        AuditChange(
+                            field="status",
+                            before=None,
+                            after="Draft",
+                        ),
+                        AuditChange(
+                            field="replaces_record_id",
+                            before=None,
+                            after=record_id,
+                        ),
+                    ),
+                ),
+            )
+    except (RecordNotFoundError, PermissionError, RecordActionError) as error:
+        raise_record_action_error(error)
+
+
+@router.post(
+    "/decision-records/{record_id}/abandon",
+    response_model=DecisionRecord,
+)
+def abandon_replacement_version(
+    record_id: str,
+    request: Request,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> DecisionRecord:
+    administrator = require_selected_identity(selected_identity_id)
+    require_administrator(administrator)
+    try:
+        with governance_lock:
+            return get_record_store(request).abandon_replacement(
+                record_id,
+                administrator,
+                record_change=lambda before, after: get_audit_event_store(
+                    request
+                ).record(
+                    event_type=AuditEventType.REPLACEMENT_DRAFT_ABANDONED,
+                    actor=administrator,
+                    subject_type="decision_record",
+                    subject_id=record_id,
+                    changes=(
+                        AuditChange(
+                            field="abandoned",
+                            before=before.abandoned,
+                            after=after.abandoned,
+                        ),
+                    ),
+                ),
+            )
+    except (RecordNotFoundError, PermissionError, RecordActionError) as error:
+        raise_record_action_error(error)
 
 
 @router.post(
