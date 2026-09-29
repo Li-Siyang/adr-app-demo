@@ -69,6 +69,9 @@ Each Task must include:
 
 Tasks must not force a specific library, framework, database, or architecture
 unless the approved Requirement Definition makes it an explicit constraint.
+Task start and completion dependency graphs must be acyclic. Every Task must
+have an executable start and completion path, and every parent Story must have
+at least one executable Task order that reaches Story completion.
 
 ## Planning completion criteria
 
@@ -79,10 +82,11 @@ A Development Plan is ready for Human Review only when:
 - every source Acceptance Criterion has been evaluated for Story mapping;
 - blocking gaps are explicitly identified;
 - dependencies and planning risks have been recorded;
-- the combined dependency and validation model has no start or completion
-  cycle;
+- the combined Story, Task, and validation dependency model has no start or
+  completion cycle;
 - every Story can start and reach its Definition of Done in the recommended
   implementation order;
+- every Task can start and complete in at least one executable Task order;
 - no undocumented product requirements have been introduced;
 - a Requirement Traceability Matrix exists;
 - a recommended implementation order is included; and

@@ -75,10 +75,11 @@ omits Epics, subordinate Tasks belong to a Story, independent Tasks are
 explicitly justified, dependencies have an approved type and satisfaction
 evidence, and priorities exist where required.
 
-Reject a mapping when the combined Plan and Test Design create a start or
-completion cycle. Report `JIRA CREATION BLOCKED: CYCLIC DEPENDENCY MODEL`
-instead of creating links that make the approved implementation order
-unexecutable.
+Reject a mapping when the combined Plan and Test Design create a Story- or
+Task-level start or completion cycle, or when no executable Task order can
+complete a parent Story. Report
+`JIRA CREATION BLOCKED: CYCLIC DEPENDENCY MODEL` instead of creating links that
+make the approved implementation order unexecutable.
 
 For an approved legacy Plan without dependency types, existing verified Jira
 items may be reused, but do not create or change dependency links. Report

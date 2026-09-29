@@ -8,6 +8,12 @@ Read the approved Requirement Definition, Development Plan, and Test Design befo
 
 Use read-only Jira. First exact-map the stable Story ID across all issue types using the configured Source ID field identifier when available; otherwise exact bracketed Summary, otherwise structured Description Source. If the configured identifier is unavailable, report `JIRA TOOLING BLOCKED`. Do not unrestricted-search or count Tasks that merely mention the Story. Require one issue of type Story, exact stable ID, approved title, and canonical summary `[<Story ID>] <approved Story title>`; a supplied key must identify it, and a child kickoff must repeat the approved title. Read related implementation Tasks and verify status, typed dependencies, ownership, and artifact references. Zero/multiple/unavailable cases respectively require `JIRA STORY MAPPING BLOCKED`/`JIRA DUPLICATE MAPPING BLOCKED`/`JIRA TOOLING BLOCKED`. Stop without Jira mutation and use the handoff template.
 
+Before coding, verify that the Story dependency graph and the selected Story's
+Task dependency graph are acyclic for start and completion dependencies. Confirm
+that every Task has an executable start and completion path and that at least
+one Task order can complete the parent Story. A Task cycle or unreachable Task
+requires `PLANNING GAP`; do not choose an arbitrary Task to bypass it.
+
 Evaluate dependencies using the approved Plan:
 
 - a start dependency is satisfied by traceable evidence that its named
@@ -17,8 +23,8 @@ Evaluate dependencies using the approved Plan:
 - an integration-validation dependency does not block development start, but
   must be included in the validation plan.
 
-For an approved legacy Plan created before typed dependencies were required,
-apply this compatibility path:
+For an approved legacy Plan created before typed Story or Task dependencies
+were required, apply this compatibility path:
 
 - do not infer a Completion dependency or require the predecessor Story to be
   Done;
@@ -29,6 +35,11 @@ apply this compatibility path:
 - list the source Plan text and evidence in the Developer handoff; and
 - require Planning Agent migration before creating new Jira dependency links
   or reporting the dependent Story complete.
+
+Apply the same interpretation independently to each legacy Task dependency.
+Do not infer Task completion dependencies, and do not use the compatibility
+path when provisional Task Start dependencies would form a cycle or leave no
+executable Task order.
 
 If the legacy Plan does not name a concrete prerequisite or the evidence is
 missing or ambiguous, stop with `PLANNING GAP`. This compatibility path does

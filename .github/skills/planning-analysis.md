@@ -131,9 +131,14 @@ Read the approved Test Design when updating an existing plan, or require this
 check before the Plan and Test Design are treated as jointly
 implementation-ready. Verify that:
 
-- the dependency graph is acyclic for both Story start and Story completion;
+- the Story dependency graph and each Story's Task dependency graph are
+  acyclic for both start and completion dependencies;
 - every Story in the recommended order can start when its start dependencies
   are met;
+- every Task can start when its start dependencies are met and can complete
+  when its completion dependencies are met;
+- every parent Story has at least one executable Task order that reaches Story
+  completion;
 - every Story can reach its Definition of Done without requiring a capability
   assigned only to a later Story;
 - a later Story's capability is not used as a blocking completion test for an
@@ -141,9 +146,10 @@ implementation-ready. Verify that:
 - integration-validation dependencies are explicitly non-blocking for
   development start.
 
-If the Plan and Test Design create a cycle, contradictory dependency semantics,
-or no executable completion path, report a `Blocking Gap`. Do not rely on Jira
-status overrides to make the plan executable.
+If any Story or Task start/completion graph contains a cycle, or the Plan and
+Test Design create contradictory dependency semantics or no executable
+completion path, report a `Blocking Gap`. Do not rely on Jira status overrides
+to make the plan executable.
 
 ## Blocking output
 
