@@ -59,6 +59,10 @@ class DecisionSubmission(BaseModel):
     outcome: Literal["Accepted", "Rejected"]
 
 
+class OwnershipTransfer(BaseModel):
+    owner_id: str
+
+
 class ApproverList(BaseModel):
     approvers: list[MockIdentity]
 
@@ -365,6 +369,48 @@ def decide_decision_record(
             )
         except (RecordNotFoundError, PermissionError, RecordActionError) as error:
             raise_record_action_error(error)
+
+
+@router.post(
+    "/decision-records/{record_id}/owner",
+    response_model=DecisionRecord,
+)
+def transfer_decision_record_owner(
+    record_id: str,
+    transfer: OwnershipTransfer,
+    request: Request,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> DecisionRecord:
+    actor = require_selected_identity(selected_identity_id)
+    try:
+        with governance_lock:
+            return get_record_store(request).transfer_owner(
+                record_id,
+                transfer.owner_id,
+                actor,
+                record_change=lambda before, after: get_audit_event_store(
+                    request
+                ).record(
+                    event_type=AuditEventType.OWNERSHIP_TRANSFERRED,
+                    actor=actor,
+                    subject_type="decision_record",
+                    subject_id=record_id,
+                    changes=(
+                        AuditChange(
+                            field="owner",
+                            before=before.owner.id,
+                            after=after.owner.id,
+                        ),
+                    ),
+                ),
+            )
+    except ValueError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(error),
+        ) from error
+    except (RecordNotFoundError, PermissionError, RecordActionError) as error:
+        raise_record_action_error(error)
 
 
 @router.post(
