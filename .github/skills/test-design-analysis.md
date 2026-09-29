@@ -28,7 +28,7 @@ Extract:
 - Acceptance Criteria IDs;
 - Story IDs;
 - Story scope;
-- Story dependencies; and
+- Story dependencies, their types, and their stated satisfaction evidence; and
 - approved constraints.
 
 ### 3. Select relevant test categories
@@ -54,6 +54,11 @@ expectations that are not approved requirements.
 
 Create Test Scenarios from Stories, Requirements, and Acceptance Criteria.
 Create Test Cases from Test Scenarios with observable expected results.
+
+Assign each Test Case to the Story that owns the capability needed to execute
+it. When a case verifies an earlier capability across a later workflow, record
+it as non-blocking integration or regression coverage for the later Story
+rather than making the earlier Story wait for future implementation.
 
 Recommended automation levels may include:
 
@@ -86,6 +91,23 @@ Use these coverage statuses:
 - `Blocked`
 
 Every approved Acceptance Criterion must be evaluated for test coverage.
+
+### 6. Check lifecycle feasibility
+
+Compare Test Cases with the approved dependency types and recommended
+implementation order. Verify that:
+
+- every Story can execute all tests required for its Definition of Done using
+  its own scope and satisfied start or completion dependencies;
+- no blocking Test Case requires a capability assigned only to a later Story;
+- deferred integration or regression coverage is explicitly identified as
+  non-blocking for the earlier Story; and
+- the combined Plan and Test Design contain no start or completion cycle.
+
+If a test is required by an Acceptance Criterion but cannot run until a later
+Story, report `TEST DESIGN BLOCKED: PLANNING CORRECTION REQUIRED` with the
+affected Stories, Test Cases, dependency cycle, and required Planning Agent or
+Human action. Do not silently mark the earlier Story's validation as deferred.
 
 ## Blocking output
 

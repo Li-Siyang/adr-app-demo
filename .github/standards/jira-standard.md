@@ -49,6 +49,15 @@ Jira coordination must not:
 - delete duplicate Jira issues automatically; or
 - fabricate execution evidence.
 
+Dependency semantics must be preserved:
+
+- only completion dependencies may use a hard Jira `blocks` relationship;
+- start dependencies must identify the capability or artifact needed to begin
+  and must not imply that the predecessor Story is Done;
+- integration-validation dependencies must not block development start; and
+- if Jira cannot represent the approved distinction safely, report
+  `JIRA MAPPING BLOCKED` rather than strengthening the dependency.
+
 Route artifact issues to the owning agent or Human Reviewer:
 
 - Requirement issue -> Requirement Agent / Human Reviewer

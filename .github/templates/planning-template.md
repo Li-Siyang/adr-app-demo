@@ -47,7 +47,15 @@ Use `.github/templates/task-template.md` for each Task.
 
 ## 8. Story Dependency Map
 
-Describe important dependencies between Stories.
+Describe important dependencies between Stories. Classify each dependency and
+state how it is satisfied.
+
+| Story | Depends on | Type | Required capability or outcome | Satisfaction evidence |
+| --- | --- | --- | --- | --- |
+| STORY-XXX | STORY-YYY | Start / Completion / Integration-validation | ... | ... |
+
+Confirm that the combined dependency and validation model has no start or
+completion cycle.
 
 ## 9. Recommended Implementation Order
 

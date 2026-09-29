@@ -64,15 +64,21 @@ Verify this chain for every affected item:
 
 Check for unmapped Requirements, Acceptance Criteria without test evaluation,
 Stories without Test Design evaluation, Test Scenarios referencing unknown
-Stories, and conflicts between Plan and Test Design. Do not repair these
-problems yourself.
+Stories, dependency types missing from the Plan, validation that requires a
+later Story to complete an earlier Story, and other conflicts between Plan and
+Test Design. Do not repair these problems yourself.
 
 ### 4. Validate plan structure
 
 Confirm every Story belongs to an Epic unless the approved Plan explicitly
 omits Epics, subordinate Tasks belong to a Story, independent Tasks are
-explicitly justified, dependencies are understandable, and priorities exist
-where required.
+explicitly justified, dependencies have an approved type and satisfaction
+evidence, and priorities exist where required.
+
+Reject a mapping when the combined Plan and Test Design create a start or
+completion cycle. Report `JIRA CREATION BLOCKED: CYCLIC DEPENDENCY MODEL`
+instead of creating links that make the approved implementation order
+unexecutable.
 
 Do not split, merge, add, remove, or re-prioritize approved Stories or Tasks.
 
@@ -115,7 +121,8 @@ Use `.github/templates/jira-creation-preview-template.md`. For each source item
 show source ID, proposed Jira type, proposed title, `CREATE` or `REUSE`, existing
 Jira ID when reused, Requirement IDs, Acceptance Criteria IDs, Engineering Task
 IDs, Test Design ID, Test Design evaluation, Test Scenario IDs where applicable,
-dependencies, parent relationship, and priority.
+typed dependencies and satisfaction evidence, parent relationship, and
+priority.
 
 Do not create or modify Jira work items during the Preview Phase.
 
@@ -159,10 +166,16 @@ Represent supported relationships:
 - Epic -> Story
 - Story -> Sub-task
 - independent Task <-> Story
-- Story dependency -> Story
+- completion dependency -> hard blocking Story link
+- start dependency -> non-blocking relationship or structured issue content
+- integration-validation dependency -> non-blocking relationship or structured
+  issue content
 
 Before creating a link, verify whether the equivalent link already exists. Do
-not create duplicate relationships.
+not create duplicate relationships. Never map a start or
+integration-validation dependency to a hard `blocks` link. If Jira cannot
+represent the distinction without changing its meaning, report
+`JIRA MAPPING BLOCKED`.
 
 ### 10. Verify final Jira state
 

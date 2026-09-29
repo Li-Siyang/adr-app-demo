@@ -17,7 +17,7 @@
 
 ## Proposed Mapping
 
-| Source ID | Proposed Jira Type | Proposed Title | Action | Existing Jira ID | Parent | Requirement IDs | Acceptance Criteria IDs | Task IDs | Test Design | Test Evaluation | Test Scenario IDs | Dependencies | Priority |
+| Source ID | Proposed Jira Type | Proposed Title | Action | Existing Jira ID | Parent | Requirement IDs | Acceptance Criteria IDs | Task IDs | Test Design | Test Evaluation | Test Scenario IDs | Typed dependencies and evidence | Priority |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | EPIC-001 | Epic | [EPIC-001] Title | CREATE / REUSE | N/A | N/A | REQ-001 | N/A | N/A | TEST-001 | N/A | N/A | N/A | Must |
 
