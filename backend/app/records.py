@@ -82,6 +82,8 @@ class DecisionRecordUpdate(BaseModel):
         if value is None:
             raise ValueError("tags must not be null")
         tags = [tag.strip() for tag in value]
+        if any(not tag for tag in tags):
+            raise ValueError("tags must not be blank")
         if len(set(tags)) != len(tags):
             raise ValueError("tags must be unique")
         return tags

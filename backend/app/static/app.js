@@ -134,7 +134,7 @@ function disableDraftAuthoring(message) {
 
 function setEditingMode(isEditing) {
   for (const field of requiredFields) {
-    field.required = !isEditing || field === recordTags;
+    field.required = !isEditing;
   }
   recordOwner.disabled = isEditing;
 }
