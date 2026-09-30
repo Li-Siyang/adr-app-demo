@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api import router as api_router
 from app.audit import AuditEventStore
 from app.records import DecisionRecordStore
+from app.tags import TagStore
 
 STATIC_DIR = Path(__file__).parent / "static"
 DEFAULT_AUDIT_DATABASE = Path(__file__).parents[1] / "data" / "audit.sqlite3"
@@ -18,6 +19,7 @@ def create_app(
     app = FastAPI(title="Internal Decision Record Application")
     app.state.audit_event_store = AuditEventStore(audit_database_path)
     app.state.record_store = DecisionRecordStore()
+    app.state.tag_store = TagStore()
     app.include_router(api_router)
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 

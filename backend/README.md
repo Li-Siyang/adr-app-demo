@@ -6,8 +6,11 @@ and guarded Draft submission flow, STORY-005 proposal decisions and review
 restart after author edits, STORY-006 ownership transfer, STORY-007 replacement
 version creation, acceptance and abandonment, and STORY-009 exact-tag record
 discovery.
-STORY-015 provides append-only audit-event storage and read-only retrieval for
-governed actions.
+STORY-010 adds team-member tag creation and multi-tag record association.
+Available tags are maintained in the application process and can be selected
+when creating or editing a record. Tag rename, merge, and deletion are not
+supported. STORY-015 provides append-only audit-event storage and read-only
+retrieval for governed actions.
 Identity selection is intentionally not authentication and does not create an
 access-control boundary.
 
@@ -20,8 +23,9 @@ approvers can accept or reject a Proposed record, including when they authored
 it; Rejected records are immutable. Decisions and review restarts are serialized
 with approver changes and recorded as attributed lifecycle audit events.
 Users operating under a selected Mock identity can list all retained records or
-apply one exact tag filter. Tag discovery does not exclude records based on
-lifecycle or archival condition.
+create tags, associate one or more available tags with records, list all
+available tags, or apply one exact tag filter. Tag discovery does not exclude
+records based on lifecycle or archival condition.
 The author, current owner, or administrator Mock identity may transfer an
 ordinary Draft or Proposed record to a different configured owner. The author
 remains unchanged, and the transfer is recorded with its acting identity and
