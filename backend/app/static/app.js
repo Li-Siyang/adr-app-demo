@@ -30,6 +30,26 @@ let selectedPermissionsLoaded = false;
 let editingRecordId = null;
 let editingOwnerId = null;
 let editingStatus = null;
+const pendingArchivalIds = new Set();
+const archivalDisabledControls = new Map();
+
+function lockRecordControls(recordId) {
+  const card = document.getElementById(`record-card-${recordId}`);
+  const controls = card
+    ? [...card.querySelectorAll("button, select")].filter((control) => !control.disabled)
+    : [];
+  for (const control of controls) {
+    control.disabled = true;
+  }
+  archivalDisabledControls.set(recordId, controls);
+}
+
+function unlockRecordControls(recordId) {
+  for (const control of archivalDisabledControls.get(recordId) || []) {
+    control.disabled = false;
+  }
+  archivalDisabledControls.delete(recordId);
+}
 
 function roleName(role) {
   return role
@@ -346,16 +366,20 @@ async function abandonReplacement(record, abandonButton) {
   }
 }
 
-async function changeArchival(record, button) {
+async function changeArchival(record) {
   const action = record.archived ? "restore" : "archive";
   if (action === "archive" && editingRecordId === record.id) {
-    archiveMessage.className = "error";
-    archiveMessage.textContent =
+    recordFormMessage.className = "error";
+    recordFormMessage.textContent =
       "Save or cancel your edits before archiving this record.";
-    recordForm.scrollIntoView({ behavior: "smooth" });
+    recordFormMessage.scrollIntoView({ behavior: "smooth" });
     return;
   }
-  button.disabled = true;
+  if (pendingArchivalIds.has(record.id)) {
+    return;
+  }
+  pendingArchivalIds.add(record.id);
+  lockRecordControls(record.id);
   archiveMessage.className = "";
   archiveMessage.textContent = "";
   try {
@@ -372,7 +396,6 @@ async function changeArchival(record, button) {
       }
       archiveMessage.className = "error";
       archiveMessage.textContent = message;
-      button.disabled = false;
       return;
     }
     archiveMessage.textContent = record.archived
@@ -383,7 +406,9 @@ async function changeArchival(record, button) {
     archiveMessage.className = "error";
     archiveMessage.textContent =
       `Record could not be ${action}d. Please try again.`;
-    button.disabled = false;
+  } finally {
+    pendingArchivalIds.delete(record.id);
+    unlockRecordControls(record.id);
   }
 }
 
@@ -482,7 +507,7 @@ function renderRecords(records, allRecords = records) {
             "aria-label",
             `${archival.textContent}: ${record.title || "Untitled Draft"} (${record.id})`,
           );
-          archival.addEventListener("click", () => changeArchival(record, archival));
+          archival.addEventListener("click", () => changeArchival(record));
           article.append(archival);
         }
       }
@@ -589,6 +614,13 @@ function renderRecords(records, allRecords = records) {
           actions.append(decide);
         }
         article.append(actions);
+      }
+      if (pendingArchivalIds.has(record.id)) {
+        const controls = [...article.querySelectorAll("button, select")];
+        for (const control of controls) {
+          control.disabled = true;
+        }
+        archivalDisabledControls.set(record.id, controls);
       }
       return article;
     }),
