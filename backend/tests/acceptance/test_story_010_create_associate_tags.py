@@ -9,6 +9,7 @@ from collections.abc import Iterator
 import pytest
 from fastapi.testclient import TestClient
 
+from app.governance import designated_approver_ids
 from app.main import create_app
 
 TEAM_MEMBER = "maya-member"
@@ -16,6 +17,7 @@ TEAM_MEMBER = "maya-member"
 
 @pytest.fixture
 def client() -> Iterator[TestClient]:
+    designated_approver_ids.clear()
     with TestClient(create_app()) as test_client:
         selected = test_client.post(
             "/api/mock-session",
@@ -23,6 +25,7 @@ def client() -> Iterator[TestClient]:
         )
         assert selected.status_code == 200
         yield test_client
+    designated_approver_ids.clear()
 
 
 def record_payload(tags: list[str]) -> dict[str, object]:
@@ -94,3 +97,64 @@ def test_tc_010_02_multiple_selected_tags_are_retained_and_discoverable(
         assert [record["id"] for record in matching_records.json()["records"]] == [
             record_id
         ]
+
+
+def test_tag_endpoints_reject_missing_identity_blank_name_and_duplicate(
+    client: TestClient,
+) -> None:
+    """Review regression: tag API errors are explicit and leave tag state unchanged."""
+    unauthenticated = TestClient(client.app)
+    assert unauthenticated.post(
+        "/api/tags",
+        json={"name": "review-validation"},
+    ).status_code == 400
+
+    blank = client.post("/api/tags", json={"name": "  "})
+    assert blank.status_code == 422
+    assert "review-validation" not in client.get("/api/tags").json()["tags"]
+
+    created = client.post("/api/tags", json={"name": "review-validation"})
+    assert created.status_code == 201
+    duplicate = client.post("/api/tags", json={"name": "review-validation"})
+    assert duplicate.status_code == 409
+    assert client.get("/api/tags").json()["tags"] == ["review-validation"]
+
+
+def test_blank_tag_update_is_atomic_for_draft_and_proposed_records(
+    client: TestClient,
+) -> None:
+    """Review regression: invalid tag edits do not mutate records or audit history."""
+    created = client.post(
+        "/api/decision-records",
+        json=record_payload(["review-validation"]),
+    )
+    assert created.status_code == 201
+    record_id = created.json()["id"]
+
+    invalid_draft_update = client.put(
+        f"/api/decision-records/{record_id}",
+        json={"tags": ["   "]},
+    )
+    assert invalid_draft_update.status_code == 422
+    retained_draft = client.get(f"/api/decision-records/{record_id}").json()
+    assert retained_draft["status"] == "Draft"
+    assert retained_draft["tags"] == ["review-validation"]
+
+    designated_approver_ids.add("arun-approver")
+    submitted = client.post(f"/api/decision-records/{record_id}/submit")
+    assert submitted.status_code == 200
+    assert submitted.json()["status"] == "Proposed"
+    invalid_proposed_update = client.put(
+        f"/api/decision-records/{record_id}",
+        json={"tags": ["   "]},
+    )
+    assert invalid_proposed_update.status_code == 422
+
+    retained_proposal = client.get(f"/api/decision-records/{record_id}").json()
+    assert retained_proposal["status"] == "Proposed"
+    assert retained_proposal["tags"] == ["review-validation"]
+    audit_events = client.get(
+        f"/api/decision-records/{record_id}/audit-events"
+    )
+    assert audit_events.status_code == 200
+    assert audit_events.json()["events"] == []
