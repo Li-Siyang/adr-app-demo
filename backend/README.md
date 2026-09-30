@@ -44,7 +44,9 @@ The record list exposes links between each original and its retained
 replacement versions.
 Audit events are durably retained in `backend/data/audit.sqlite3` with the
 acting Mock identity, timestamp, subject, and immutable field-level changes.
-The existing approver designation flow records these events; later governed
+The record cards expose a Change history disclosure for each retained record,
+including attributed content edits and replacement-version changes. The
+existing approver designation flow records these events; later governed
 workflows can use the same audit store.
 
 Decision records and approver designations are process-local demonstration

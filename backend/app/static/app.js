@@ -360,6 +360,87 @@ async function navigateToRecord(recordId, event) {
   }
 }
 
+function historyValue(value, field) {
+  if (value === null) {
+    return "Not set";
+  }
+  if (["tags", "replacement_record_ids"].includes(field)) {
+    try {
+      const parsed = JSON.parse(value);
+      return parsed.join(", ") || "None";
+    } catch {
+      // Preserve the stored value if a list entry is malformed.
+    }
+  }
+  return String(value);
+}
+
+function historyFieldName(field) {
+  const relatedField = field.match(/^related_record\.([^.]+)\.(.+)$/);
+  if (relatedField) {
+    return `Related record ${relatedField[1]} ${displayFieldName([
+      relatedField[2],
+    ])}`;
+  }
+  return displayFieldName([field]);
+}
+
+async function loadRecordHistory(recordId, message, entries) {
+  message.textContent = "Loading change history...";
+  entries.replaceChildren();
+  try {
+    const response = await fetch(
+      `/api/decision-records/${recordId}/audit-events`,
+    );
+    if (!response.ok) {
+      let error = null;
+      try {
+        error = await response.json();
+      } catch {
+        // Keep the standard message when the server response is not JSON.
+      }
+      message.textContent = apiErrorMessage(
+        error || {},
+        "Change history could not be loaded.",
+      );
+      return;
+    }
+
+    const collection = await response.json();
+    if (collection.events.length === 0) {
+      message.textContent = "No recorded changes.";
+      return;
+    }
+
+    message.textContent = "";
+    entries.replaceChildren(
+      ...collection.events.map((event) => {
+        const entry = document.createElement("li");
+        const attribution = document.createElement("p");
+        const occurredAt = new Date(event.occurred_at);
+        attribution.textContent =
+          `Changed by ${event.actor.display_name} | ` +
+          occurredAt.toLocaleString();
+        const changes = document.createElement("ul");
+        changes.replaceChildren(
+          ...event.changes.map((change) => {
+            const item = document.createElement("li");
+            item.textContent =
+              `${historyFieldName(change.field)}: ` +
+              `${historyValue(change.before, change.field)} -> ` +
+              `${historyValue(change.after, change.field)}`;
+            return item;
+          }),
+        );
+        entry.append(attribution, changes);
+        return entry;
+      }),
+    );
+  } catch {
+    message.textContent = "Change history could not be loaded. Please try again.";
+  }
+}
+
 function renderRecords(records, allRecords = records) {
   recordList.replaceChildren(
     ...records.map((record) => {
@@ -415,6 +496,20 @@ function renderRecords(records, allRecords = records) {
         }
         article.append(links);
       }
+
+      const history = document.createElement("details");
+      history.className = "record-history";
+      const historySummary = document.createElement("summary");
+      historySummary.textContent = "Change history";
+      const historyMessage = document.createElement("p");
+      const historyEntries = document.createElement("ol");
+      history.addEventListener("toggle", () => {
+        if (history.open) {
+          loadRecordHistory(record.id, historyMessage, historyEntries);
+        }
+      });
+      history.append(historySummary, historyMessage, historyEntries);
+      article.append(history);
 
       const activeReplacement = allRecords.some(
         (candidate) =>
