@@ -11,6 +11,7 @@ const recordList = document.querySelector("#record-list");
 const recordListMessage = document.querySelector("#record-list-message");
 const decisionMessage = document.querySelector("#decision-message");
 const transferMessage = document.querySelector("#transfer-message");
+const replacementMessage = document.querySelector("#replacement-message");
 const cancelEdit = document.querySelector("#cancel-edit");
 
 let availableTags = [];
@@ -227,22 +228,171 @@ async function transferOwner(record, ownerSelect, transferButton) {
   }
 }
 
-function renderRecords(records) {
+async function createReplacement(record, replacementButton) {
+  replacementButton.disabled = true;
+  replacementMessage.className = "";
+  replacementMessage.textContent = "";
+  try {
+    const response = await fetch(
+      `/api/decision-records/${record.id}/replacements`,
+      { method: "POST" },
+    );
+    if (!response.ok) {
+      let message = "Replacement version could not be created.";
+      try {
+        message = apiErrorMessage(await response.json(), message);
+      } catch {
+        // Keep the generic message when the server response is not JSON.
+      }
+      replacementMessage.className = "error";
+      replacementMessage.textContent = message;
+      replacementButton.disabled = false;
+      return;
+    }
+    replacementMessage.textContent = "Replacement Draft created.";
+    await loadRecords(tagFilter.value);
+  } catch {
+    replacementMessage.className = "error";
+    replacementMessage.textContent =
+      "Replacement version could not be created. Please try again.";
+    replacementButton.disabled = false;
+  }
+}
+
+async function abandonReplacement(record, abandonButton) {
+  abandonButton.disabled = true;
+  replacementMessage.className = "";
+  replacementMessage.textContent = "";
+  try {
+    const response = await fetch(
+      `/api/decision-records/${record.id}/abandon`,
+      { method: "POST" },
+    );
+    if (!response.ok) {
+      let message = "Replacement Draft could not be abandoned.";
+      try {
+        message = apiErrorMessage(await response.json(), message);
+      } catch {
+        // Keep the generic message when the server response is not JSON.
+      }
+      replacementMessage.className = "error";
+      replacementMessage.textContent = message;
+      abandonButton.disabled = false;
+      return;
+    }
+    replacementMessage.textContent =
+      "Replacement Draft retained and marked Abandoned.";
+    await loadRecords(tagFilter.value);
+  } catch {
+    replacementMessage.className = "error";
+    replacementMessage.textContent =
+      "Replacement Draft could not be abandoned. Please try again.";
+    abandonButton.disabled = false;
+  }
+}
+
+async function navigateToRecord(recordId, event) {
+  event.preventDefault();
+  const cardId = `record-card-${recordId}`;
+  if (!document.getElementById(cardId)) {
+    tagFilter.value = "";
+    await loadRecords();
+  }
+
+  const card = document.getElementById(cardId);
+  if (card) {
+    window.location.hash = cardId;
+    card.scrollIntoView({ behavior: "smooth" });
+  }
+}
+
+function renderRecords(records, allRecords = records) {
   recordList.replaceChildren(
     ...records.map((record) => {
       const article = document.createElement("article");
       article.className = "record-card";
+      article.id = `record-card-${record.id}`;
 
       const title = document.createElement("h3");
       title.textContent = record.title || "Untitled Draft";
       const details = document.createElement("p");
       details.textContent =
-        `${record.status} | Author: ${record.author.display_name} | ` +
+        `${record.status}${record.abandoned ? " (Abandoned)" : ""} | ` +
+        `Author: ${record.author.display_name} | ` +
         `Owner: ${record.owner.display_name} | ` +
         `Decision date: ${record.decision_date}`;
       const tags = document.createElement("p");
       tags.textContent = `Tags: ${record.tags.join(", ")}`;
       article.append(title, details, tags);
+
+      const original = allRecords.find(
+        (candidate) => candidate.id === record.replaces_record_id,
+      );
+      const linkedReplacements = (record.replacement_record_ids || [])
+        .map((replacementId) =>
+          allRecords.find((candidate) => candidate.id === replacementId),
+        )
+        .filter(Boolean);
+      if (original || linkedReplacements.length) {
+        const links = document.createElement("p");
+        links.className = "version-links";
+        if (original) {
+          const link = document.createElement("a");
+          link.href = `#record-card-${original.id}`;
+          link.textContent = `Version of: ${original.title}`;
+          link.addEventListener("click", (event) =>
+            navigateToRecord(original.id, event),
+          );
+          links.append(link);
+        }
+        for (const replacement of linkedReplacements) {
+          if (links.childNodes.length) {
+            links.append(document.createTextNode(" | "));
+          }
+          const link = document.createElement("a");
+          link.href = `#record-card-${replacement.id}`;
+          link.textContent =
+            `Replacement: ${replacement.title} (${replacement.status}` +
+            `${replacement.abandoned ? ", Abandoned" : ""})`;
+          link.addEventListener("click", (event) =>
+            navigateToRecord(replacement.id, event),
+          );
+          links.append(link);
+        }
+        article.append(links);
+      }
+
+      const activeReplacement = allRecords.some(
+        (candidate) =>
+          candidate.replaces_record_id === record.id &&
+          ["Draft", "Proposed"].includes(candidate.status) &&
+          !candidate.abandoned,
+      );
+      if (
+        selectedPermissionsLoaded &&
+        selectedIsAdministrator &&
+        record.status === "Accepted" &&
+        !activeReplacement
+      ) {
+        const create = document.createElement("button");
+        create.type = "button";
+        create.textContent = "Create replacement Draft";
+        create.addEventListener("click", () => createReplacement(record, create));
+        article.append(create);
+      }
+      if (
+        selectedPermissionsLoaded &&
+        selectedIsAdministrator &&
+        record.replaces_record_id &&
+        record.status === "Draft" &&
+        !record.abandoned
+      ) {
+        const abandon = document.createElement("button");
+        abandon.type = "button";
+        abandon.textContent = "Abandon replacement Draft";
+        abandon.addEventListener("click", () => abandonReplacement(record, abandon));
+        article.append(abandon);
+      }
 
       const transferable =
         selectedPermissionsLoaded &&
@@ -347,9 +497,8 @@ function updateTagOptions(tags) {
 async function loadRecords(tag = "") {
   const requestId = ++latestRecordRequest;
   recordListMessage.textContent = "Loading decision records...";
-  const query = tag ? `?tag=${encodeURIComponent(tag)}` : "";
   try {
-    const response = await fetch(`/api/decision-records${query}`);
+    const response = await fetch("/api/decision-records");
     if (requestId !== latestRecordRequest) {
       return;
     }
@@ -364,7 +513,10 @@ async function loadRecords(tag = "") {
       return;
     }
     updateTagOptions(collection.records.flatMap((record) => record.tags));
-    renderRecords(collection.records);
+    const records = tag
+      ? collection.records.filter((record) => record.tags.includes(tag))
+      : collection.records;
+    renderRecords(records, collection.records);
   } catch {
     if (requestId === latestRecordRequest) {
       recordList.replaceChildren();

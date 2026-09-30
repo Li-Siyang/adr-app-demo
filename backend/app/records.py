@@ -100,6 +100,8 @@ class DecisionRecord(BaseModel):
         "Draft"
     )
     abandoned: bool = False
+    replaces_record_id: str | None = None
+    replacement_record_ids: list[str] = Field(default_factory=list)
     title: str
     context: str
     decision: str
@@ -221,7 +223,14 @@ class DecisionRecordStore:
         record_id: str,
         outcome: Literal["Accepted", "Rejected"],
         *,
-        record_change: Callable[[DecisionRecord, DecisionRecord], None],
+        record_change: Callable[
+            [
+                DecisionRecord,
+                DecisionRecord,
+                tuple[DecisionRecord, DecisionRecord] | None,
+            ],
+            None,
+        ],
     ) -> DecisionRecord:
         with self._lock:
             record = self._records.get(record_id)
@@ -232,10 +241,123 @@ class DecisionRecordStore:
                     "Only a Proposed record can be accepted or rejected."
                 )
 
+            superseded_transition = None
+            if outcome == "Accepted" and record.replaces_record_id is not None:
+                original = self._records.get(record.replaces_record_id)
+                if (
+                    original is None
+                    or original.status != "Accepted"
+                    or record.id not in original.replacement_record_ids
+                ):
+                    raise RecordActionError(
+                        "The original Accepted record is no longer eligible "
+                        "for replacement acceptance."
+                    )
+                superseded = original.model_copy(
+                    update={"status": "Superseded"}
+                )
+                superseded_transition = (original, superseded)
+
             decided = record.model_copy(update={"status": outcome})
-            record_change(record, decided)
+            record_change(record, decided, superseded_transition)
+            if superseded_transition is not None:
+                original, superseded = superseded_transition
+                self._records[original.id] = superseded
             self._records[record_id] = decided
             return decided
+
+    def create_replacement(
+        self,
+        record_id: str,
+        actor: MockIdentity,
+        *,
+        record_change: Callable[[DecisionRecord], None],
+    ) -> DecisionRecord:
+        with self._lock:
+            original = self._records.get(record_id)
+            if original is None:
+                raise RecordNotFoundError
+            if not is_administrator(actor):
+                raise PermissionError(
+                    "Only an administrator may create a replacement version."
+                )
+            if original.status != "Accepted":
+                raise RecordActionError(
+                    "Only an Accepted record can have a replacement version."
+                )
+            if any(
+                (replacement := self._records.get(replacement_id)) is not None
+                and replacement.status in ("Draft", "Proposed")
+                and not replacement.abandoned
+                for replacement_id in original.replacement_record_ids
+            ):
+                raise RecordActionError(
+                    "An active replacement version already exists."
+                )
+
+            replacement = original.model_copy(
+                update={
+                    "id": str(uuid4()),
+                    "status": "Draft",
+                    "abandoned": False,
+                    "replaces_record_id": original.id,
+                    "replacement_record_ids": [],
+                    "author": actor,
+                    "tags": list(original.tags),
+                    "created_at": datetime.now(timezone.utc),
+                }
+            )
+            updated_original = original.model_copy(
+                update={
+                    "replacement_record_ids": [
+                        *original.replacement_record_ids,
+                        replacement.id,
+                    ]
+                }
+            )
+            record_change(replacement)
+            self._records[original.id] = updated_original
+            self._records[replacement.id] = replacement
+            return replacement
+
+    def abandon_replacement(
+        self,
+        record_id: str,
+        actor: MockIdentity,
+        *,
+        record_change: Callable[[DecisionRecord, DecisionRecord], None],
+    ) -> DecisionRecord:
+        with self._lock:
+            record = self._records.get(record_id)
+            if record is None:
+                raise RecordNotFoundError
+            if not is_administrator(actor):
+                raise PermissionError(
+                    "Only an administrator may abandon a replacement Draft."
+                )
+            if (
+                record.status != "Draft"
+                or record.abandoned
+                or record.replaces_record_id is None
+            ):
+                raise RecordActionError(
+                    "Only an active replacement Draft can be abandoned."
+                )
+            original = self._records.get(record.replaces_record_id)
+            if (
+                original is None
+                or original.status != "Accepted"
+                or record.id not in original.replacement_record_ids
+            ):
+                raise RecordActionError(
+                    "The original Accepted record is no longer eligible "
+                    "for replacement abandonment."
+                )
+
+            abandoned = record.model_copy(update={"abandoned": True})
+            record_change(record, abandoned)
+            self._records[record_id] = abandoned
+            return abandoned
 
     def transfer_owner(
         self,
