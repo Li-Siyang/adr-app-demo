@@ -17,6 +17,7 @@ const recordListMessage = document.querySelector("#record-list-message");
 const decisionMessage = document.querySelector("#decision-message");
 const transferMessage = document.querySelector("#transfer-message");
 const replacementMessage = document.querySelector("#replacement-message");
+const archiveMessage = document.querySelector("#archive-message");
 const cancelEdit = document.querySelector("#cancel-edit");
 
 let availableTags = [];
@@ -345,6 +346,40 @@ async function abandonReplacement(record, abandonButton) {
   }
 }
 
+async function changeArchival(record, button) {
+  const action = record.archived ? "restore" : "archive";
+  button.disabled = true;
+  archiveMessage.className = "";
+  archiveMessage.textContent = "";
+  try {
+    const response = await fetch(
+      `/api/decision-records/${record.id}/${action}`,
+      { method: "POST" },
+    );
+    if (!response.ok) {
+      let message = `Record could not be ${action}d.`;
+      try {
+        message = apiErrorMessage(await response.json(), message);
+      } catch {
+        // Keep the generic message when the server response is not JSON.
+      }
+      archiveMessage.className = "error";
+      archiveMessage.textContent = message;
+      button.disabled = false;
+      return;
+    }
+    archiveMessage.textContent = record.archived
+      ? "Record restored."
+      : "Record archived and retained.";
+    await loadRecords(tagFilter.value);
+  } catch {
+    archiveMessage.className = "error";
+    archiveMessage.textContent =
+      `Record could not be ${action}d. Please try again.`;
+    button.disabled = false;
+  }
+}
+
 async function navigateToRecord(recordId, event) {
   event.preventDefault();
   const cardId = `record-card-${recordId}`;
@@ -372,6 +407,7 @@ function renderRecords(records, allRecords = records) {
       const details = document.createElement("p");
       details.textContent =
         `${record.status}${record.abandoned ? " (Abandoned)" : ""} | ` +
+        `${record.archived ? "Archived | " : ""}` +
         `Author: ${record.author.display_name} | ` +
         `Owner: ${record.owner.display_name} | ` +
         `Decision date: ${record.decision_date}`;
@@ -422,9 +458,27 @@ function renderRecords(records, allRecords = records) {
           ["Draft", "Proposed"].includes(candidate.status) &&
           !candidate.abandoned,
       );
+      if (selectedPermissionsLoaded && selectedIsAdministrator) {
+        const blockedByProposedReplacement =
+          record.status === "Accepted" &&
+          allRecords.some(
+            (candidate) =>
+              candidate.replaces_record_id === record.id &&
+              candidate.status === "Proposed" &&
+              !candidate.abandoned,
+          );
+        if (record.archived || !blockedByProposedReplacement) {
+          const archival = document.createElement("button");
+          archival.type = "button";
+          archival.textContent = record.archived ? "Restore record" : "Archive record";
+          archival.addEventListener("click", () => changeArchival(record, archival));
+          article.append(archival);
+        }
+      }
       if (
         selectedPermissionsLoaded &&
         selectedIsAdministrator &&
+        !record.archived &&
         record.status === "Accepted" &&
         !activeReplacement
       ) {
@@ -437,6 +491,7 @@ function renderRecords(records, allRecords = records) {
       if (
         selectedPermissionsLoaded &&
         selectedIsAdministrator &&
+        !record.archived &&
         record.replaces_record_id &&
         record.status === "Draft" &&
         !record.abandoned
@@ -454,6 +509,7 @@ function renderRecords(records, allRecords = records) {
           record.owner.id === selectedIdentityId ||
           selectedIsAdministrator) &&
         ["Draft", "Proposed"].includes(record.status) &&
+        !record.archived &&
         !record.abandoned;
       if (transferable && availableOwners.length) {
         const actions = document.createElement("div");
@@ -486,6 +542,7 @@ function renderRecords(records, allRecords = records) {
       const editable =
         record.author.id === selectedIdentityId &&
         ["Draft", "Proposed"].includes(record.status) &&
+        !record.archived &&
         !record.abandoned;
       if (editable) {
         const actions = document.createElement("div");
@@ -506,7 +563,7 @@ function renderRecords(records, allRecords = records) {
         }
         article.append(actions);
       }
-      if (record.status === "Proposed" && selectedCanDecideProposals) {
+      if (record.status === "Proposed" && !record.archived && selectedCanDecideProposals) {
         const actions = document.createElement("div");
         actions.className = "record-actions";
         for (const outcome of ["Accepted", "Rejected"]) {

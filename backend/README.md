@@ -5,16 +5,23 @@ the STORY-003 structured Draft creation flow, the STORY-004 author editing
 and guarded Draft submission flow, STORY-005 proposal decisions and review
 restart after author edits, STORY-006 ownership transfer, STORY-007 replacement
 version creation, acceptance and abandonment, and STORY-009 exact-tag record
-discovery.
-STORY-010 adds team-member tag creation and multi-tag record association.
-Available tags are maintained in the application process and can be selected
-when creating or editing a record. Tag rename, merge, and deletion are not
-supported. STORY-015 provides append-only audit-event storage and read-only
-retrieval for governed actions.
+discovery. STORY-010 adds team-member tag creation and multi-tag record
+association. Available tags are maintained in the application process and can
+be selected when creating or editing a record. Tag rename, merge, and deletion
+are not supported. STORY-015 provides append-only audit-event storage and
+read-only retrieval for governed actions.
+STORY-012 adds administrator-only archival and restoration. Archival is a
+separate condition: the lifecycle status and replacement-specific Abandoned
+condition remain intact. Archived records remain available in lists, exact-tag
+results, and version links; restore returns them to active use without changing
+their lifecycle status. An Accepted original with an active Proposed replacement
+cannot be archived. Other edits and transitions on archived records require
+restoration first. A replacement Draft cannot be submitted while its Accepted
+original is archived. Archive and restore actions produce attributed audit events.
 Identity selection is intentionally not authentication and does not create an
 access-control boundary.
 
-Drafts are retained in the application process for this demonstration. They
+Records are retained in the application process for this demonstration. They
 capture the selected Mock identity as author, a distinct configured owner,
 required decision context, one or more tags, and the demo-data boundary notice.
 Authors can edit their own eligible Drafts and Proposed records. Editing a
