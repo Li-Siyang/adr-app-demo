@@ -23,6 +23,7 @@ const cancelEdit = document.querySelector("#cancel-edit");
 let availableTags = [];
 let availableOwners = [];
 let latestRecordRequest = 0;
+let latestRecordsLoad = null;
 let selectedIdentityId = null;
 let selectedCanDecideProposals = false;
 let selectedIsAdministrator = false;
@@ -401,7 +402,14 @@ async function changeArchival(record) {
     archiveMessage.textContent = record.archived
       ? "Record restored."
       : "Record archived and retained.";
-    await loadRecords(tagFilter.value);
+    let refresh = loadRecords(tagFilter.value);
+    while (refresh) {
+      await refresh;
+      if (refresh === latestRecordsLoad) {
+        break;
+      }
+      refresh = latestRecordsLoad;
+    }
   } catch {
     archiveMessage.className = "error";
     archiveMessage.textContent =
@@ -660,35 +668,39 @@ function updateTagOptions(tags) {
   );
 }
 
-async function loadRecords(tag = "") {
+function loadRecords(tag = "") {
   const requestId = ++latestRecordRequest;
-  recordListMessage.textContent = "Loading decision records...";
-  try {
-    const response = await fetch("/api/decision-records");
-    if (requestId !== latestRecordRequest) {
-      return;
-    }
-    if (!response.ok) {
-      recordList.replaceChildren();
-      recordListMessage.textContent = "Decision records could not be loaded.";
-      return;
-    }
+  const load = (async () => {
+    recordListMessage.textContent = "Loading decision records...";
+    try {
+      const response = await fetch("/api/decision-records");
+      if (requestId !== latestRecordRequest) {
+        return;
+      }
+      if (!response.ok) {
+        recordList.replaceChildren();
+        recordListMessage.textContent = "Decision records could not be loaded.";
+        return;
+      }
 
-    const collection = await response.json();
-    if (requestId !== latestRecordRequest) {
-      return;
+      const collection = await response.json();
+      if (requestId !== latestRecordRequest) {
+        return;
+      }
+      updateTagOptions(collection.records.flatMap((record) => record.tags));
+      const records = tag
+        ? collection.records.filter((record) => record.tags.includes(tag))
+        : collection.records;
+      renderRecords(records, collection.records);
+    } catch {
+      if (requestId === latestRecordRequest) {
+        recordList.replaceChildren();
+        recordListMessage.textContent = "Decision records could not be loaded.";
+      }
     }
-    updateTagOptions(collection.records.flatMap((record) => record.tags));
-    const records = tag
-      ? collection.records.filter((record) => record.tags.includes(tag))
-      : collection.records;
-    renderRecords(records, collection.records);
-  } catch {
-    if (requestId === latestRecordRequest) {
-      recordList.replaceChildren();
-      recordListMessage.textContent = "Decision records could not be loaded.";
-    }
-  }
+  })();
+  latestRecordsLoad = load;
+  return load;
 }
 
 async function loadContext() {

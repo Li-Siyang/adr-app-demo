@@ -39,6 +39,8 @@ const other = {
 };
 let resolveArchive;
 let archiveRequests = 0;
+let pauseLists = 0;
+const pendingLists = [];
 window.fetch = async (url, options = {}) => {
   if (url === "/api/mock-session") return reply({selected_identity: {
     id: "admin", label: "Admin", roles: ["administrator"],
@@ -48,7 +50,13 @@ window.fetch = async (url, options = {}) => {
   if (url === "/api/tags") return reply({tags: []});
   if (url === "/api/mock-identities") return reply([{id: "admin", label: "Admin"}]);
   if (url === "/api/attribution-preview") return reply({message: "Admin"});
-  if (url === "/api/decision-records") return reply({records: [record, other]});
+  if (url === "/api/decision-records") {
+    if (pauseLists) {
+      pauseLists--;
+      return new Promise((resolve) => { pendingLists.push(resolve); });
+    }
+    return reply({records: [record, other]});
+  }
   if (url === "/api/decision-records/one/archive") {
     archiveRequests++;
     return new Promise((resolve) => { resolveArchive = resolve; });
@@ -98,7 +106,17 @@ async function check() {
 
   button("one", "Archive record").click();
   record.archived = true;
+  pauseLists = 2;
   resolveArchive(reply({}));
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  document.querySelector("#tag-filter").dispatchEvent(new Event("change"));
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  pendingLists.shift()(reply({records: [record, other]}));
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  if (!button("one", "Edit Draft").disabled ||
+      !button("one", "Archive record").disabled)
+    throw new Error("Superseded archive refresh unlocked stale card");
+  pendingLists.shift()(reply({records: [record, other]}));
   await new Promise((resolve) => setTimeout(resolve, 20));
   if (button("one", "Edit Draft") || !button("one", "Restore record") ||
       button("one", "Restore record").disabled)

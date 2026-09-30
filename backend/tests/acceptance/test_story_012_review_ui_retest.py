@@ -1,6 +1,7 @@
 """Independent browser regression for STORY-012 review findings."""
 
 import os
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -9,10 +10,23 @@ import pytest
 
 
 STATIC = Path(__file__).resolve().parents[2] / "app" / "static"
-CHROME = Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe")
+CHROME = next(
+    (
+        browser
+        for browser in (
+            shutil.which("chrome"),
+            shutil.which("chromium"),
+            shutil.which("google-chrome"),
+            shutil.which("msedge"),
+            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+        )
+        if browser and Path(browser).is_file()
+    ),
+    None,
+)
 
 
-@pytest.mark.skipif(not CHROME.is_file(), reason="Chrome unavailable")
+@pytest.mark.skipif(CHROME is None, reason="Chrome unavailable")
 def test_archive_edit_warning_and_pending_mutations_in_real_ui():
     mock = r"""
 <script>
@@ -123,7 +137,19 @@ async function run() {
   button("first", "Restore record").click();
   assert(button("first", "Restore record").disabled, "Restore not locked");
   first.archived = false;
+  pauseNextList = true;
   settle(response());
+  await tick();
+  assert(typeof releaseList === "function", "Restore refresh not pending");
+  const oldRefresh = releaseList;
+  pauseNextList = true;
+  document.querySelector("#tag-filter").dispatchEvent(new Event("change"));
+  await tick();
+  oldRefresh();
+  await tick();
+  assert(button("first", "Restore record").disabled,
+    "Superseded refresh unlocked stale archived card");
+  releaseList();
   await tick();
   assert(!button("first", "Archive record").disabled &&
     !button("second", "Edit Draft").disabled, "Restore did not unlock");

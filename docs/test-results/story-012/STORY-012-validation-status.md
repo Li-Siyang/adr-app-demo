@@ -1,12 +1,14 @@
 # STORY-012 validation status
 
 **Latest independent run:** [TR-024](details/TR-024-story-012-archive-ui-retest.md)
-— **PASSED**; READY FOR REVIEW for the validated production commit.
+— **PASSED for the historical production commit only**. PR #33 is Draft;
+the subsequent superseded-refresh fix is pending independent retest. NOT
+READY FOR REVIEW for the new production code.
 **Validated production commit:** `10021f11c9dd82a6da3fbc028344ba20cef695fa`.
 **Validated production app.js blob:** `f1ff89ab16d81953471b3528887ae6a4256e88af`.
-**Current-code applicability:** TR-024 independently retested the PR review
-changes. Evidence-only commits after this SHA do not change production; any
-subsequent production change requires another independent retest.
+**Current-code applicability:** TR-024 did not test the superseded-refresh
+change now in progress. Its PASS cannot be carried forward to a new production
+SHA; a new independent run is required.
 
 All five blocking STORY-012 Test Cases passed. The assigned administrator-only,
 archived exact-tag, deletion-denial, and archival audit/retention regressions
