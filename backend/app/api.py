@@ -597,6 +597,62 @@ def abandon_replacement_version(
         raise_record_action_error(error)
 
 
+def change_record_archival(
+    record_id: str,
+    request: Request,
+    selected_identity_id: str | None,
+    *,
+    archived: bool,
+) -> DecisionRecord:
+    administrator = require_administrator(require_selected_identity(selected_identity_id))
+    try:
+        with governance_lock:
+            return get_record_store(request).set_archived(
+                record_id,
+                administrator,
+                archived=archived,
+                record_change=lambda before, after: get_audit_event_store(
+                    request
+                ).record(
+                    event_type=(
+                        AuditEventType.RECORD_ARCHIVED
+                        if archived
+                        else AuditEventType.RECORD_RESTORED
+                    ),
+                    actor=administrator,
+                    subject_type="decision_record",
+                    subject_id=record_id,
+                    changes=(
+                        AuditChange(
+                            field="archived",
+                            before=before.archived,
+                            after=after.archived,
+                        ),
+                    ),
+                ),
+            )
+    except (RecordNotFoundError, PermissionError, RecordActionError) as error:
+        raise_record_action_error(error)
+
+
+@router.post("/decision-records/{record_id}/archive", response_model=DecisionRecord)
+def archive_decision_record(
+    record_id: str,
+    request: Request,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> DecisionRecord:
+    return change_record_archival(record_id, request, selected_identity_id, archived=True)
+
+
+@router.post("/decision-records/{record_id}/restore", response_model=DecisionRecord)
+def restore_decision_record(
+    record_id: str,
+    request: Request,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> DecisionRecord:
+    return change_record_archival(record_id, request, selected_identity_id, archived=False)
+
+
 @router.post(
     "/decision-records/{record_id}/owner",
     response_model=DecisionRecord,

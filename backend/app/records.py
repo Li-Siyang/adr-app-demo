@@ -102,6 +102,7 @@ class DecisionRecord(BaseModel):
         "Draft"
     )
     abandoned: bool = False
+    archived: bool = False
     replaces_record_id: str | None = None
     replacement_record_ids: list[str] = Field(default_factory=list)
     title: str
@@ -210,6 +211,7 @@ class DecisionRecordStore:
             record = self._records.get(record_id)
             if record is None:
                 raise RecordNotFoundError
+            self._require_not_archived(record)
             self._require_editable_by_author(record, actor)
             restart_review = record.status == "Proposed" and bool(updates)
             if restart_review:
@@ -238,6 +240,7 @@ class DecisionRecordStore:
             record = self._records.get(record_id)
             if record is None:
                 raise RecordNotFoundError
+            self._require_not_archived(record)
             if record.status != "Proposed":
                 raise RecordActionError(
                     "Only a Proposed record can be accepted or rejected."
@@ -249,6 +252,7 @@ class DecisionRecordStore:
                 if (
                     original is None
                     or original.status != "Accepted"
+                    or original.archived
                     or record.id not in original.replacement_record_ids
                 ):
                     raise RecordActionError(
@@ -283,6 +287,7 @@ class DecisionRecordStore:
                 raise PermissionError(
                     "Only an administrator may create a replacement version."
                 )
+            self._require_not_archived(original)
             if original.status != "Accepted":
                 raise RecordActionError(
                     "Only an Accepted record can have a replacement version."
@@ -337,6 +342,7 @@ class DecisionRecordStore:
                 raise PermissionError(
                     "Only an administrator may abandon a replacement Draft."
                 )
+            self._require_not_archived(record)
             if (
                 record.status != "Draft"
                 or record.abandoned
@@ -373,6 +379,7 @@ class DecisionRecordStore:
             record = self._records.get(record_id)
             if record is None:
                 raise RecordNotFoundError
+            self._require_not_archived(record)
             if record.abandoned or record.status not in ("Draft", "Proposed"):
                 raise RecordActionError(
                     "Only a non-Abandoned Draft or Proposed record can change owner."
@@ -406,11 +413,18 @@ class DecisionRecordStore:
             record = self._records.get(record_id)
             if record is None:
                 raise RecordNotFoundError
+            self._require_not_archived(record)
             if record.status != "Draft":
                 if record.status == "Rejected":
                     raise RecordActionError("Rejected records are immutable.")
                 raise RecordActionError("Only a Draft can be submitted.")
             self._require_editable_by_author(record, actor)
+            if record.replaces_record_id is not None:
+                original = self._records.get(record.replaces_record_id)
+                if original is not None and original.archived:
+                    raise RecordActionError(
+                        "Restore the original before submitting its replacement."
+                    )
 
             missing_fields = [
                 field
@@ -426,6 +440,47 @@ class DecisionRecordStore:
             proposed = record.model_copy(update={"status": "Proposed"})
             self._records[record_id] = proposed
             return proposed
+
+    def set_archived(
+        self,
+        record_id: str,
+        actor: MockIdentity,
+        *,
+        archived: bool,
+        record_change: Callable[[DecisionRecord, DecisionRecord], None],
+    ) -> DecisionRecord:
+        with self._lock:
+            record = self._records.get(record_id)
+            if record is None:
+                raise RecordNotFoundError
+            if not is_administrator(actor):
+                raise PermissionError(
+                    "Only an administrator may archive or restore a record."
+                )
+            if record.archived == archived:
+                raise RecordActionError(
+                    "The record is already archived." if archived
+                    else "The record is not archived."
+                )
+            if archived and record.status == "Accepted" and any(
+                (replacement := self._records.get(replacement_id)) is not None
+                and replacement.status == "Proposed"
+                and not replacement.abandoned
+                for replacement_id in record.replacement_record_ids
+            ):
+                raise RecordActionError(
+                    "An Accepted original with an active Proposed replacement "
+                    "cannot be archived."
+                )
+            updated = record.model_copy(update={"archived": archived})
+            record_change(record, updated)
+            self._records[record_id] = updated
+            return updated
+
+    @staticmethod
+    def _require_not_archived(record: DecisionRecord) -> None:
+        if record.archived:
+            raise RecordActionError("Restore the archived record before changing it.")
 
     @staticmethod
     def _require_editable_by_author(

@@ -17,11 +17,13 @@ const recordListMessage = document.querySelector("#record-list-message");
 const decisionMessage = document.querySelector("#decision-message");
 const transferMessage = document.querySelector("#transfer-message");
 const replacementMessage = document.querySelector("#replacement-message");
+const archiveMessage = document.querySelector("#archive-message");
 const cancelEdit = document.querySelector("#cancel-edit");
 
 let availableTags = [];
 let availableOwners = [];
 let latestRecordRequest = 0;
+let latestRecordsLoad = null;
 let selectedIdentityId = null;
 let selectedCanDecideProposals = false;
 let selectedIsAdministrator = false;
@@ -29,6 +31,26 @@ let selectedPermissionsLoaded = false;
 let editingRecordId = null;
 let editingOwnerId = null;
 let editingStatus = null;
+const pendingArchivalIds = new Set();
+const archivalDisabledControls = new Map();
+
+function lockRecordControls(recordId) {
+  const card = document.getElementById(`record-card-${recordId}`);
+  const controls = card
+    ? [...card.querySelectorAll("button, select")].filter((control) => !control.disabled)
+    : [];
+  for (const control of controls) {
+    control.disabled = true;
+  }
+  archivalDisabledControls.set(recordId, controls);
+}
+
+function unlockRecordControls(recordId) {
+  for (const control of archivalDisabledControls.get(recordId) || []) {
+    control.disabled = false;
+  }
+  archivalDisabledControls.delete(recordId);
+}
 
 function roleName(role) {
   return role
@@ -345,6 +367,59 @@ async function abandonReplacement(record, abandonButton) {
   }
 }
 
+async function changeArchival(record) {
+  const action = record.archived ? "restore" : "archive";
+  if (action === "archive" && editingRecordId === record.id) {
+    recordFormMessage.className = "error";
+    recordFormMessage.textContent =
+      "Save or cancel your edits before archiving this record.";
+    recordFormMessage.scrollIntoView({ behavior: "smooth" });
+    return;
+  }
+  if (pendingArchivalIds.has(record.id)) {
+    return;
+  }
+  pendingArchivalIds.add(record.id);
+  lockRecordControls(record.id);
+  archiveMessage.className = "";
+  archiveMessage.textContent = "";
+  try {
+    const response = await fetch(
+      `/api/decision-records/${record.id}/${action}`,
+      { method: "POST" },
+    );
+    if (!response.ok) {
+      let message = `Record could not be ${action}d.`;
+      try {
+        message = apiErrorMessage(await response.json(), message);
+      } catch {
+        // Keep the generic message when the server response is not JSON.
+      }
+      archiveMessage.className = "error";
+      archiveMessage.textContent = message;
+      return;
+    }
+    archiveMessage.textContent = record.archived
+      ? "Record restored."
+      : "Record archived and retained.";
+    let refresh = loadRecords(tagFilter.value);
+    while (refresh) {
+      await refresh;
+      if (refresh === latestRecordsLoad) {
+        break;
+      }
+      refresh = latestRecordsLoad;
+    }
+  } catch {
+    archiveMessage.className = "error";
+    archiveMessage.textContent =
+      `Record could not be ${action}d. Please try again.`;
+  } finally {
+    pendingArchivalIds.delete(record.id);
+    unlockRecordControls(record.id);
+  }
+}
+
 async function navigateToRecord(recordId, event) {
   event.preventDefault();
   const cardId = `record-card-${recordId}`;
@@ -453,6 +528,7 @@ function renderRecords(records, allRecords = records) {
       const details = document.createElement("p");
       details.textContent =
         `${record.status}${record.abandoned ? " (Abandoned)" : ""} | ` +
+        `${record.archived ? "Archived | " : ""}` +
         `Author: ${record.author.display_name} | ` +
         `Owner: ${record.owner.display_name} | ` +
         `Decision date: ${record.decision_date}`;
@@ -517,9 +593,31 @@ function renderRecords(records, allRecords = records) {
           ["Draft", "Proposed"].includes(candidate.status) &&
           !candidate.abandoned,
       );
+      if (selectedPermissionsLoaded && selectedIsAdministrator) {
+        const blockedByProposedReplacement =
+          record.status === "Accepted" &&
+          allRecords.some(
+            (candidate) =>
+              candidate.replaces_record_id === record.id &&
+              candidate.status === "Proposed" &&
+              !candidate.abandoned,
+          );
+        if (record.archived || !blockedByProposedReplacement) {
+          const archival = document.createElement("button");
+          archival.type = "button";
+          archival.textContent = record.archived ? "Restore record" : "Archive record";
+          archival.setAttribute(
+            "aria-label",
+            `${archival.textContent}: ${record.title || "Untitled Draft"} (${record.id})`,
+          );
+          archival.addEventListener("click", () => changeArchival(record));
+          article.append(archival);
+        }
+      }
       if (
         selectedPermissionsLoaded &&
         selectedIsAdministrator &&
+        !record.archived &&
         record.status === "Accepted" &&
         !activeReplacement
       ) {
@@ -532,6 +630,7 @@ function renderRecords(records, allRecords = records) {
       if (
         selectedPermissionsLoaded &&
         selectedIsAdministrator &&
+        !record.archived &&
         record.replaces_record_id &&
         record.status === "Draft" &&
         !record.abandoned
@@ -549,6 +648,7 @@ function renderRecords(records, allRecords = records) {
           record.owner.id === selectedIdentityId ||
           selectedIsAdministrator) &&
         ["Draft", "Proposed"].includes(record.status) &&
+        !record.archived &&
         !record.abandoned;
       if (transferable && availableOwners.length) {
         const actions = document.createElement("div");
@@ -581,6 +681,7 @@ function renderRecords(records, allRecords = records) {
       const editable =
         record.author.id === selectedIdentityId &&
         ["Draft", "Proposed"].includes(record.status) &&
+        !record.archived &&
         !record.abandoned;
       if (editable) {
         const actions = document.createElement("div");
@@ -592,7 +693,7 @@ function renderRecords(records, allRecords = records) {
           record.status === "Proposed" ? "Edit proposal" : "Edit Draft";
         edit.addEventListener("click", () => beginEdit(record));
         actions.append(edit);
-        if (record.status === "Draft") {
+        if (record.status === "Draft" && !original?.archived) {
           const submit = document.createElement("button");
           submit.type = "button";
           submit.textContent = "Submit Draft";
@@ -601,7 +702,7 @@ function renderRecords(records, allRecords = records) {
         }
         article.append(actions);
       }
-      if (record.status === "Proposed" && selectedCanDecideProposals) {
+      if (record.status === "Proposed" && !record.archived && selectedCanDecideProposals) {
         const actions = document.createElement("div");
         actions.className = "record-actions";
         for (const outcome of ["Accepted", "Rejected"]) {
@@ -616,6 +717,13 @@ function renderRecords(records, allRecords = records) {
           actions.append(decide);
         }
         article.append(actions);
+      }
+      if (pendingArchivalIds.has(record.id)) {
+        const controls = [...article.querySelectorAll("button, select")];
+        for (const control of controls) {
+          control.disabled = true;
+        }
+        archivalDisabledControls.set(record.id, controls);
       }
       return article;
     }),
@@ -655,35 +763,39 @@ function updateTagOptions(tags) {
   );
 }
 
-async function loadRecords(tag = "") {
+function loadRecords(tag = "") {
   const requestId = ++latestRecordRequest;
-  recordListMessage.textContent = "Loading decision records...";
-  try {
-    const response = await fetch("/api/decision-records");
-    if (requestId !== latestRecordRequest) {
-      return;
-    }
-    if (!response.ok) {
-      recordList.replaceChildren();
-      recordListMessage.textContent = "Decision records could not be loaded.";
-      return;
-    }
+  const load = (async () => {
+    recordListMessage.textContent = "Loading decision records...";
+    try {
+      const response = await fetch("/api/decision-records");
+      if (requestId !== latestRecordRequest) {
+        return;
+      }
+      if (!response.ok) {
+        recordList.replaceChildren();
+        recordListMessage.textContent = "Decision records could not be loaded.";
+        return;
+      }
 
-    const collection = await response.json();
-    if (requestId !== latestRecordRequest) {
-      return;
+      const collection = await response.json();
+      if (requestId !== latestRecordRequest) {
+        return;
+      }
+      updateTagOptions(collection.records.flatMap((record) => record.tags));
+      const records = tag
+        ? collection.records.filter((record) => record.tags.includes(tag))
+        : collection.records;
+      renderRecords(records, collection.records);
+    } catch {
+      if (requestId === latestRecordRequest) {
+        recordList.replaceChildren();
+        recordListMessage.textContent = "Decision records could not be loaded.";
+      }
     }
-    updateTagOptions(collection.records.flatMap((record) => record.tags));
-    const records = tag
-      ? collection.records.filter((record) => record.tags.includes(tag))
-      : collection.records;
-    renderRecords(records, collection.records);
-  } catch {
-    if (requestId === latestRecordRequest) {
-      recordList.replaceChildren();
-      recordListMessage.textContent = "Decision records could not be loaded.";
-    }
-  }
+  })();
+  latestRecordsLoad = load;
+  return load;
 }
 
 async function loadContext() {
