@@ -1,13 +1,13 @@
 # STORY-012 validation status
 
-**Latest independent run:** [TR-022](details/TR-022-story-012-review-fix-retest.md)
-— **PASSED** for the production commit below.
-**Validated production commit:** `fedeb6b9eae10cc864f87225abc774f23d040821`.
-**Validated production tree:** `fc1cc73b26a6ac2800afce565e85dd18ac422dde`.
-**Current-code applicability:** **PENDING INDEPENDENT RETEST**. A subsequent
-PR review fix prevents archiving the record currently being edited; TR-022
-applies only to the validated production commit above. This PR remains Draft
-until independent validation passes the updated production code.
+**Latest independent run:** [TR-023](details/TR-023-story-012-edit-archive-retest.md)
+— **PASSED**; READY FOR REVIEW.
+**Validated production commit:** `c72d66e7ce88f7ec403c7032ffdcf71904013e97`.
+**Validated production tree:** `511705b7e30ff5941b0d3da5c267161e34fa3997`.
+**Current-code applicability:** TR-023 independently retested the latest
+production change. Evidence-only commits after this SHA do not modify
+production; any subsequent production change requires another independent
+retest.
 
 All five blocking STORY-012 Test Cases passed. The assigned administrator-only,
 archived exact-tag, deletion-denial, and archival audit/retention regressions
@@ -16,6 +16,8 @@ non-blocking and deferred because STORY-011 is absent from the inherited
 production branch; no predecessor Story is represented as fully passed.
 TR-022 also independently retested both PR review findings in headless Chrome
 against the actual UI script and ran the complete backend regression suite.
+TR-023 independently retested the editing/archival review fix, including
+preservation of unsaved edits and normal archiving after save or cancel.
 
 ## Run history
 
@@ -23,3 +25,4 @@ against the actual UI script and ran the complete backend regression suite.
 | --- | --- | --- | --- |
 | [TR-021](details/TR-021-story-012-archive-restore.md) | `225f3989e7761dad1e3ad9a535785e438dc173d0` | PASSED | TC-012-01–05 passed; focused suite 33 passed; full backend regression 261 passed with one historical approved skip. |
 | [TR-022](details/TR-022-story-012-review-fix-retest.md) | `fedeb6b9eae10cc864f87225abc774f23d040821` | PASSED | Two review findings independently retested in Chrome; blocking and deferred regression 49 passed, 1 historical skip; full backend 261 passed, 1 historical skip. |
+| [TR-023](details/TR-023-story-012-edit-archive-retest.md) | `c72d66e7ce88f7ec403c7032ffdcf71904013e97` | PASSED | Edit/archive guard independently retested in Chrome; blocking/deferred regression 49 passed, 1 historical skip; full backend 261 passed, 1 historical skip. |
