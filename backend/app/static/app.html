@@ -55,6 +55,15 @@
         <div id="record-list" class="record-list"></div>
       </section>
 
+      <section aria-labelledby="create-tag-title">
+        <h2 id="create-tag-title">Create a tag</h2>
+        <form id="tag-form">
+          <label>Tag name <input id="tag-name" name="name" required></label>
+          <button type="submit">Create tag</button>
+          <p id="tag-form-message" aria-live="polite"></p>
+        </form>
+      </section>
+
       <section class="notice" aria-labelledby="record-data-title">
         <h2 id="record-data-title">Decision record data boundary</h2>
         <p>
@@ -78,8 +87,8 @@
             <select name="owner_id" id="record-owner" required></select>
           </label>
           <label>Decision date <input name="decision_date" type="date" required></label>
-          <label>Tags (one or more, comma separated)
-            <input name="tags" required>
+          <label>Tags (select one or more)
+            <select id="record-tags" name="tags" multiple required size="5"></select>
           </label>
           <div class="button-row">
             <button type="submit">Save Draft</button>

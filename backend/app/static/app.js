@@ -1,8 +1,13 @@
 const identityContext = document.querySelector("#identity-context");
 const attributionPreview = document.querySelector("#attribution-preview");
 const changeIdentity = document.querySelector("#change-identity");
+const tagForm = document.querySelector("#tag-form");
+const tagName = document.querySelector("#tag-name");
+const tagFormMessage = document.querySelector("#tag-form-message");
+const createTagButton = tagForm.querySelector('button[type="submit"]');
 const recordForm = document.querySelector("#record-form");
 const recordOwner = document.querySelector("#record-owner");
+const recordTags = document.querySelector("#record-tags");
 const recordFormMessage = document.querySelector("#record-form-message");
 const saveDraft = recordForm.querySelector('button[type="submit"]');
 const requiredFields = [...recordForm.querySelectorAll("[required]")];
@@ -73,6 +78,53 @@ function apiErrorMessage(error, fallback) {
   return fallback;
 }
 
+async function loadTags() {
+  const response = await fetch("/api/tags");
+  if (!response.ok) {
+    throw new Error("Available tags could not be loaded.");
+  }
+  const collection = await response.json();
+  updateTagOptions(collection.tags);
+}
+
+async function createTag(event) {
+  event.preventDefault();
+  createTagButton.disabled = true;
+  tagFormMessage.className = "";
+  tagFormMessage.textContent = "";
+
+  try {
+    const response = await fetch("/api/tags", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: tagName.value }),
+    });
+    if (!response.ok) {
+      let message = "Tag could not be created.";
+      try {
+        message = apiErrorMessage(await response.json(), message);
+      } catch {
+        // Keep the generic message when the server response is not JSON.
+      }
+      tagFormMessage.className = "error";
+      tagFormMessage.textContent = message;
+      return;
+    }
+
+    const createdTag = await response.json();
+    updateTagOptions([createdTag.name]);
+    tagForm.reset();
+    tagFormMessage.textContent =
+      `Tag "${createdTag.name}" is available for record association.`;
+  } catch {
+    tagFormMessage.className = "error";
+    tagFormMessage.textContent =
+      "Tag could not be created. Please try again.";
+  } finally {
+    createTagButton.disabled = false;
+  }
+}
+
 function disableDraftAuthoring(message) {
   recordOwner.replaceChildren();
   recordOwner.disabled = true;
@@ -114,7 +166,9 @@ function beginEdit(record) {
     recordForm.elements[field].value = record[field];
   }
   recordOwner.value = editingOwnerId;
-  recordForm.elements.tags.value = record.tags.join(", ");
+  for (const option of recordTags.options) {
+    option.selected = record.tags.includes(option.value);
+  }
   cancelEdit.hidden = false;
   saveDraft.textContent = "Save changes";
   recordFormMessage.textContent = "";
@@ -479,6 +533,9 @@ function updateTagOptions(tags) {
   const discoveredTags = [...new Set(tags)].sort();
   availableTags = [...new Set([...availableTags, ...discoveredTags])].sort();
   const selectedTag = tagFilter.value;
+  const selectedRecordTags = new Set(
+    [...recordTags.selectedOptions].map((option) => option.value),
+  );
   const allTagsOption = document.createElement("option");
   allTagsOption.value = "";
   allTagsOption.textContent = "All tags";
@@ -492,6 +549,15 @@ function updateTagOptions(tags) {
     }),
   );
   tagFilter.value = selectedTag;
+  recordTags.replaceChildren(
+    ...availableTags.map((tag) => {
+      const option = document.createElement("option");
+      option.value = tag;
+      option.textContent = tag;
+      option.selected = selectedRecordTags.has(tag);
+      return option;
+    }),
+  );
 }
 
 async function loadRecords(tag = "") {
@@ -559,6 +625,13 @@ async function loadContext() {
       "Transfer permissions could not be loaded; transfer actions are unavailable.";
   }
 
+  try {
+    await loadTags();
+  } catch {
+    tagFormMessage.className = "error";
+    tagFormMessage.textContent =
+      "Available tags could not be loaded; tag association is unavailable.";
+  }
   await loadRecords();
 
   const attributionResponse = await fetch("/api/attribution-preview");
@@ -606,6 +679,8 @@ tagFilter.addEventListener("change", () => {
   loadRecords(tagFilter.value);
 });
 
+tagForm.addEventListener("submit", createTag);
+
 cancelEdit.addEventListener("click", () => {
   resetForm();
   recordFormMessage.textContent = "";
@@ -618,7 +693,7 @@ recordForm.addEventListener("submit", async (event) => {
   const restartedReview = editingStatus === "Proposed";
   const formData = new FormData(recordForm);
   const payload = Object.fromEntries(formData.entries());
-  payload.tags = payload.tags.split(",").map((tag) => tag.trim());
+  payload.tags = [...recordTags.selectedOptions].map((option) => option.value);
 
   try {
     const response = await fetch(

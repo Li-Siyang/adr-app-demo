@@ -3,7 +3,7 @@ import json
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Cookie, HTTPException, Request, Response, status
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from app.audit import AuditChange, AuditEvent, AuditEventStore, AuditEventType
 from app.governance import (
@@ -14,7 +14,7 @@ from app.governance import (
     is_designated_approver,
     role_permissions,
 )
-from app.identities import MOCK_IDENTITIES, MockIdentity, find_mock_identity
+from app.identities import MOCK_IDENTITIES, MockIdentity, Role, find_mock_identity
 from app.records import (
     DecisionRecord,
     DecisionRecordCreate,
@@ -24,6 +24,7 @@ from app.records import (
     RecordActionError,
     RecordNotFoundError,
 )
+from app.tags import DuplicateTagError, TagStore
 
 MOCK_IDENTITY_COOKIE = "adr_mock_identity"
 
@@ -73,6 +74,26 @@ class GovernancePermissions(BaseModel):
     permissions: list[str]
 
 
+class TagCreate(BaseModel):
+    name: str
+
+    @field_validator("name")
+    @classmethod
+    def require_non_blank_name(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Tag name must not be blank.")
+        return value
+
+
+class TagCollection(BaseModel):
+    tags: list[str]
+
+
+class CreatedTag(BaseModel):
+    name: str
+
+
 SelectedIdentityCookie = Annotated[str | None, Cookie(alias=MOCK_IDENTITY_COOKIE)]
 
 
@@ -103,6 +124,19 @@ def get_record_store(request: Request) -> DecisionRecordStore:
 
 def get_audit_event_store(request: Request) -> AuditEventStore:
     return request.app.state.audit_event_store
+
+
+def get_tag_store(request: Request) -> TagStore:
+    return request.app.state.tag_store
+
+
+def require_team_member(identity: MockIdentity) -> MockIdentity:
+    if Role.TEAM_MEMBER not in identity.roles:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only a team-member Mock identity may create tags.",
+        )
+    return identity
 
 
 def audit_value(value: object) -> str | bool | None:
@@ -215,6 +249,35 @@ def list_decision_records(
     return DecisionRecordCollection(records=records)
 
 
+@router.get("/tags", response_model=TagCollection)
+def list_tags(
+    request: Request,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> TagCollection:
+    require_selected_identity(selected_identity_id)
+    return TagCollection(tags=get_tag_store(request).list())
+
+
+@router.post(
+    "/tags",
+    response_model=CreatedTag,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_tag(
+    payload: TagCreate,
+    request: Request,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> CreatedTag:
+    require_team_member(require_selected_identity(selected_identity_id))
+    try:
+        return CreatedTag(name=get_tag_store(request).create(payload.name))
+    except DuplicateTagError as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="A tag with this exact name already exists.",
+        ) from error
+
+
 @router.get("/audit-events", response_model=AuditEventCollection)
 def list_audit_events(
     request: Request,
@@ -308,7 +371,9 @@ def create_decision_record(
 ) -> DecisionRecord:
     author = require_selected_identity(selected_identity_id)
     try:
-        return get_record_store(request).create(payload, author)
+        record = get_record_store(request).create(payload, author)
+        get_tag_store(request).ensure(record.tags)
+        return record
     except ValueError as error:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -326,7 +391,7 @@ def update_decision_record(
     author = require_selected_identity(selected_identity_id)
     try:
         with governance_lock:
-            return get_record_store(request).update(
+            record = get_record_store(request).update(
                 record_id,
                 payload,
                 author,
@@ -340,6 +405,8 @@ def update_decision_record(
                     ),
                 ),
             )
+        get_tag_store(request).ensure(record.tags)
+        return record
     except ValueError as error:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
