@@ -17,7 +17,8 @@ results, and version links; restore returns them to active use without changing
 their lifecycle status. An Accepted original with an active Proposed replacement
 cannot be archived. Other edits and transitions on archived records require
 restoration first. A replacement Draft cannot be submitted while its Accepted
-original is archived. Archive and restore actions produce attributed audit events.
+original is archived; the UI hides its submission action but still allows
+editing. Archive and restore actions produce attributed audit events.
 Identity selection is intentionally not authentication and does not create an
 access-control boundary.
 

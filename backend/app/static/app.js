@@ -471,6 +471,10 @@ function renderRecords(records, allRecords = records) {
           const archival = document.createElement("button");
           archival.type = "button";
           archival.textContent = record.archived ? "Restore record" : "Archive record";
+          archival.setAttribute(
+            "aria-label",
+            `${archival.textContent}: ${record.title || "Untitled Draft"} (${record.id})`,
+          );
           archival.addEventListener("click", () => changeArchival(record, archival));
           article.append(archival);
         }
@@ -554,7 +558,7 @@ function renderRecords(records, allRecords = records) {
           record.status === "Proposed" ? "Edit proposal" : "Edit Draft";
         edit.addEventListener("click", () => beginEdit(record));
         actions.append(edit);
-        if (record.status === "Draft") {
+        if (record.status === "Draft" && !original?.archived) {
           const submit = document.createElement("button");
           submit.type = "button";
           submit.textContent = "Submit Draft";

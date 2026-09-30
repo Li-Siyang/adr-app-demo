@@ -1,12 +1,13 @@
 # STORY-012 validation status
 
 **Latest independent run:** [TR-021](details/TR-021-story-012-archive-restore.md)
-— **PASSED**; READY FOR REVIEW.
+— **PASSED** for the production commit below.
 **Validated production commit:** `225f3989e7761dad1e3ad9a535785e438dc173d0`.
 **Validated production tree:** `df121381634f27ea11d612be5382c03672645afb`.
-**Current-code applicability:** TR-021 validates the exact inherited
-`li-siyang-potential-engine` production HEAD. Subsequent commits on this
-validation branch contain only Validation-Agent-owned tests and evidence.
+**Current-code applicability:** **PENDING INDEPENDENT RETEST**. The PR review
+fixes changed `backend/app/static/app.js` after TR-021; its PASSED result
+applies only to the production commit above. This PR remains Draft until an
+independent validation run passes the current production code.
 
 All five blocking STORY-012 Test Cases passed. The assigned administrator-only,
 archived exact-tag, deletion-denial, and archival audit/retention regressions
