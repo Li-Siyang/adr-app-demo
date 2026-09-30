@@ -5,7 +5,13 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Cookie, HTTPException, Request, Response, status
 from pydantic import BaseModel, field_validator
 
-from app.audit import AuditChange, AuditEvent, AuditEventStore, AuditEventType
+from app.audit import (
+    AuditChange,
+    AuditEvent,
+    AuditEventStore,
+    AuditEventType,
+    create_audit_event,
+)
 from app.governance import (
     change_approver_designation,
     designated_approver_snapshot,
@@ -146,6 +152,8 @@ def audit_value(value: object) -> str | bool | None:
         return value.isoformat()
     if isinstance(value, list):
         return json.dumps(value)
+    if isinstance(value, MockIdentity):
+        return value.id
     return str(value)
 
 
@@ -158,9 +166,11 @@ def record_lifecycle_transition(
     changed_fields: tuple[str, ...] = (),
     related_transition: tuple[DecisionRecord, DecisionRecord] | None = None,
 ) -> None:
-    changes = [
-        AuditChange(field="status", before=before.status, after=after.status)
-    ]
+    changes = []
+    if before.status != after.status:
+        changes.append(
+            AuditChange(field="status", before=before.status, after=after.status)
+        )
     for field in changed_fields:
         before_value = getattr(before, field)
         after_value = getattr(after, field)
@@ -172,6 +182,7 @@ def record_lifecycle_transition(
                     after=audit_value(after_value),
                 )
             )
+    events = []
     if related_transition is not None:
         related_before, related_after = related_transition
         changes.append(
@@ -181,13 +192,40 @@ def record_lifecycle_transition(
                 after=related_after.status,
             )
         )
-    get_audit_event_store(request).record(
-        event_type=AuditEventType.LIFECYCLE_TRANSITIONED,
-        actor=actor,
-        subject_type="decision_record",
-        subject_id=before.id,
-        changes=changes,
+        events.append(
+            create_audit_event(
+                event_type=AuditEventType.LIFECYCLE_TRANSITIONED,
+                actor=actor,
+                subject_type="decision_record",
+                subject_id=related_before.id,
+                changes=(
+                    AuditChange(
+                        field="status",
+                        before=related_before.status,
+                        after=related_after.status,
+                    ),
+                ),
+            )
+        )
+    if not changes:
+        return
+
+    event_type = (
+        AuditEventType.LIFECYCLE_TRANSITIONED
+        if before.status != after.status
+        else AuditEventType.RECORD_UPDATED
     )
+    events.insert(
+        0,
+        create_audit_event(
+            event_type=event_type,
+            actor=actor,
+            subject_type="decision_record",
+            subject_id=before.id,
+            changes=changes,
+        ),
+    )
+    get_audit_event_store(request).record_many(events)
 
 
 @router.get("/mock-identities", response_model=list[MockIdentity])
@@ -465,29 +503,59 @@ def create_replacement_version(
     require_administrator(administrator)
     try:
         with governance_lock:
-            return get_record_store(request).create_replacement(
+            record_store = get_record_store(request)
+            original = record_store.get(record_id)
+
+            def record_replacement_history(
+                replacement: DecisionRecord,
+            ) -> None:
+                if original is None:
+                    raise RuntimeError(
+                        "Replacement history requires an existing original record."
+                    )
+                previous_replacements = original.replacement_record_ids
+                get_audit_event_store(request).record_many(
+                    (
+                        create_audit_event(
+                            event_type=AuditEventType.LIFECYCLE_TRANSITIONED,
+                            actor=administrator,
+                            subject_type="decision_record",
+                            subject_id=replacement.id,
+                            changes=(
+                                AuditChange(
+                                    field="status",
+                                    before=None,
+                                    after="Draft",
+                                ),
+                                AuditChange(
+                                    field="replaces_record_id",
+                                    before=None,
+                                    after=record_id,
+                                ),
+                            ),
+                        ),
+                        create_audit_event(
+                            event_type=AuditEventType.RECORD_UPDATED,
+                            actor=administrator,
+                            subject_type="decision_record",
+                            subject_id=record_id,
+                            changes=(
+                                AuditChange(
+                                    field="replacement_record_ids",
+                                    before=json.dumps(previous_replacements),
+                                    after=json.dumps(
+                                        [*previous_replacements, replacement.id]
+                                    ),
+                                ),
+                            ),
+                        ),
+                    )
+                )
+
+            return record_store.create_replacement(
                 record_id,
                 administrator,
-                record_change=lambda replacement: get_audit_event_store(
-                    request
-                ).record(
-                    event_type=AuditEventType.LIFECYCLE_TRANSITIONED,
-                    actor=administrator,
-                    subject_type="decision_record",
-                    subject_id=replacement.id,
-                    changes=(
-                        AuditChange(
-                            field="status",
-                            before=None,
-                            after="Draft",
-                        ),
-                        AuditChange(
-                            field="replaces_record_id",
-                            before=None,
-                            after=record_id,
-                        ),
-                    ),
-                ),
+                record_change=record_replacement_history,
             )
     except (RecordNotFoundError, PermissionError, RecordActionError) as error:
         raise_record_action_error(error)

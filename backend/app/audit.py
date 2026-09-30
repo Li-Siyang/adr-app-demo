@@ -12,6 +12,7 @@ from app.identities import MockIdentity, Role
 
 
 class AuditEventType(StrEnum):
+    RECORD_UPDATED = "record_updated"
     USER_ROLE_CHANGED = "user_role_changed"
     APPROVER_DESIGNATION_CHANGED = "approver_designation_changed"
     LIFECYCLE_TRANSITIONED = "lifecycle_transitioned"
@@ -54,6 +55,29 @@ class AuditEvent(BaseModel):
     subject_type: str = Field(min_length=1)
     subject_id: str = Field(min_length=1)
     changes: tuple[AuditChange, ...] = Field(min_length=1)
+
+
+def create_audit_event(
+    *,
+    event_type: AuditEventType,
+    actor: MockIdentity,
+    subject_type: str,
+    subject_id: str,
+    changes: Iterable[AuditChange],
+) -> AuditEvent:
+    return AuditEvent(
+        id=str(uuid4()),
+        event_type=event_type,
+        actor=AuditActor(
+            id=actor.id,
+            display_name=actor.display_name,
+            roles=actor.roles,
+        ),
+        occurred_at=datetime.now(timezone.utc),
+        subject_type=subject_type,
+        subject_id=subject_id,
+        changes=tuple(changes),
+    )
 
 
 class AuditEventStore:
@@ -115,21 +139,26 @@ class AuditEventStore:
         subject_id: str,
         changes: Iterable[AuditChange],
     ) -> AuditEvent:
-        event = AuditEvent(
-            id=str(uuid4()),
+        event = create_audit_event(
             event_type=event_type,
-            actor=AuditActor(
-                id=actor.id,
-                display_name=actor.display_name,
-                roles=actor.roles,
-            ),
-            occurred_at=datetime.now(timezone.utc),
+            actor=actor,
             subject_type=subject_type,
             subject_id=subject_id,
             changes=tuple(changes),
         )
+        self.record_many((event,))
+        return event
+
+    def record_many(
+        self,
+        events: Iterable[AuditEvent],
+    ) -> tuple[AuditEvent, ...]:
+        event_batch = tuple(events)
+        if not event_batch:
+            return ()
+
         with self._connect() as connection:
-            connection.execute(
+            connection.executemany(
                 """
                 INSERT INTO audit_events (
                     id,
@@ -143,24 +172,27 @@ class AuditEventStore:
                     changes
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (
-                    event.id,
-                    event.event_type.value,
-                    event.actor.id,
-                    event.actor.display_name,
-                    json.dumps([role.value for role in event.actor.roles]),
-                    event.occurred_at.isoformat(),
-                    event.subject_type,
-                    event.subject_id,
-                    json.dumps(
-                        [
-                            change.model_dump(mode="json")
-                            for change in event.changes
-                        ]
-                    ),
-                ),
+                [
+                    (
+                        event.id,
+                        event.event_type.value,
+                        event.actor.id,
+                        event.actor.display_name,
+                        json.dumps([role.value for role in event.actor.roles]),
+                        event.occurred_at.isoformat(),
+                        event.subject_type,
+                        event.subject_id,
+                        json.dumps(
+                            [
+                                change.model_dump(mode="json")
+                                for change in event.changes
+                            ]
+                        ),
+                    )
+                    for event in event_batch
+                ],
             )
-        return event
+        return event_batch
 
     def list(
         self,

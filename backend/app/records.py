@@ -215,7 +215,7 @@ class DecisionRecordStore:
             if restart_review:
                 updates["status"] = "Draft"
             updated = record.model_copy(update=updates)
-            if restart_review and record_change is not None:
+            if updates and record_change is not None:
                 record_change(record, updated)
             self._records[record_id] = updated
             return updated

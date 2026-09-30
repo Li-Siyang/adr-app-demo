@@ -158,6 +158,19 @@ form {
   background: #fff;
 }
 
+.record-history {
+  margin-top: 1rem;
+}
+
+.record-history summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.record-history ol {
+  padding-left: 1.25rem;
+}
+
 .record-card h3,
 .record-card p:last-child {
   margin-bottom: 0;

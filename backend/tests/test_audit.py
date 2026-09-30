@@ -22,6 +22,7 @@ def client(tmp_path: Path) -> Iterator[TestClient]:
 
 def test_supports_every_approved_governed_event_category() -> None:
     assert set(AuditEventType) == {
+        AuditEventType.RECORD_UPDATED,
         AuditEventType.USER_ROLE_CHANGED,
         AuditEventType.APPROVER_DESIGNATION_CHANGED,
         AuditEventType.LIFECYCLE_TRANSITIONED,
@@ -237,6 +238,125 @@ def test_decision_record_history_filters_events_and_rejects_unknown_record(
         client.get("/api/decision-records/not-configured/audit-events").status_code
         == 404
     )
+
+
+def test_record_edits_are_retained_as_attributed_immutable_history(
+    client: TestClient,
+) -> None:
+    client.post("/api/mock-session", json={"identity_id": "maya-member"})
+    created = client.post(
+        "/api/decision-records",
+        json={
+            "title": "Original title",
+            "context": "History describes later edits.",
+            "decision": "Keep each revision.",
+            "rationale": "The event store is append-only.",
+            "alternatives_considered": "Overwrite the earlier value.",
+            "consequences": "Readers can inspect authorship.",
+            "owner_id": "maya-member",
+            "decision_date": "2026-09-11",
+            "tags": ["history"],
+        },
+    ).json()
+
+    updated = client.put(
+        f"/api/decision-records/{created['id']}",
+        json={"title": "Revised title"},
+    )
+    no_op = client.put(
+        f"/api/decision-records/{created['id']}",
+        json={"title": "Revised title"},
+    )
+    history_response = client.get(
+        f"/api/decision-records/{created['id']}/audit-events"
+    )
+
+    assert updated.status_code == 200
+    assert no_op.status_code == 200
+    assert history_response.status_code == 200
+    events = history_response.json()["events"]
+    assert len(events) == 1
+    assert events[0]["event_type"] == "record_updated"
+    assert events[0]["actor"]["id"] == "maya-member"
+    assert events[0]["occurred_at"]
+    assert events[0]["changes"] == [
+        {"field": "title", "before": "Original title", "after": "Revised title"}
+    ]
+    assert (
+        client.delete(f"/api/audit-events/{events[0]['id']}").status_code == 405
+    )
+
+
+def test_replacement_link_change_is_retained_for_both_versions(
+    client: TestClient,
+) -> None:
+    payload = {
+        "title": "Original decision",
+        "context": "The history view needs a linked version.",
+        "decision": "Keep each version independently navigable.",
+        "rationale": "Each record owns its immutable history.",
+        "alternatives_considered": "Store the link only on the replacement.",
+        "consequences": "Readers can follow the relationship in both directions.",
+        "owner_id": "maya-member",
+        "decision_date": "2026-09-11",
+        "tags": ["history"],
+    }
+    client.post("/api/mock-session", json={"identity_id": "zoe-admin"})
+    assert client.post(
+        "/api/approvers",
+        json={"identity_id": "arun-approver"},
+    ).status_code == 200
+    client.post("/api/mock-session", json={"identity_id": "maya-member"})
+    original = client.post("/api/decision-records", json=payload).json()
+    assert client.post(
+        f"/api/decision-records/{original['id']}/submit"
+    ).status_code == 200
+    client.post("/api/mock-session", json={"identity_id": "arun-approver"})
+    assert client.post(
+        f"/api/decision-records/{original['id']}/decision",
+        json={"outcome": "Accepted"},
+    ).status_code == 200
+    client.post("/api/mock-session", json={"identity_id": "zoe-admin"})
+    replacement = client.post(
+        f"/api/decision-records/{original['id']}/replacements"
+    ).json()
+
+    original_history = client.get(
+        f"/api/decision-records/{original['id']}/audit-events"
+    ).json()["events"]
+    replacement_history = client.get(
+        f"/api/decision-records/{replacement['id']}/audit-events"
+    ).json()["events"]
+    link_change = next(
+        event
+        for event in original_history
+        if any(
+            change["field"] == "replacement_record_ids"
+            for change in event["changes"]
+        )
+    )
+
+    assert replacement["replaces_record_id"] == original["id"]
+    assert client.get(
+        f"/api/decision-records/{original['id']}"
+    ).json()["replacement_record_ids"] == [replacement["id"]]
+    assert link_change["actor"]["id"] == "zoe-admin"
+    assert link_change["changes"] == [
+        {
+            "field": "replacement_record_ids",
+            "before": "[]",
+            "after": f'["{replacement["id"]}"]',
+        }
+    ]
+    assert replacement_history[-1]["subject_id"] == replacement["id"]
+    assert replacement_history[-1]["changes"] == [
+        {"field": "status", "before": None, "after": "Draft"},
+        {
+            "field": "replaces_record_id",
+            "before": None,
+            "after": original["id"],
+        },
+    ]
 
 
 def test_unknown_audit_event_returns_not_found(client: TestClient) -> None:
