@@ -291,6 +291,21 @@ async function abandonReplacement(record, abandonButton) {
   }
 }
 
+async function navigateToRecord(recordId, event) {
+  event.preventDefault();
+  const cardId = `record-card-${recordId}`;
+  if (!document.getElementById(cardId)) {
+    tagFilter.value = "";
+    await loadRecords();
+  }
+
+  const card = document.getElementById(cardId);
+  if (card) {
+    window.location.hash = cardId;
+    card.scrollIntoView({ behavior: "smooth" });
+  }
+}
+
 function renderRecords(records, allRecords = records) {
   recordList.replaceChildren(
     ...records.map((record) => {
@@ -310,12 +325,12 @@ function renderRecords(records, allRecords = records) {
       tags.textContent = `Tags: ${record.tags.join(", ")}`;
       article.append(title, details, tags);
 
-      const original = records.find(
+      const original = allRecords.find(
         (candidate) => candidate.id === record.replaces_record_id,
       );
       const linkedReplacements = (record.replacement_record_ids || [])
         .map((replacementId) =>
-          records.find((candidate) => candidate.id === replacementId),
+          allRecords.find((candidate) => candidate.id === replacementId),
         )
         .filter(Boolean);
       if (original || linkedReplacements.length) {
@@ -325,6 +340,9 @@ function renderRecords(records, allRecords = records) {
           const link = document.createElement("a");
           link.href = `#record-card-${original.id}`;
           link.textContent = `Version of: ${original.title}`;
+          link.addEventListener("click", (event) =>
+            navigateToRecord(original.id, event),
+          );
           links.append(link);
         }
         for (const replacement of linkedReplacements) {
@@ -336,6 +354,9 @@ function renderRecords(records, allRecords = records) {
           link.textContent =
             `Replacement: ${replacement.title} (${replacement.status}` +
             `${replacement.abandoned ? ", Abandoned" : ""})`;
+          link.addEventListener("click", (event) =>
+            navigateToRecord(replacement.id, event),
+          );
           links.append(link);
         }
         article.append(links);
