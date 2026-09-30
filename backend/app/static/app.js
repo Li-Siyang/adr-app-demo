@@ -348,6 +348,13 @@ async function abandonReplacement(record, abandonButton) {
 
 async function changeArchival(record, button) {
   const action = record.archived ? "restore" : "archive";
+  if (action === "archive" && editingRecordId === record.id) {
+    archiveMessage.className = "error";
+    archiveMessage.textContent =
+      "Save or cancel your edits before archiving this record.";
+    recordForm.scrollIntoView({ behavior: "smooth" });
+    return;
+  }
   button.disabled = true;
   archiveMessage.className = "";
   archiveMessage.textContent = "";

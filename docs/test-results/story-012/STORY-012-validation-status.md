@@ -1,12 +1,13 @@
 # STORY-012 validation status
 
 **Latest independent run:** [TR-022](details/TR-022-story-012-review-fix-retest.md)
-— **PASSED**; READY FOR REVIEW.
+— **PASSED** for the production commit below.
 **Validated production commit:** `fedeb6b9eae10cc864f87225abc774f23d040821`.
 **Validated production tree:** `fc1cc73b26a6ac2800afce565e85dd18ac422dde`.
-**Current-code applicability:** TR-022 independently retested the production
-changes made after TR-021. Subsequent validation evidence-only commits do not
-change this tested production tree; a new production change requires retest.
+**Current-code applicability:** **PENDING INDEPENDENT RETEST**. A subsequent
+PR review fix prevents archiving the record currently being edited; TR-022
+applies only to the validated production commit above. This PR remains Draft
+until independent validation passes the updated production code.
 
 All five blocking STORY-012 Test Cases passed. The assigned administrator-only,
 archived exact-tag, deletion-denial, and archival audit/retention regressions
