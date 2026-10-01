@@ -73,6 +73,22 @@ uvicorn app.main:app --reload
 
 Open `http://127.0.0.1:8000`.
 
+## Deployed HTTPS
+
+STORY-014 / TASK-020 (AC-032) applies this deployed-traffic boundary.
+
+The application defaults to `APP_ENV=development`, which allows local HTTP
+development. Set `APP_ENV=production` when deploying; the application then
+redirects HTTP requests to HTTPS.
+
+Run deployed traffic behind a TLS-enabled ingress or reverse proxy. Configure
+that edge to redirect or reject public HTTP connections and forward the
+original protocol using `X-Forwarded-Proto`. Start Uvicorn with proxy headers
+enabled and trust only the ingress addresses that can connect to the
+application (for example, configure `--proxy-headers` and
+`--forwarded-allow-ips` for the deployment). Do not trust forwarded headers
+from arbitrary clients.
+
 ## Test
 
 ```powershell
