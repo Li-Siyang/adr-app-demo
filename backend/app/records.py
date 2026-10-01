@@ -96,6 +96,28 @@ class DecisionRecordUpdate(BaseModel):
         return value
 
 
+class DecisionCommentCreate(BaseModel):
+    content: str
+
+    @field_validator("content")
+    @classmethod
+    def require_non_blank_content(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("Comment content must not be blank.")
+        return value
+
+
+class DecisionComment(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    id: str
+    content: str
+    author: MockIdentity
+    created_at: datetime
+    deleted: bool = False
+
+
 class DecisionRecord(BaseModel):
     id: str
     status: Literal["Draft", "Proposed", "Accepted", "Rejected", "Superseded"] = (
@@ -120,9 +142,14 @@ class DecisionRecord(BaseModel):
         "information, regulated personal information, or health information."
     )
     created_at: datetime
+    comments: tuple[DecisionComment, ...] = ()
 
 
 class RecordNotFoundError(Exception):
+    pass
+
+
+class CommentNotFoundError(Exception):
     pass
 
 
@@ -196,6 +223,72 @@ class DecisionRecordStore:
     def get(self, record_id: str) -> DecisionRecord | None:
         with self._lock:
             return self._records.get(record_id)
+
+    def add_comment(
+        self,
+        record_id: str,
+        content: str,
+        actor: MockIdentity,
+    ) -> DecisionComment:
+        with self._lock:
+            record = self._records.get(record_id)
+            if record is None:
+                raise RecordNotFoundError
+
+            comment = DecisionComment(
+                id=str(uuid4()),
+                content=content,
+                author=actor,
+                created_at=datetime.now(timezone.utc),
+            )
+            self._records[record_id] = record.model_copy(
+                update={"comments": (*record.comments, comment)}
+            )
+            return comment
+
+    def soft_delete_comment(
+        self,
+        record_id: str,
+        comment_id: str,
+        actor: MockIdentity,
+        *,
+        record_change: Callable[
+            [DecisionRecord, DecisionComment, DecisionComment], None
+        ],
+    ) -> DecisionComment:
+        with self._lock:
+            record = self._records.get(record_id)
+            if record is None:
+                raise RecordNotFoundError
+
+            comment_index = next(
+                (
+                    index
+                    for index, comment in enumerate(record.comments)
+                    if comment.id == comment_id
+                ),
+                None,
+            )
+            if comment_index is None:
+                raise CommentNotFoundError
+
+            comment = record.comments[comment_index]
+            if comment.author.id != actor.id:
+                raise PermissionError("Only the comment author may delete it.")
+            if comment.deleted:
+                raise RecordActionError("The comment has already been deleted.")
+
+            deleted_comment = comment.model_copy(
+                update={"content": "[deleted]", "deleted": True}
+            )
+            updated_comments = list(record.comments)
+            updated_comments[comment_index] = deleted_comment
+            updated_record = record.model_copy(
+                update={"comments": tuple(updated_comments)}
+            )
+            record_change(record, comment, deleted_comment)
+            self._records[record_id] = updated_record
+            return deleted_comment
 
     def update(
         self,
@@ -312,6 +405,7 @@ class DecisionRecordStore:
                     "author": actor,
                     "tags": list(original.tags),
                     "created_at": datetime.now(timezone.utc),
+                    "comments": (),
                 }
             )
             updated_original = original.model_copy(

@@ -18,6 +18,7 @@ const decisionMessage = document.querySelector("#decision-message");
 const transferMessage = document.querySelector("#transfer-message");
 const replacementMessage = document.querySelector("#replacement-message");
 const archiveMessage = document.querySelector("#archive-message");
+const commentMessage = document.querySelector("#comment-message");
 const cancelEdit = document.querySelector("#cancel-edit");
 
 let availableTags = [];
@@ -27,6 +28,7 @@ let latestRecordsLoad = null;
 let selectedIdentityId = null;
 let selectedCanDecideProposals = false;
 let selectedIsAdministrator = false;
+let selectedIsTeamMember = false;
 let selectedPermissionsLoaded = false;
 let editingRecordId = null;
 let editingOwnerId = null;
@@ -516,6 +518,74 @@ async function loadRecordHistory(recordId, message, entries) {
   }
 }
 
+async function saveComment(event, record, form, button) {
+  event.preventDefault();
+  button.disabled = true;
+  commentMessage.className = "";
+  commentMessage.textContent = "";
+
+  try {
+    const response = await fetch(
+      `/api/decision-records/${record.id}/comments`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: new FormData(form).get("content"),
+        }),
+      },
+    );
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      commentMessage.className = "error";
+      commentMessage.textContent = apiErrorMessage(
+        error || {},
+        "Comment could not be added. Please try again.",
+      );
+      return;
+    }
+
+    commentMessage.textContent = "Comment added.";
+    await loadRecords(tagFilter.value);
+  } catch {
+    commentMessage.className = "error";
+    commentMessage.textContent = "Comment could not be added. Please try again.";
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function deleteComment(record, comment, button) {
+  button.disabled = true;
+  commentMessage.className = "";
+  commentMessage.textContent = "";
+
+  try {
+    const response = await fetch(
+      `/api/decision-records/${record.id}/comments/${comment.id}`,
+      { method: "DELETE" },
+    );
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      commentMessage.className = "error";
+      commentMessage.textContent = apiErrorMessage(
+        error || {},
+        "Comment could not be deleted. Please try again.",
+      );
+      return;
+    }
+
+    commentMessage.textContent = "Comment deleted.";
+    await loadRecords(tagFilter.value);
+  } catch {
+    commentMessage.className = "error";
+    commentMessage.textContent =
+      "Comment could not be deleted. Please try again.";
+  } finally {
+    button.disabled = false;
+  }
+}
+
 function renderRecords(records, allRecords = records) {
   recordList.replaceChildren(
     ...records.map((record) => {
@@ -535,6 +605,67 @@ function renderRecords(records, allRecords = records) {
       const tags = document.createElement("p");
       tags.textContent = `Tags: ${record.tags.join(", ")}`;
       article.append(title, details, tags);
+
+      const commentsSection = document.createElement("section");
+      commentsSection.className = "record-comments";
+      const commentsTitle = document.createElement("h4");
+      commentsTitle.textContent = "Comments";
+      commentsSection.append(commentsTitle);
+      const recordComments = record.comments || [];
+      if (recordComments.length) {
+        const commentsList = document.createElement("ul");
+        for (const comment of recordComments) {
+          const item = document.createElement("li");
+          const content = document.createElement("p");
+          content.textContent = comment.content;
+          const attribution = document.createElement("p");
+          attribution.className = "comment-attribution";
+          attribution.textContent =
+            `${comment.author.display_name} | ` +
+            `${new Date(comment.created_at).toLocaleString()}`;
+          item.append(content, attribution);
+          if (
+            selectedIsTeamMember &&
+            comment.author.id === selectedIdentityId &&
+            !comment.deleted
+          ) {
+            const remove = document.createElement("button");
+            remove.type = "button";
+            remove.className = "secondary";
+            remove.textContent = "Delete comment";
+            remove.addEventListener("click", () =>
+              deleteComment(record, comment, remove),
+            );
+            item.append(remove);
+          }
+          commentsList.append(item);
+        }
+        commentsSection.append(commentsList);
+      } else {
+        const emptyComments = document.createElement("p");
+        emptyComments.textContent = "No comments yet.";
+        commentsSection.append(emptyComments);
+      }
+      if (selectedIsTeamMember) {
+        const form = document.createElement("form");
+        form.className = "comment-form";
+        const label = document.createElement("label");
+        label.textContent = "Add a comment";
+        const content = document.createElement("textarea");
+        content.name = "content";
+        content.required = true;
+        content.setAttribute("aria-label", `Comment on ${record.title}`);
+        const submit = document.createElement("button");
+        submit.type = "submit";
+        submit.textContent = "Add comment";
+        label.append(content);
+        form.append(label, submit);
+        form.addEventListener("submit", (event) =>
+          saveComment(event, record, form, submit),
+        );
+        commentsSection.append(form);
+      }
+      article.append(commentsSection);
 
       const original = allRecords.find(
         (candidate) => candidate.id === record.replaces_record_id,
@@ -808,6 +939,7 @@ async function loadContext() {
 
   const identity = session.selected_identity;
   selectedIdentityId = identity.id;
+  selectedIsTeamMember = identity.roles.includes("team-member");
   identityContext.replaceChildren();
 
   const title = document.createElement("h2");
