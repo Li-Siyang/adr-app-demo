@@ -124,6 +124,48 @@ def test_retrieves_created_draft_by_id(client: TestClient) -> None:
     assert response.json() == created
 
 
+@pytest.mark.parametrize(
+    ("record_status", "archived", "abandoned"),
+    [
+        pytest.param("Draft", False, False, id="draft"),
+        pytest.param("Proposed", False, False, id="proposed"),
+        pytest.param("Accepted", False, False, id="accepted"),
+        pytest.param("Rejected", False, False, id="rejected"),
+        pytest.param("Superseded", False, False, id="superseded"),
+        pytest.param("Draft", False, True, id="abandoned-replacement"),
+        pytest.param("Draft", True, False, id="archived"),
+        pytest.param("Draft", True, True, id="archived-abandoned-replacement"),
+    ],
+)
+def test_decision_record_delete_attempts_are_rejected_and_retained(
+    client: TestClient,
+    record_status: str,
+    archived: bool,
+    abandoned: bool,
+) -> None:
+    created = client.post("/api/decision-records", json=complete_payload()).json()
+    store: DecisionRecordStore = client.app.state.record_store
+    record = store.get(created["id"])
+    assert record is not None
+    retained = record.model_copy(
+        update={
+            "status": record_status,
+            "archived": archived,
+            "abandoned": abandoned,
+            "replaces_record_id": "original-record" if abandoned else None,
+        }
+    )
+    store._records[retained.id] = retained
+    path = f"/api/decision-records/{retained.id}"
+
+    assert client.delete(path).status_code == 405
+    assert client.put(path, json={"deleted": True}).status_code == 422
+
+    expected = retained.model_dump(mode="json")
+    assert client.get(path).json() == expected
+    assert client.get("/api/decision-records").json()["records"] == [expected]
+
+
 def test_unknown_decision_record_returns_not_found(client: TestClient) -> None:
     response = client.get("/api/decision-records/not-configured")
 

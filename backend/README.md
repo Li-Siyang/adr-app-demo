@@ -22,6 +22,11 @@ editing. Archive and restore actions produce attributed audit events.
 Identity selection is intentionally not authentication and does not create an
 access-control boundary.
 
+STORY-013 keeps permanent and soft decision-record deletion unavailable in
+every lifecycle, replacement-specific, and archival condition. Archival and
+restoration remain available under their rules; this retention boundary applies
+to decision records, not comment content.
+
 Records are retained in the application process for this demonstration. They
 capture the selected Mock identity as author, a distinct configured owner,
 required decision context, one or more tags, and the demo-data boundary notice.
