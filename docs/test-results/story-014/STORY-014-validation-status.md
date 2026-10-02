@@ -1,20 +1,22 @@
 # STORY-014 validation status
 
-**Latest independent run:** [TR-030](details/TR-030-story-014-rendered-notice-visibility.md)
+**Latest independent run:** [TR-031](details/TR-031-story-014-pushed-head-revalidation.md)
 — **PASSED**; recommendation: **READY FOR REVIEW**.
-**Tested commit:** `801448e50df85e78abd64a885329a783cf89c86c`.
-**Current-code applicability:** The latest run validates this commit, including
-the renamed notice acceptance test and browser-rendered visibility checks. No
-production source behavior changed.
+**Tested commit:** `c604368075dbf860424b37efc02a6a36b91da209`.
+**Current-code applicability:** The latest run validates the exact pushed PR
+HEAD, including the renamed notice acceptance test and browser-rendered
+visibility checks. No production source behavior changed since the prior
+tested commit.
 
 TC-014-01 passed for identity entry and the shared record creation/editing
 surface, including headless Chrome checks that the notice has visible computed
 styles and non-empty rendered bounds. The full backend regression suite passed
-(271 passed, 1 skipped). HTTPS, deployment, AC-032, and TC-016-03 are not
-STORY-014 acceptance conditions under the approved v1.4 baseline; AC-032 and
-TC-016-03 belong to STORY-016. The inherited legacy Jira mapping discrepancy
-is a tracking issue and does not alter the approved requirement, plan, test
-design, or this product result. Jira was not modified.
+(271 passed, 1 skipped). This run was executed against the exact pushed PR
+HEAD. HTTPS, deployment, AC-032, and TC-016-03 are not STORY-014 acceptance
+conditions under the approved v1.4 baseline; AC-032 and TC-016-03 belong to
+STORY-016. The inherited legacy Jira mapping discrepancy is a tracking issue
+and does not alter the approved requirement, plan, test design, or this
+product result. Jira was not modified.
 
 ## Run history
 
@@ -24,3 +26,4 @@ design, or this product result. Jira was not modified.
 | [TR-028](details/TR-028-story-014-demo-data-notice.md) | `796074f9788662a0488f7e6b62fed6bae1289033` | PASSED | TC-014-01 passed on identity entry and the shared create/edit surface; full backend suite passed. |
 | [TR-029](details/TR-029-story-014-independent-rerun.md) | `796074f9788662a0488f7e6b62fed6bae1289033` | PASSED | Independent rerun: TC-014-01 passed (2 route checks); full backend suite passed (271 passed, 1 skipped). |
 | [TR-030](details/TR-030-story-014-rendered-notice-visibility.md) | `801448e50df85e78abd64a885329a783cf89c86c` | PASSED | TC-014-01 passed with computed-style/rendered-bounds checks in headless Chrome on both surfaces; full backend suite passed (271 passed, 1 skipped). |
+| [TR-031](details/TR-031-story-014-pushed-head-revalidation.md) | `c604368075dbf860424b37efc02a6a36b91da209` | PASSED | Exact pushed PR HEAD revalidated: both browser visibility assertions passed; full backend suite passed (271 passed, 1 skipped). |
