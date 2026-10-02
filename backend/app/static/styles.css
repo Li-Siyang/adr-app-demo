@@ -162,6 +162,35 @@ form {
   margin-top: 1rem;
 }
 
+.record-comments {
+  margin-top: 1rem;
+  border-top: 1px solid #d7e0e6;
+  padding-top: 1rem;
+}
+
+.record-comments h4 {
+  margin: 0 0 0.5rem;
+}
+
+.record-comments ul {
+  display: grid;
+  gap: 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.record-comments li p {
+  margin-bottom: 0.25rem;
+}
+
+.comment-attribution {
+  color: #435564;
+  font-size: 0.9rem;
+}
+
+.comment-form {
+  margin-top: 1rem;
+}
+
 .record-history summary {
   cursor: pointer;
   font-weight: 700;

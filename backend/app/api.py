@@ -22,6 +22,9 @@ from app.governance import (
 )
 from app.identities import MOCK_IDENTITIES, MockIdentity, Role, find_mock_identity
 from app.records import (
+    CommentNotFoundError,
+    DecisionComment,
+    DecisionCommentCreate,
     DecisionRecord,
     DecisionRecordCreate,
     DecisionRecordStore,
@@ -228,6 +231,33 @@ def record_lifecycle_transition(
     get_audit_event_store(request).record_many(events)
 
 
+def record_comment_deletion(
+    request: Request,
+    actor: MockIdentity,
+    record: DecisionRecord,
+    before: DecisionComment,
+    after: DecisionComment,
+) -> None:
+    get_audit_event_store(request).record(
+        event_type=AuditEventType.COMMENT_DELETED,
+        actor=actor,
+        subject_type="decision_record",
+        subject_id=record.id,
+        changes=(
+            AuditChange(
+                field=f"comment.{before.id}.content",
+                before=before.content,
+                after=after.content,
+            ),
+            AuditChange(
+                field=f"comment.{before.id}.deleted",
+                before=before.deleted,
+                after=after.deleted,
+            ),
+        ),
+    )
+
+
 @router.get("/mock-identities", response_model=list[MockIdentity])
 def list_mock_identities() -> list[MockIdentity]:
     return list(MOCK_IDENTITIES)
@@ -376,6 +406,61 @@ def get_decision_record(record_id: str, request: Request) -> DecisionRecord:
             detail="The decision record does not exist.",
         )
     return record
+
+
+@router.post(
+    "/decision-records/{record_id}/comments",
+    response_model=DecisionComment,
+    status_code=status.HTTP_201_CREATED,
+)
+def add_decision_comment(
+    record_id: str,
+    payload: DecisionCommentCreate,
+    request: Request,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> DecisionComment:
+    actor = require_team_member(require_selected_identity(selected_identity_id))
+    try:
+        return get_record_store(request).add_comment(
+            record_id,
+            payload.content,
+            actor,
+        )
+    except RecordNotFoundError as error:
+        raise_record_action_error(error)
+
+
+@router.delete(
+    "/decision-records/{record_id}/comments/{comment_id}",
+    response_model=DecisionComment,
+)
+def delete_decision_comment(
+    record_id: str,
+    comment_id: str,
+    request: Request,
+    selected_identity_id: SelectedIdentityCookie = None,
+) -> DecisionComment:
+    actor = require_team_member(require_selected_identity(selected_identity_id))
+    try:
+        return get_record_store(request).soft_delete_comment(
+            record_id,
+            comment_id,
+            actor,
+            record_change=lambda record, before, after: record_comment_deletion(
+                request,
+                actor,
+                record,
+                before,
+                after,
+            ),
+        )
+    except CommentNotFoundError as error:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The comment does not exist.",
+        ) from error
+    except (RecordNotFoundError, PermissionError, RecordActionError) as error:
+        raise_record_action_error(error)
 
 
 def raise_record_action_error(error: Exception) -> None:

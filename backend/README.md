@@ -19,6 +19,10 @@ cannot be archived. Other edits and transitions on archived records require
 restoration first. A replacement Draft cannot be submitted while its Accepted
 original is archived; the UI hides its submission action but still allows
 editing. Archive and restore actions produce attributed audit events.
+STORY-011 adds attributed top-level comments to decision records. Comment authors
+may soft-delete their own comments; deleted content is replaced by `[deleted]`
+and an immutable audit event records the actor and content change. Replies and
+comment editing are not supported.
 Identity selection is intentionally not authentication and does not create an
 access-control boundary.
 
