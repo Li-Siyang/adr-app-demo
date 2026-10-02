@@ -232,6 +232,14 @@ def test_tc_014_01_notice_is_visible_after_real_ui_initialization(tmp_path: Path
 (() => {
   const notice = document.querySelector("section.notice");
   if (!notice) return false;
+  const text = notice.innerText.toLowerCase().replace(/\\s+/g, " ");
+  const requiredPhrases = [
+    "demo or synthetic data",
+    "real internal confidential information",
+    "regulated personal information",
+    "health information",
+  ];
+  if (!requiredPhrases.every((phrase) => text.includes(phrase))) return false;
   for (let element = notice; element; element = element.parentElement) {
     const style = getComputedStyle(element);
     const bounds = element.getBoundingClientRect();
