@@ -1,23 +1,24 @@
 # STORY-014 validation status
 
-**Latest independent run:** [TR-027](details/TR-027-story-014-data-and-https-boundaries.md)
-— **BLOCKED**; deployed HTTPS verification remains required.
-**Tested production commit:** `b05c4bfd1e1c4f2e7cf8cbd4e8324319ea4af361`.
-**Current-code applicability:** Production code was unchanged during TR-027.
-The run's independent acceptance tests and report are validation artifacts in
-the worktree; they do not change the production commit. A production change
-requires a fresh independent retest.
+**Latest independent run:** [TR-028](details/TR-028-story-014-demo-data-notice.md)
+— **PASSED**; recommendation: **READY FOR REVIEW**.
+**Tested production commit:** `796074f9788662a0488f7e6b62fed6bae1289033`.
+**Current-code applicability:** This run validates the current production
+commit. The validation evidence is documentation-only and does not change
+production code; the result applies to the tested production commit.
 
-TC-014-01 passed for the identity entry and shared create/edit screen. The
-locally executable portions of TC-014-02 passed for production redirects,
-HTTPS page/API requests, and local HTTP page/API requests. TC-014-02 remains
-blocked because no representative deployed HTTPS edge was available to verify
-the client-facing TLS connection and subsequent public traffic. Since both
-approved STORY-014 cases are blocking completion cases, independent review
-readiness remains blocked.
+TEST-001 v2.2 assigns STORY-014 only TC-014-01 / AC-037. That case passed for
+identity entry and the shared record creation/editing surface. The full
+backend regression suite passed (271 passed, 1 skipped). HTTPS, deployment,
+AC-032, and TC-016-03 are not STORY-014 acceptance conditions under the
+approved v1.4 baseline; AC-032 and TC-016-03 belong to STORY-016. The inherited
+legacy Jira mapping discrepancy is a tracking issue and does not alter the
+approved requirement, plan, test design, or this product result. Jira was not
+modified.
 
 ## Run history
 
 | Run | Validated production commit | Result | Key finding |
 | --- | --- | --- | --- |
-| [TR-027](details/TR-027-story-014-data-and-https-boundaries.md) | `b05c4bfd1e1c4f2e7cf8cbd4e8324319ea4af361` | BLOCKED | TC-014-01 passed; TC-014-02's app/local checks passed, but deployed TLS ingress evidence is unavailable. |
+| [TR-027](details/TR-027-story-014-data-and-https-boundaries.md) | `b05c4bfd1e1c4f2e7cf8cbd4e8324319ea4af361` | BLOCKED against superseded Requirement v1.3 | TC-014-01 passed; its deployed-HTTPS check was blocked under the then-approved v1.3 baseline. Historical evidence is unchanged and does not establish a result against v1.4. |
+| [TR-028](details/TR-028-story-014-demo-data-notice.md) | `796074f9788662a0488f7e6b62fed6bae1289033` | PASSED | TC-014-01 passed on identity entry and the shared create/edit surface; full backend suite passed. |
