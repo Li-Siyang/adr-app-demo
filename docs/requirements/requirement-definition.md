@@ -1,10 +1,11 @@
 # Requirement Definition
 
 **Product:** Internal Decision Record Application  
-**Version:** 1.3
+**Version:** 1.4
 **Status:** Approved  
-**Scope:** Minimum Viable Product (MVP)  
-**Approval date:** 2026-09-10
+**Scope:** Minimum Viable Product (MVP), local demonstration operation<br>
+**Approval date:** 2026-10-02<br>
+**Approval decision:** “批准 DRAFT v1.4，以 README 本地运行步骤验收”
 
 ## Requirement Classification
 
@@ -13,6 +14,19 @@
   implemented by assumption.
 - **Scope Constraint:** An approved limit that does not require application
   behavior.
+
+## Approved Change Summary
+
+The MVP demonstration must be operable locally using the repository's existing
+README local-run instructions. A deployed environment and deployed HTTPS
+validation are not required to demonstrate or accept this MVP. HTTPS is not
+required for local operation.
+
+Version 1.4 revises CR-OBJ-001, adds CR-SCP-004 and CR-OOS-015, revises
+CR-NFR-005 and AC-032, and updates the relevant readiness and traceability
+statements. Other Version 1.3 requirements and identifiers are carried forward
+unchanged. AC-037 and the prohibition on real internal confidential,
+regulated personal, and health information remain unchanged.
 
 Resolved assumptions, recommendations, and questions from prior versions are
 removed from the active requirement set. Their disposition is recorded in
@@ -40,9 +54,10 @@ with preconfigured Mock users and demo or synthetic data.
 
 **CR-OBJ-001 — Confirmed Requirement**
 
-Provide one MVP demonstration environment where the team can create, review,
-approve, discover, discuss, version, and retain decision records using
-preconfigured Mock identities and demo or synthetic data.
+Provide one locally operable MVP demonstration environment where the team can
+create, review, approve, discover, discuss, version, and retain decision
+records using preconfigured Mock identities and demo or synthetic data. A
+deployed environment is not required for this MVP demonstration scope.
 
 **CR-OBJ-002 — Confirmed Requirement**
 
@@ -140,6 +155,12 @@ records.
 The MVP may contain only demo or synthetic data. Real internal confidential
 information, regulated personal information, and health information are
 prohibited.
+
+**CR-SCP-004 — Scope Constraint**
+
+The MVP demonstration must be operable locally. A deployed environment,
+public-facing ingress, and deployed HTTPS validation are not prerequisites for
+demonstrating or accepting this MVP scope.
 
 # Functional Requirements
 
@@ -367,10 +388,11 @@ unauthorized access.
 
 ## Data Protection
 
-**CR-NFR-005 — Confirmed Requirement**
+**CR-NFR-005 — Scope Constraint**
 
-In deployed environments, application traffic between a user's client and the
-application must use HTTPS. This requirement does not apply to local development.
+HTTPS is not required for local MVP demonstration operation. The MVP has no
+requirement to be deployed, and deployed HTTPS is not an acceptance condition
+for this local-demo scope.
 
 ## Capacity and Performance
 
@@ -826,9 +848,11 @@ acceptance criteria. No response-time assertion applies.
 
 **AC-032**
 
-Given a deployed environment, when a user accesses or uses the application, then
-the client-facing application connection and subsequent application traffic use
-HTTPS. No equivalent HTTPS acceptance check is required for local development.
+Given the MVP is started using the repository's documented README local-run
+instructions, when an evaluator accesses the local application and exercises
+the in-scope demonstration workflows, then the application is operable without
+a deployed environment. HTTPS is not required for local operation, and
+availability of a deployed HTTPS endpoint is not a precondition for acceptance.
 
 **AC-033**
 
@@ -950,6 +974,12 @@ verification of team membership, and enforcement of a real security boundary.
 No production authentication behavior or future implementation approach is
 defined by this MVP requirement.
 
+**CR-OOS-015 — Scope Constraint**
+
+Deployment of the MVP and end-to-end validation of HTTPS at a deployed,
+client-facing endpoint are outside the local-demo acceptance scope. This
+exclusion does not remove the requirement that the MVP be operable locally.
+
 The following additional exclusions are approved for Version 1.3 and do not
 define or imply a future solution:
 
@@ -961,7 +991,10 @@ define or imply a future solution:
 
 # Open Questions
 
-No unresolved product question currently blocks Development Planning.
+No unresolved product question currently blocks Development Planning or
+acceptance. The local acceptance setup procedure is the repository's existing
+README local-run instructions, as explicitly approved on 2026-10-02; no
+additional assumption or open question about that procedure remains.
 Post-abandonment behavior is fully defined by CR-FR-030: the retained
 replacement-version Draft is immutable and cannot be reactivated.
 Production-grade identity, backup and recovery, encryption at rest, tag
@@ -975,9 +1008,10 @@ become engineering tasks and do not require additional product decisions.
 
 | Requirement area | Acceptance criteria or constraint |
 |---|---|
-| CR-BG-001–003, CR-OBJ-001–002 | Delivered collectively by AC-002, AC-005–016, AC-018–021, AC-031–034, AC-037, AC-043–047 |
+| CR-BG-001–003, CR-OBJ-001–002 | Delivered collectively by AC-002, AC-005–016, AC-018–021, AC-031–034, AC-037, AC-043–047; local-demo objective is covered by AC-032 |
 | CR-USR-001–011 | AC-002–003, AC-006–007, AC-014, AC-023, AC-029, AC-043–044, AC-046–047 |
 | CR-SCP-001–003 | AC-002–005, AC-015–016, AC-018–021, AC-024, AC-029–031, AC-037, AC-043–047 |
+| CR-SCP-004 | AC-032 |
 | CR-FR-003 | AC-002 |
 | CR-FR-004–006A | AC-004–005, AC-008, AC-014 |
 | CR-FR-007–010, CR-FR-024 | AC-005–008, AC-024, AC-038 |
@@ -987,7 +1021,7 @@ become engineering tasks and do not require additional product decisions.
 | CR-FR-023 | AC-037 |
 | CR-FR-027–028 | AC-002, AC-043–044 |
 | CR-NFR-003 | AC-009, AC-013, AC-038, AC-047 |
-| CR-NFR-005 | AC-032 |
+| CR-NFR-005 (Scope Constraint) | AC-032 |
 | CR-NFR-004 | AC-031 |
 | CR-NFR-006, CR-NFR-010, CR-NFR-012 | Approved scope constraints; no mandatory measurable target |
 | CR-NFR-007–008 | AC-018, AC-033–034, AC-046 |
@@ -996,11 +1030,29 @@ become engineering tasks and do not require additional product decisions.
 | CR-BR-001–007, CR-BR-009–016, CR-BR-018–019 | AC-003, AC-005–010, AC-014, AC-018–021, AC-023–026, AC-029–030, AC-037–039, AC-043–047 |
 | CR-US-001–016 | Covered by the corresponding functional criteria above |
 | CR-OOS-001–014 | Approved scope constraints |
+| CR-OOS-015 | No deployed environment or deployed HTTPS check is required for local-demo acceptance |
 | Version 1.3 additional exclusions | Approved scope constraints for backup/recovery, encryption at rest, tag administration, and a formal response-time target or performance acceptance measurement |
 
 Historical resolution tables below preserve the IDs that applied in their named
-versions. Items retired from the active Version 1.3 definition are explicitly
-identified in **Resolution Traceability from Version 1.2**.
+versions. The Version 1.3 baseline changes and preserved validation history are
+recorded in **Resolution Traceability from Version 1.3**.
+
+## Resolution Traceability from Version 1.3
+
+| Version 1.3 item | Resolution in Version 1.4 |
+|---|---|
+| CR-OBJ-001 | Narrowed the demonstration objective to a locally operable MVP; a deployed environment is not required. |
+| CR-NFR-005, AC-032 | Identifiers retained. Local operation using the README local-run instructions is accepted; local HTTPS and a deployed HTTPS endpoint are not required acceptance conditions. |
+| CR-SCP-003, CR-FR-023, CR-BR-010, AC-037 | Carried forward unchanged. The demo/synthetic-data-only boundary and prohibition on real internal confidential, regulated personal, and health information remain in force. |
+| STORY-014 and TC-014-02 | The demo-data notice work and AC-037 coverage remain applicable. Deployed HTTPS is no longer a blocking completion condition. PLAN-001 and TEST-001 were not changed as part of this Requirement Definition approval. |
+| TR-027 and STORY-014 validation status | Historical Version 1.3 validation evidence remains unchanged and records deployed HTTPS validation as blocked against the v1.3 baseline. It is not evidence of a result against Version 1.4. |
+| All other Version 1.3 requirements and identifiers | Carried forward unchanged. |
+
+The local-run-procedure clarification raised as A-001 and OQ-014 in the draft
+was resolved by the explicit Human approval dated 2026-10-02: use the
+repository's existing README local-run instructions for local acceptance. These
+draft-only items are therefore removed from the active assumptions and open
+questions.
 
 ## Resolution Traceability from Version 1.0
 
@@ -1103,18 +1155,12 @@ The MVP requirement definition is ready for Development Planning when:
 
 ## Readiness Assessment
 
-Version 1.3 is stakeholder-approved. It retains the unaffected Version 1.2
-requirements and incorporates the approved removal of backup and recovery,
-decision-record deletion, encryption at rest, tag administration, comment
-replies, and the formal response-time target. It also incorporates the approved
-administrator-only Abandoned condition for replacement-version Drafts, including
-retention, immutability, auditability, the active-replacement endpoint, and
-continued preservation through archive and restore. It retains
-archival/restoration, top-level comment soft deletion, team-member tag creation
-and association, HTTPS for deployed environments, and functional capacity for
-25 preconfigured Mock users and 1,000 decision records. It does not define
-future solutions for the removed capabilities. Every item in this document's
-Definition of Done is satisfied. The remaining test-design, transaction,
-concurrency, and integrity considerations are engineering-resolvable
-implementation details, not unresolved product decisions. Version 1.3 is
-**READY for Development Planning**.
+Version 1.4 is stakeholder-approved. It retains the unaffected Version 1.3
+requirements and approved scope exclusions, including the demo/synthetic-data
+restriction and AC-037. It requires local operation using the repository's
+README local-run instructions; it does not require deployment or deployed
+HTTPS validation. It does not define future solutions for the excluded
+capabilities. Every item in this document's Definition of Done is satisfied.
+The remaining test-design, transaction, concurrency, and integrity
+considerations are engineering-resolvable implementation details, not
+unresolved product decisions. Version 1.4 is **READY for Development Planning**.
