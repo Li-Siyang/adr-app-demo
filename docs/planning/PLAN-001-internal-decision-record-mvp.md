@@ -21,7 +21,7 @@ Planning date: 2026-10-02
 
 ## 2. Planning Summary
 
-This proposed plan delivers the Internal Decision Record Application MVP for
+This approved plan delivers the Internal Decision Record Application MVP for
 local demonstration operation by one modeled internal team. The work is
 organized around Mock identity selection, role-dependent behavior, decision
 authoring and lifecycle, replacement versioning, immutable history, discovery,
@@ -56,10 +56,9 @@ HTTPS work.
 
 ### Blocking Gaps
 
-No blocking requirement-definition or Plan dependency gaps identified. Joint
-Plan/Test Design implementation readiness remains blocked until this draft is
-Human-approved and TEST-001 Version 2.1 is revised and approved against this
-Plan and Requirement Version 1.4; see the Test Design readiness finding below.
+No blocking requirement-definition or Plan dependency gaps are identified.
+Plan and Test Design implementation readiness is established by this approved
+Plan Version 1.4 and approved TEST-001 Version 2.2.
 
 ### Non-blocking Gaps
 
@@ -71,37 +70,29 @@ measurable targets.
 
 ### Joint Plan and Test Design Readiness
 
-Approved TEST-001 Version 2.1 cites Requirement Version 1.3 and approved Plan
-Version 1.2. Its TC-014-02 and STORY-014 completion designation require and
-block on deployed HTTPS validation, whereas approved Requirement Version 1.4
-requires local operation using the README local-run instructions and expressly
-does not require deployment or deployed HTTPS. TC-014-02 therefore does not
-validate the current AC-032; its deployed-HTTPS expectation must not be used as
-a Version 1.4 completion gate.
+Approved TEST-001 Version 2.2 aligns with Requirement Version 1.4 and this
+Plan Version 1.4. TC-014-01 assigns AC-037 notice validation to STORY-014 as
+blocking completion coverage. TC-016-03 assigns AC-032 README-based local
+operation and in-scope workflow validation to STORY-016 as blocking completion
+coverage; deployment and HTTPS are not prerequisites or assertions. The Test
+Design therefore preserves STORY-014's notice-only scope while providing an
+executable integrated local-operation path for STORY-016.
 
-This draft resolves the Plan's execution-ownership gap by assigning AC-032
-solely to final integrated STORY-016 as blocking completion validation.
-STORY-014 owns only AC-037 for the notices on identity-entry, creation, and
-editing surfaces. Its existing STORY-001 and STORY-003 Start dependencies
-and TASK-020's TASK-001 and TASK-004 Start dependencies are sufficient for
-that notice work; later workflows do not block STORY-014's Definition of Done.
-STORY-016's integrated scope and TASK-022 Start prerequisites provide the
-complete workflow capability for a README-based local run. After Plan
-approval, Test Design must revise TS-014/TC-014-02 to remove deployed HTTPS
-and STORY-014's AC-032 blocking assignment; revised TC-016 coverage or an
-added STORY-016 case must start from the existing README local-run instructions,
-access the local application, exercise the in-scope demonstration workflows,
-and verify operability without deployment or any HTTPS prerequisite. That
-case must block STORY-016 completion. No TEST-001 changes or new validation
-results are claimed here.
+STORY-014 owns AC-037 for the notices on identity-entry, creation, and editing
+surfaces. Its STORY-001 and STORY-003 Start dependencies and TASK-020's
+TASK-001 and TASK-004 Start dependencies are sufficient for that notice work;
+later workflows do not block STORY-014's Definition of Done. STORY-016's
+integrated scope and TASK-022 Start prerequisites provide the complete
+workflow capability for a README-based local run. The approved Test Design
+also retains the other cross-Story cases as non-blocking integration
+validation under their designated later execution-owning Stories.
 
 The other cross-Story cases in TEST-001 remain subject to the existing typed
 Plan relationships: TC-002-02–04, TC-003-02, TC-004-05, TC-005-03,
 TC-006-02, TC-009-01, TC-013-01–02, and TC-015-01–03 are non-blocking
-integration validation rather than earlier-Story completion gates. A revised
-Test Design and Human approval are required after this Plan is approved; neither
-this draft nor stale TEST-001 may be consumed for implementation before those
-approvals.
+integration validation rather than earlier-Story completion gates. The
+approved Test Design is authoritative for case-level execution ownership and
+expected results.
 
 ---
 
@@ -1173,8 +1164,8 @@ Every active source Acceptance Criterion in Requirement Version 1.4 is mapped
 to at least one Story. AC-037 remains mapped to STORY-001, STORY-003, and
 STORY-014 for the unchanged demo/synthetic-only notice. AC-032 maps solely
 to STORY-016 as blocking integrated local-workflow acceptance under the README
-instructions. TEST-001 v2.1 still assigns it to STORY-014 and must be revised
-after Plan approval. Retired criteria from prior versions are not mapped as
+instructions. TEST-001 v2.2 maps TC-014-01 to STORY-014 and TC-016-03 to
+STORY-016 accordingly. Retired criteria from prior versions are not mapped as
 active work.
 
 ---
@@ -1214,10 +1205,10 @@ recommended order, STORY-014 reaches Done after its notice surfaces are
 available, without later capabilities. STORY-016's local-workflow,
 capacity, and browser completion validation runs only once the integrated
 capabilities are available through TASK-022 and TASK-024's existing Start
-prerequisites. The Plan thus has an executable completion path without a
-start/completion cycle. Stale TEST-001 v2.1 does not have a jointly executable
-path; its AC-032 ownership and deployed-HTTPS case must be corrected after
-Human approval of this draft.
+prerequisites. The Plan and approved TEST-001 v2.2 have an executable
+completion path without a start/completion cycle. TC-014-01 provides
+STORY-014's blocking notice coverage, and TC-016-03 provides STORY-016's
+blocking local-operation coverage.
 
 ## 8.1 Task Dependency Map
 
@@ -1254,8 +1245,9 @@ path: TASK-001 and TASK-004 unlock TASK-020's notice work and STORY-014's
 AC-037 validation; all integrated capabilities precede TASK-022's AC-032 and
 AC-031 exercise; TASK-022 precedes TASK-024's AC-036 browser exercise. This
 provides an executable Task order for each parent Story without requiring a
-later-Story capability for STORY-014. TEST-001 v2.1 remains inconsistent until
-its STORY-014 and STORY-016 case ownership is revised (Section 3).
+later-Story capability for STORY-014. Approved TEST-001 v2.2 assigns
+STORY-014's notice case to TC-014-01 and STORY-016's local-operation case to
+TC-016-03.
 
 ---
 
@@ -1309,12 +1301,10 @@ their execution-owning later Stories are available.
   presentation and correct audit attribution.
 - Functional-capacity validation must exercise all in-scope behavior with 25
   Mock users and 1,000 records even though no response-time assertion applies.
-- TEST-001 v2.1 still assigns deployed-HTTPS validation and AC-032 as
-  STORY-014 blocking completion. It must be revised after Plan approval to
-  leave notice validation under STORY-014 and validate AC-032's complete
-  README-based local workflow exercise as blocking STORY-016 completion.
-  Until that revision is approved, joint Plan/Test Design readiness is
-  blocked; the corrected Plan's typed Start graphs remain acyclic.
+- The superseded TEST-001 v2.1 mapped deployed-HTTPS validation and AC-032 to
+  STORY-014. Approved TEST-001 v2.2 removes that stale mapping, retains
+  STORY-014's AC-037 notice validation, and assigns README-based local
+  workflow validation for AC-032 to STORY-016.
 - The existing STORY-001 SSO implementation and legacy Test Design do not
   satisfy this plan and must not be treated as evidence for Version 1.4.
 - The historical deployed-HTTPS implementation/validation status was blocked
@@ -1334,14 +1324,8 @@ retains stable source identity STORY-014; its old summary may need later
 synchronization to the notice-only title. This is mapping maintenance, not a
 product question, and Jira remains untouched.
 
-Human approval of this DRAFT Plan Version 1.4 is required before Test Design
-consumption or code. After Plan approval, the Test Design Agent must revise
-old TEST-001 Version 2.1 against approved Requirement Version 1.4 and approved
-Plan Version 1.4: keep TC-014-01 notice validation under STORY-014; remove
-TC-014-02's deployed HTTPS expectation and STORY-014 blocking AC-032 mapping;
-and revise TC-016 coverage or add a STORY-016 case that starts from the existing README
-local-run instructions, accesses the local application, and exercises the
-in-scope demonstration workflows without deployment or HTTPS prerequisites,
-blocking STORY-016 completion. Obtain Human approval of the revised Test
-Design before implementation uses it. Synchronize the Jira summary later if
-needed; do not alter Jira as part of this Plan update.
+The approved Plan Version 1.4 and Test Design Version 2.2 establish the current
+implementation and validation baseline. TC-014-01 covers STORY-014 notice
+surfaces; TC-016-03 covers STORY-016 README-based local operation and
+integrated workflows without deployment or HTTPS prerequisites. Synchronize
+the Jira summary later if needed; do not alter Jira as part of this Plan update.
