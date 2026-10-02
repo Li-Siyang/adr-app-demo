@@ -270,6 +270,111 @@ def test_tc_014_01_notice_is_visible_after_real_ui_initialization(tmp_path: Path
                 10,
                 "Boolean(document.querySelector('#record-form'))",
             ) is True
+            assert _evaluate(
+                connection,
+                11,
+                "document.querySelector('#cancel-edit').hidden",
+            ) is True
+            assert _evaluate(
+                connection,
+                12,
+                "!document.querySelector('#record-owner').disabled",
+            ) is True
+
+            _cdp_command(
+                connection,
+                13,
+                "Runtime.evaluate",
+                {
+                    "expression": """
+(() => {
+  const field = document.querySelector("#tag-name");
+  field.value = "story014-validation";
+  document.querySelector("#tag-form").dispatchEvent(
+    new Event("submit", {bubbles: true, cancelable: true})
+  );
+})()
+""",
+                    "returnByValue": True,
+                },
+            )
+            _wait_for(
+                connection,
+                14,
+                "document.querySelector('#record-tags option[value=\"story014-validation\"]') ? 'ready' : 'loading'",
+                "ready",
+            )
+            _cdp_command(
+                connection,
+                15,
+                "Runtime.evaluate",
+                {
+                    "expression": """
+(() => {
+  const form = document.querySelector("#record-form");
+  form.elements.title.value = "STORY-014 notice validation record";
+  form.elements.context.value = "Synthetic context for UI validation.";
+  form.elements.decision.value = "Use a local demonstration.";
+  form.elements.rationale.value = "Exercise the editable Draft UI.";
+  form.elements.alternatives_considered.value = "No alternative.";
+  form.elements.consequences.value = "The synthetic Draft is editable.";
+  form.elements.owner_id.value = "maya-member";
+  form.elements.decision_date.value = "2026-10-02";
+  document.querySelector(
+    '#record-tags option[value="story014-validation"]'
+  ).selected = true;
+  form.dispatchEvent(new Event("submit", {bubbles: true, cancelable: true}));
+})()
+""",
+                    "returnByValue": True,
+                },
+            )
+            _wait_for(
+                connection,
+                16,
+                """[...document.querySelectorAll("#record-list h3")]
+  .some((node) => node.textContent === "STORY-014 notice validation record")
+    ? "created" : "creating" """,
+                "created",
+            )
+            assert _evaluate(connection, 17, visibility) is True
+            assert _evaluate(
+                connection,
+                18,
+                "document.querySelector('#cancel-edit').hidden",
+            ) is True
+            _cdp_command(
+                connection,
+                19,
+                "Runtime.evaluate",
+                {
+                    "expression": """
+[...document.querySelectorAll("#record-list article")]
+  .find((card) => card.querySelector("h3")?.textContent ===
+    "STORY-014 notice validation record")
+  ?.querySelector("button.secondary")?.click()
+""",
+                    "returnByValue": True,
+                },
+            )
+            _wait_for(
+                connection,
+                20,
+                "!document.querySelector('#cancel-edit').hidden ? 'editing' : 'loading'",
+                "editing",
+            )
+            assert _evaluate(connection, 21, visibility) is True
+            assert _evaluate(
+                connection,
+                22,
+                """document.querySelector("#record-form")
+  .getBoundingClientRect().height > 0 &&
+  document.querySelector("#record-form").elements.title.value ===
+    "STORY-014 notice validation record" &&
+  document.querySelector("#record-form").querySelector(
+    'button[type="submit"]'
+  ).textContent === "Save changes" """,
+            ) is True
     finally:
         if chrome is not None:
             chrome.terminate()

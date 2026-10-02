@@ -409,4 +409,5 @@ deployed endpoint or HTTPS.
 |---|---|---|
 | 2.2 | 2026-10-02 | Revised against Requirement Version 1.4 Approved and PLAN-001 Version 1.4 Approved. Preserved TC-014-01 as the unchanged AC-037 notice case for identity-entry, creation, and editing under STORY-014. Removed the v2.1 TC-014-02 deployed-HTTPS/AC-032 mapping from active coverage. That superseded v2.1 mapping assigned AC-032 to TC-014-02 and STORY-014 as blocking completion; it is historical only and is not a v2.2 acceptance condition. Added TC-016-03 for README-based local operation and in-scope workflow exercise, blocking only STORY-016. |
 
-**Recommendation:** READY FOR HUMAN REVIEW
+**Recommendation:** APPROVED — use as the current implementation and
+validation baseline.
