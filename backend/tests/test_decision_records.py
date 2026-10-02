@@ -147,23 +147,50 @@ def test_decision_record_delete_attempts_are_rejected_and_retained(
     store: DecisionRecordStore = client.app.state.record_store
     record = store.get(created["id"])
     assert record is not None
-    retained = record.model_copy(
-        update={
-            "status": record_status,
-            "archived": archived,
-            "abandoned": abandoned,
-            "replaces_record_id": "original-record" if abandoned else None,
-        }
-    )
-    store._records[retained.id] = retained
-    path = f"/api/decision-records/{retained.id}"
+    if abandoned:
+        designated_approver_ids.add("arun-approver")
+        original_id = record.id
+        assert client.post(
+            f"/api/decision-records/{original_id}/submit"
+        ).status_code == 200
+        client.post("/api/mock-session", json={"identity_id": "arun-approver"})
+        assert client.post(
+            f"/api/decision-records/{original_id}/decision",
+            json={"outcome": "Accepted"},
+        ).status_code == 200
+        client.post("/api/mock-session", json={"identity_id": "zoe-admin"})
+        replacement = client.post(
+            f"/api/decision-records/{original_id}/replacements"
+        )
+        assert replacement.status_code == 201
+        record_id = replacement.json()["id"]
+        result = client.post(f"/api/decision-records/{record_id}/abandon")
+        assert result.status_code == 200
+        if archived:
+            assert client.post(
+                f"/api/decision-records/{record_id}/archive"
+            ).status_code == 200
+        retained = store.get(record_id)
+        assert retained is not None
+        assert retained.replaces_record_id == original_id
+        original = store.get(original_id)
+        assert original is not None
+        assert record_id in original.replacement_record_ids
+    else:
+        retained = record.model_copy(
+            update={"status": record_status, "archived": archived}
+        )
+        store._records[retained.id] = retained
+        record_id = retained.id
+    path = f"/api/decision-records/{record_id}"
+    listed = client.get("/api/decision-records").json()["records"]
 
     assert client.delete(path).status_code == 405
     assert client.put(path, json={"deleted": True}).status_code == 422
 
     expected = retained.model_dump(mode="json")
     assert client.get(path).json() == expected
-    assert client.get("/api/decision-records").json()["records"] == [expected]
+    assert client.get("/api/decision-records").json()["records"] == listed
 
 
 def test_unknown_decision_record_returns_not_found(client: TestClient) -> None:
