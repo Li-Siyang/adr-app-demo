@@ -1,8 +1,8 @@
 # STORY-013 Validation Status
 
-**Latest status:** [TR-029](details/TR-029-story-013-independent-retest-pending.md)
+**Latest status:** [TR-030](details/TR-030-story-013-same-session-recheck.md)
 — **BLOCKED**; independent retest pending.
-**Target PR commit:** `d0bc6551f5dbad5def260a27fda77e05eb631554`.
+**Target PR commit (before TR-030 documentation):** `5578e0f6b2ffd2f7ed142b54b8a34c9689c81303`.
 **Last executable-test commit:** `d928ffad3ab81fd2d2e97e5e173227de2a497da0`.
 **Current-code applicability:** Neither TR-027 nor TR-028 is qualifying
 independent validation: both were reported by the same session that authored
@@ -24,3 +24,4 @@ independence claim was incorrect. No product-dependency blocker is identified.
 | [TR-027](details/TR-027-story-013-record-retention.md) | `2423591b223b8676af4ef27edb16608504d17d24` | Historical self-check; not independent | Fixture weakness subsequently identified by PR review. |
 | [TR-028](details/TR-028-story-013-linked-replacement-retest.md) | `d928ffad3ab81fd2d2e97e5e173227de2a497da0` | Historical self-check; not independent | Linked replacement fixture fix passed locally, but author and validator were the same session. |
 | [TR-029](details/TR-029-story-013-independent-retest-pending.md) | No independently validated post-fix commit | BLOCKED | Requires a separate Validation Agent session to validate TC-013-01/02 and regressions. |
+| [TR-030](details/TR-030-story-013-same-session-recheck.md) | `5578e0f6b2ffd2f7ed142b54b8a34c9689c81303` (self-check only) | BLOCKED | Full suite rerun: 288 passed, 1 existing skip; separate independent sign-off still missing. |
