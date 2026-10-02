@@ -1,45 +1,54 @@
 # Development Plan
 
 **Plan ID:** PLAN-001
-**Version:** 1.2
+**Version:** 1.4
 **Status:** APPROVED
-**Approval date:** 2026-09-29
+**Planning Date:** 2026-10-02
+**Approval date:** 2026-10-02
+**Approval decision:** “批准 PLAN-001 v1.4，继续修订测试设计”
 
 ## 1. Source Requirement
 
 Requirement document: `docs/requirements/requirement-definition.md`
 
-Requirement version: 1.3
+Requirement version: 1.4
 
 Requirement status: Approved
 
-Planning date: 2026-09-29
+Planning date: 2026-10-02
 
 ---
 
 ## 2. Planning Summary
 
-This plan delivers the Internal Decision Record Application demonstration MVP
-for one modeled internal team. The work is organized around Mock identity
-selection, role-dependent behavior, decision authoring and lifecycle,
-replacement versioning, immutable history, discovery, top-level comments,
-archival, auditability, and operational compatibility.
+This proposed plan delivers the Internal Decision Record Application MVP for
+local demonstration operation by one modeled internal team. The work is
+organized around Mock identity selection, role-dependent behavior, decision
+authoring and lifecycle, replacement versioning, immutable history, discovery,
+top-level comments, archival, auditability, and operational compatibility.
 
 Mock identity selection and core record creation are foundational. Role
 administration and lifecycle behavior precede replacement versioning and
 archival. Immutable audit behavior is cross-cutting and must be available before
 governed actions are completed.
 
-Version 1.3 removes organizational SSO, a real access-security boundary, record
-deletion, backup and recovery, encryption at rest, tag administration, comment
-replies, and a formal response-time target from MVP scope. It adds a permanent,
-retained, replacement-specific Abandoned condition for replacement-version
-Drafts. The MVP uses only demo or synthetic data.
+The Version 1.4 requirement retains the Version 1.3 scope, including the
+demo/synthetic-only data boundary and permanent, retained,
+replacement-specific Abandoned condition. The MVP must be operable locally by
+using the repository README's local-run instructions. Deployment, deployed
+HTTPS, and local HTTPS are not acceptance prerequisites. STORY-014 owns the
+data-use notices (AC-037); STORY-016 owns integrated local operability and
+the in-scope workflow exercise (AC-032) alongside capacity and browser
+validation.
 
-No product-level planning blocker remains. Principal engineering risks are
-atomic lifecycle outcomes, immutable history, replacement abandonment,
-consistent Mock-identity attribution, permanent audit retention, and preserving
-record links and archival state.
+Principal engineering risks remain atomic lifecycle outcomes, immutable
+history, replacement abandonment, consistent Mock-identity attribution,
+permanent audit retention, and preserving record links and archival state.
+The former deployed-HTTPS implementation/validation is a delivery-transition
+consideration only: Requirement Version 1.3 records its deployed HTTPS
+validation as blocked against that baseline. That historical status is not
+Version 1.4 acceptance evidence and does not require deployment or deployed
+HTTPS work.
 
 ---
 
@@ -47,25 +56,52 @@ record links and archival state.
 
 ### Blocking Gaps
 
-No blocking requirement gaps identified.
+No blocking requirement-definition or Plan dependency gaps identified. Joint
+Plan/Test Design implementation readiness remains blocked until this draft is
+Human-approved and TEST-001 Version 2.1 is revised and approved against this
+Plan and Requirement Version 1.4; see the Test Design readiness finding below.
 
 ### Non-blocking Gaps
 
-No non-blocking requirement gaps identified. Responsiveness, availability, and
-accessibility are approved best-effort scope constraints without mandatory
+The preexisting Jira Story AIBAIDD-22 retains STORY-014 as its stable source
+identity, but its old summary may require later Jira synchronization with the
+revised notice-only title; Jira was not changed. Responsiveness, availability,
+and accessibility are approved best-effort scope constraints without mandatory
 measurable targets.
 
 ### Joint Plan and Test Design Readiness
 
-TEST-001 Version 2.0 predates typed dependency and deferred-execution fields.
-Its cross-Story cases do not distinguish the Story whose requirement is covered
-from the later Story that owns execution. The Test Design Agent must migrate
-TEST-001 and obtain Human approval before this Plan and Test Design are jointly
-implementation-ready. TC-002-02–04, TC-003-02, TC-004-05, TC-005-03,
-TC-006-02, TC-009-01, TC-013-01–02, and TC-015-01–03 require capabilities
-delivered by later Stories. This Plan treats those relationships as
-non-blocking integration validation rather than as earlier-Story completion
-gates.
+Approved TEST-001 Version 2.1 cites Requirement Version 1.3 and approved Plan
+Version 1.2. Its TC-014-02 and STORY-014 completion designation require and
+block on deployed HTTPS validation, whereas approved Requirement Version 1.4
+requires local operation using the README local-run instructions and expressly
+does not require deployment or deployed HTTPS. TC-014-02 therefore does not
+validate the current AC-032; its deployed-HTTPS expectation must not be used as
+a Version 1.4 completion gate.
+
+This draft resolves the Plan's execution-ownership gap by assigning AC-032
+solely to final integrated STORY-016 as blocking completion validation.
+STORY-014 owns only AC-037 for the notices on identity-entry, creation, and
+editing surfaces. Its existing STORY-001 and STORY-003 Start dependencies
+and TASK-020's TASK-001 and TASK-004 Start dependencies are sufficient for
+that notice work; later workflows do not block STORY-014's Definition of Done.
+STORY-016's integrated scope and TASK-022 Start prerequisites provide the
+complete workflow capability for a README-based local run. After Plan
+approval, Test Design must revise TS-014/TC-014-02 to remove deployed HTTPS
+and STORY-014's AC-032 blocking assignment; revised TC-016 coverage or an
+added STORY-016 case must start from the existing README local-run instructions,
+access the local application, exercise the in-scope demonstration workflows,
+and verify operability without deployment or any HTTPS prerequisite. That
+case must block STORY-016 completion. No TEST-001 changes or new validation
+results are claimed here.
+
+The other cross-Story cases in TEST-001 remain subject to the existing typed
+Plan relationships: TC-002-02–04, TC-003-02, TC-004-05, TC-005-03,
+TC-006-02, TC-009-01, TC-013-01–02, and TC-015-01–03 are non-blocking
+integration validation rather than earlier-Story completion gates. A revised
+Test Design and Human approval are required after this Plan is approved; neither
+this draft nor stale TEST-001 may be consumed for implementation before those
+approvals.
 
 ---
 
@@ -134,14 +170,16 @@ CR-BR-007, CR-BR-014.
 
 Stories: STORY-012, STORY-013
 
-### EPIC-007: Demo Data, Audit, and Operational Quality
+### EPIC-007: Demo Data, Audit, and Local Demonstration Quality
 
-Objective: Enforce the demo-data boundary, provide HTTPS in deployed
-environments, retain governed audit evidence, and meet approved capacity and
-browser requirements.
+Objective: Enforce the demo-data boundary, ensure local demonstration
+operability under the approved README instructions, retain governed audit
+evidence, and meet approved capacity and browser requirements. Deployment and
+deployed HTTPS are not acceptance prerequisites.
 
-Related Requirements: CR-SCP-002–003; CR-FR-014, CR-FR-019–021,
-CR-FR-023, CR-FR-030; CR-NFR-004–008, CR-NFR-010–013; CR-BR-010.
+Related Requirements: CR-OBJ-001; CR-SCP-002–004; CR-FR-014, CR-FR-019–021,
+CR-FR-023, CR-FR-030; CR-NFR-004–008, CR-NFR-010–013; CR-BR-010;
+CR-OOS-006, CR-OOS-015.
 
 Stories: STORY-014, STORY-015, STORY-016
 
@@ -695,29 +733,27 @@ All mapped source Acceptance Criteria are satisfied; required automated tests
 are implemented; existing tests pass; documentation is updated when required;
 the Pull Request is reviewed.
 
-### STORY-014: Enforce Demo Data and Deployed HTTPS Boundaries
+### STORY-014: Display Demo-Data Notices
 
 **User Story**
 
-As a product stakeholder, I want the MVP clearly limited to demo or synthetic
-data and deployed traffic protected by HTTPS so that the demonstration remains
-within its approved operating boundary.
+As an MVP user, I want to see the required demo-data notice at identity entry
+and record creation and editing so that I know the permitted data boundary.
 
 **Description**
 
-Display the required data-use notice at identity selection, creation, and edit
-surfaces. Prohibit real internal confidential, regulated personal, and health
-information. Use HTTPS for client-facing traffic in deployed environments;
-local development is exempt.
+Keep the required demo/synthetic-only data-use notice at the identity-entry,
+creation, and editing surfaces, including all three prohibited real-data
+categories.
 
 **Related Requirements**
 
-CR-SCP-003; CR-FR-023; CR-NFR-005; CR-BR-010; CR-OOS-006.
+CR-SCP-003; CR-FR-023; CR-BR-010; CR-OOS-006.
 
 **Source Acceptance Criteria Mapping**
 
-AC-037 maps the visible demo-data notice. AC-032 maps HTTPS in deployed
-environments and the local-development exemption.
+AC-037 maps the unchanged visible demo/synthetic-only notice and prohibited
+data categories.
 
 **Dependencies**
 
@@ -732,9 +768,10 @@ Must
 
 **Definition of Done**
 
-All mapped source Acceptance Criteria are satisfied; required automated tests
-are implemented; existing tests pass; documentation is updated when required;
-the Pull Request is reviewed.
+AC-037's demo/synthetic-only notice and all prohibited data categories are
+visible on the identity-entry, creation, and editing surfaces. Required
+validation, documentation, and delivery conditions in the Story Delivery
+Definition of Done still apply. AC-032 is not a STORY-014 completion condition.
 
 ### STORY-015: Audit and Permanently Retain Governed Events
 
@@ -779,29 +816,35 @@ All mapped source Acceptance Criteria are satisfied; required automated tests
 are implemented; existing tests pass; documentation is updated when required;
 the Pull Request is reviewed.
 
-### STORY-016: Meet Capacity and Compatibility Requirements
+### STORY-016: Validate Integrated Local MVP, Capacity, and Compatibility
 
 **User Story**
 
-As a product stakeholder, I want the MVP to remain functional at approved
-capacity and in supported browsers so that its workflows can be demonstrated
-under approved conditions.
+As an MVP evaluator, I want to run the integrated application locally and
+exercise its workflows at approved capacity and in supported browsers so that
+the demonstration can be accepted under approved conditions.
 
 **Description**
 
-Validate all in-scope behavior with 25 preconfigured Mock users and 1,000
-decision records, without a response-time assertion. Support the current and
-immediately prior major versions of Chrome and Edge. Responsiveness,
-availability, and accessibility remain best-effort scope constraints.
+Start the MVP using the repository's existing README local-run instructions
+and exercise the in-scope demonstration workflows in the local application
+without requiring deployment or HTTPS. Validate all in-scope behavior with
+25 preconfigured Mock users and 1,000 decision records, without a
+response-time assertion. Support the current and immediately prior major
+versions of Chrome and Edge. Responsiveness, availability, and accessibility
+remain best-effort scope constraints.
 
 **Related Requirements**
 
-CR-SCP-002; CR-NFR-004, CR-NFR-006, CR-NFR-010–012.
+CR-OBJ-001; CR-SCP-002, CR-SCP-004; CR-NFR-004–006,
+CR-NFR-010–012; CR-OOS-015.
 
 **Source Acceptance Criteria Mapping**
 
 AC-031 maps functional behavior at approved capacity without a response-time
-assertion. AC-036 maps supported browser versions. No source Acceptance
+assertion. AC-032 maps local operation using the README instructions and
+exercising all in-scope demonstration workflows without deployment or an
+HTTPS prerequisite. AC-036 maps supported browser versions. No source Acceptance
 Criterion is required for CR-NFR-006, CR-NFR-010, or CR-NFR-012 because each is
 explicitly an approved scope constraint rather than mandatory measurable
 behavior.
@@ -810,7 +853,7 @@ behavior.
 
 | Story | Type | Required capability or outcome | Satisfaction evidence |
 | --- | --- | --- | --- |
-| STORY-001–STORY-015 | Integration-validation | The complete in-scope MVP is integrated for capacity and browser validation. | Passing full acceptance suite at approved capacity and on each required browser/version combination. |
+| STORY-001–STORY-015 | Integration-validation | The complete in-scope MVP is integrated for local-workflow, capacity, and browser validation. | Passing README-based local-workflow exercise, full acceptance suite at approved capacity, and each required browser/version combination. |
 
 **Priority**
 
@@ -818,9 +861,11 @@ Must
 
 **Definition of Done**
 
-All mapped source Acceptance Criteria are satisfied; required automated tests
-are implemented; existing tests pass; documentation is updated when required;
-the Pull Request is reviewed.
+AC-032's README-based local operation and in-scope demonstration workflow
+exercise are verified without deployment or HTTPS prerequisites, alongside
+AC-031 capacity and AC-036 browser validation. Required automated tests,
+existing tests, documentation, and delivery conditions in the Story Delivery
+Definition of Done still apply.
 
 ---
 
@@ -1001,13 +1046,12 @@ or accepted in any lifecycle, replacement-specific, or archival condition.
 
 Dependencies: See TASK-019 in Section 8.1.
 
-### TASK-020: Apply demo-data and HTTPS controls
+### TASK-020: Display demo-data notices
 
 Parent Story: STORY-014
 
-Purpose: Present the approved data-use notices and require HTTPS for
-client-facing traffic in deployed environments while exempting local
-development.
+Purpose: Display the approved demo/synthetic-only notice and all prohibited
+real-data categories on identity-entry, creation, and editing surfaces.
 
 Dependencies: See TASK-020 in Section 8.1.
 
@@ -1020,13 +1064,15 @@ retain audit entries and archived records permanently.
 
 Dependencies: See TASK-021 in Section 8.1.
 
-### TASK-022: Validate approved functional capacity
+### TASK-022: Validate local operation and approved functional capacity
 
 Parent Story: STORY-016
 
-Purpose: Verify all in-scope functions continue to satisfy their mapped
-Acceptance Criteria with 25 preconfigured Mock users and 1,000 records, without
-a response-time assertion.
+Purpose: Start the integrated MVP using the existing README local-run
+instructions, exercise its in-scope demonstration workflows locally without
+deployment or HTTPS prerequisites, and verify all in-scope functions continue
+to satisfy their mapped Acceptance Criteria with 25 preconfigured Mock users
+and 1,000 records, without a response-time assertion.
 
 Dependencies: See TASK-022 in Section 8.1.
 
@@ -1050,8 +1096,8 @@ reactivation or mutation, and permit a new replacement.
 Dependencies: See TASK-025 in Section 8.1.
 
 Retired from the Version 1.3 active plan: TASK-023 (backup and recovery).
-TASK-019, TASK-020, and TASK-022 retain their identifiers but have been
-redefined to match the approved Version 1.3 requirements.
+TASK-019 retains its Version 1.3 redefinition. TASK-020 and TASK-022 retain
+their identifiers and are revised here to match Requirement Version 1.4.
 
 ---
 
@@ -1059,7 +1105,7 @@ redefined to match the approved Version 1.3 requirements.
 
 | Requirement | Story | Status |
 |---|---|---|
-| CR-BG-001–003, CR-OBJ-001–002 | STORY-001, STORY-003, STORY-005, STORY-007–STORY-015 | Covered |
+| CR-BG-001–003, CR-OBJ-001–002 | STORY-001, STORY-003, STORY-005, STORY-007–STORY-016 | Covered; CR-OBJ-001 local operability is mapped to STORY-016 / AC-032 |
 | CR-USR-001–002 | STORY-001, STORY-003, STORY-011 | Covered |
 | CR-USR-003 | STORY-003–STORY-005 | Covered |
 | CR-USR-004–006 | STORY-002, STORY-012 | Covered |
@@ -1069,6 +1115,7 @@ redefined to match the approved Version 1.3 requirements.
 | CR-SCP-001 | STORY-001–STORY-013 | Covered |
 | CR-SCP-002 | STORY-016 | Covered |
 | CR-SCP-003 | STORY-003, STORY-014 | Covered |
+| CR-SCP-004 | STORY-016 | Covered |
 | CR-FR-003–005 | STORY-003, STORY-009–STORY-010 | Covered |
 | CR-FR-006, CR-FR-023–024 | STORY-003–STORY-005, STORY-014 | Covered |
 | CR-FR-006A, CR-FR-026 | STORY-006 | Covered |
@@ -1080,7 +1127,7 @@ redefined to match the approved Version 1.3 requirements.
 | CR-FR-029 | STORY-013 | Covered |
 | CR-NFR-003 | STORY-007–STORY-008 | Covered |
 | CR-NFR-004 | STORY-016 | Covered |
-| CR-NFR-005 | STORY-014 | Covered |
+| CR-NFR-005 | STORY-016 | Covered as a local HTTPS/deployment scope constraint; no HTTPS or deployment acceptance test |
 | CR-NFR-006, CR-NFR-010, CR-NFR-012 | STORY-016 | Covered as scope constraints |
 | CR-NFR-007–008 | STORY-007, STORY-011–STORY-012, STORY-015 | Covered |
 | CR-NFR-011 | STORY-016 | Covered |
@@ -1096,6 +1143,7 @@ redefined to match the approved Version 1.3 requirements.
 | CR-BR-018 | STORY-001 | Covered |
 | CR-US-001–016 | STORY-001–STORY-012 | Covered |
 | CR-OOS-001–014 and Version 1.3 exclusions | All stories | Covered as scope guardrails |
+| CR-OOS-015 | STORY-016 | Covered as a scope guardrail: no deployment or deployed HTTPS acceptance |
 
 ### Source Acceptance Criteria Coverage
 
@@ -1114,16 +1162,19 @@ redefined to match the approved Version 1.3 requirements.
 | AC-023 | STORY-002 |
 | AC-024 | STORY-004 |
 | AC-029 | STORY-010 |
-| AC-031, AC-036 | STORY-016 |
-| AC-032 | STORY-014 |
+| AC-031–032, AC-036 | STORY-016: approved capacity, README-based local workflow operation without deployment/HTTPS prerequisites, and browser compatibility |
 | AC-033–034 | STORY-015 |
 | AC-037 | STORY-001, STORY-003, STORY-014 |
 | AC-038 | STORY-005, STORY-008 |
 | AC-043–044 | STORY-001 |
 | AC-045 | STORY-013 |
 
-Every active source Acceptance Criterion in Requirement Version 1.3 is mapped
-to at least one Story. Retired criteria from prior versions are not mapped as
+Every active source Acceptance Criterion in Requirement Version 1.4 is mapped
+to at least one Story. AC-037 remains mapped to STORY-001, STORY-003, and
+STORY-014 for the unchanged demo/synthetic-only notice. AC-032 maps solely
+to STORY-016 as blocking integrated local-workflow acceptance under the README
+instructions. TEST-001 v2.1 still assigns it to STORY-014 and must be revised
+after Plan approval. Retired criteria from prior versions are not mapped as
 active work.
 
 ---
@@ -1151,17 +1202,22 @@ active work.
 | STORY-012 | STORY-002; STORY-005; STORY-007; STORY-009; STORY-015 | Start | Administrator enforcement, lifecycle/replacement conditions, archived discovery, and audit recording. | Passing focused validation for each named capability. |
 | STORY-013 | STORY-003 | Start | Retained records with no record-delete capability. | Passing focused record-retention validation. |
 | STORY-013 | STORY-007; STORY-012 | Integration-validation | Replacement and archived conditions for deletion-denial regression. | Passing deferred record-deletion regression. |
-| STORY-014 | STORY-001; STORY-003 | Start | Identity, creation, and editing surfaces. | Passing focused surface validation. |
+| STORY-014 | STORY-001; STORY-003 | Start | Identity-entry, creation, and editing surfaces for the unchanged demo-data notice. | Passing focused surface validation. |
 | STORY-015 | STORY-001; STORY-002; STORY-003 | Start | Actor attribution, role/approver events, and retained record events. | Passing focused validation for each named foundation. |
 | STORY-015 | STORY-005; STORY-006; STORY-007; STORY-011; STORY-012 | Integration-validation | Remaining governed event categories. | Passing deferred end-to-end audit regression. |
-| STORY-016 | STORY-001–STORY-015 | Integration-validation | Complete integrated MVP. | Passing capacity and browser suites. |
+| STORY-016 | STORY-001–STORY-015 | Integration-validation | Complete integrated MVP for README-based local workflow, capacity, and browser validation. | Passing local workflow exercise, capacity, and browser suites. |
 
-The Start graph is acyclic and contains no Completion dependencies. Every Story
-can start when its named capability evidence exists, without waiting for a
-predecessor Story status to become Done. Integration-validation relationships
-do not block development start or Story completion. TEST-001 must preserve the
-coverage Story while assigning later execution ownership before joint
-implementation readiness can be approved.
+The typed Story Start graph is acyclic and contains no Completion dependencies.
+The Task Start graph is also acyclic, as confirmed in Section 8.1. The
+integration-validation relationships do not block development start. In the
+recommended order, STORY-014 reaches Done after its notice surfaces are
+available, without later capabilities. STORY-016's local-workflow,
+capacity, and browser completion validation runs only once the integrated
+capabilities are available through TASK-022 and TASK-024's existing Start
+prerequisites. The Plan thus has an executable completion path without a
+start/completion cycle. Stale TEST-001 v2.1 does not have a jointly executable
+path; its AC-032 ownership and deployed-HTTPS case must be corrected after
+Human approval of this draft.
 
 ## 8.1 Task Dependency Map
 
@@ -1188,13 +1244,18 @@ implementation readiness can be approved.
 | STORY-013 | TASK-019 | TASK-017; TASK-025 | Integration-validation | Archived and Abandoned fixtures for deletion-denial regression. | Passing deferred TASK-019 regression for both conditions. |
 | STORY-014 | TASK-020 | TASK-001; TASK-004 | Start | Entry, creation, and editing surfaces. | Passing focused TASK-001 and TASK-004 validation. |
 | STORY-015 | TASK-021 | TASK-001; TASK-002; TASK-004 | Start | Actor attribution, governed role events, and retained record events. | Passing focused validation for each named capability. |
-| STORY-016 | TASK-022 | TASK-001–TASK-021; TASK-025 | Start | Complete integrated functional scope at approved capacity. | Merged capability evidence and passing focused validation for every active Task. |
+| STORY-016 | TASK-022 | TASK-001–TASK-021; TASK-025 | Start | Complete integrated functional scope for README-based local workflow operation and approved capacity. | Merged capability evidence and passing focused validation for every prerequisite Task; passing local workflow exercise and capacity validation completes TASK-022. |
 | STORY-016 | TASK-024 | TASK-001–TASK-022; TASK-025 | Start | Complete integrated scope and capacity fixtures. | Passing TASK-022 capacity validation and merged capability evidence. |
 | STORY-007 | TASK-025 | TASK-010; TASK-021 | Start | Active replacement Draft and reusable audit recording. | Passing focused TASK-010 and TASK-021 validation. |
 
-TASK-001 has no dependency. The Task Start graph is acyclic and contains no
-Completion dependencies. Every Task has an executable start path, and each
-parent Story has at least one Task order that reaches completion.
+TASK-001 has no dependency. The typed Task Start graph is acyclic and contains
+no Completion dependencies. Every Task has an executable start and completion
+path: TASK-001 and TASK-004 unlock TASK-020's notice work and STORY-014's
+AC-037 validation; all integrated capabilities precede TASK-022's AC-032 and
+AC-031 exercise; TASK-022 precedes TASK-024's AC-036 browser exercise. This
+provides an executable Task order for each parent Story without requiring a
+later-Story capability for STORY-014. TEST-001 v2.1 remains inconsistent until
+its STORY-014 and STORY-016 case ownership is revised (Section 3).
 
 ---
 
@@ -1219,11 +1280,13 @@ parent Story has at least one Task order that reaches completion.
 
 This order establishes Mock identity, role behavior, core records, and audit
 support first. Lifecycle then enables replacement governance, immutable
-history, and archival. Deletion denial is verified after the applicable record
-conditions exist. Capacity and compatibility are validated against the
-integrated MVP. Start dependencies are capability gates, not predecessor-Done
-gates; integration-validation items run when their execution-owning later
-Stories are available.
+history, and archival. STORY-014 can complete its notice-only validation
+after STORY-001 and STORY-003 surfaces exist. Deletion denial is verified
+after the applicable record conditions exist. README-based local operation
+and all in-scope workflows, capacity, and compatibility are validated by
+STORY-016 against the integrated MVP. Start dependencies are capability
+gates, not predecessor-Done gates; integration-validation items run when
+their execution-owning later Stories are available.
 
 ---
 
@@ -1246,11 +1309,18 @@ Stories are available.
   presentation and correct audit attribution.
 - Functional-capacity validation must exercise all in-scope behavior with 25
   Mock users and 1,000 records even though no response-time assertion applies.
-- Until TEST-001 is migrated, its single-Story test ownership can be
-  misinterpreted as an earlier-Story completion gate and recreate the lifecycle
-  deadlock this Plan removes.
+- TEST-001 v2.1 still assigns deployed-HTTPS validation and AC-032 as
+  STORY-014 blocking completion. It must be revised after Plan approval to
+  leave notice validation under STORY-014 and validate AC-032's complete
+  README-based local workflow exercise as blocking STORY-016 completion.
+  Until that revision is approved, joint Plan/Test Design readiness is
+  blocked; the corrected Plan's typed Start graphs remain acyclic.
 - The existing STORY-001 SSO implementation and legacy Test Design do not
-  satisfy this plan and must not be treated as evidence for Version 1.3.
+  satisfy this plan and must not be treated as evidence for Version 1.4.
+- The historical deployed-HTTPS implementation/validation status was blocked
+  against Requirement Version 1.3; do not treat it as a Version 1.4 acceptance
+  requirement or as a reason to deploy. Any disposition of that historical
+  work is a delivery-transition matter, not scope added by this Plan.
 
 ---
 
@@ -1259,8 +1329,19 @@ Stories are available.
 No open product questions remain. Concurrency control, transaction handling,
 Mock-identity state propagation, audit immutability, link integrity, and
 capacity-test execution are engineering concerns represented by the tasks above
-without changing the approved product requirements.
+without changing the approved product requirements. Jira Story AIBAIDD-22
+retains stable source identity STORY-014; its old summary may need later
+synchronization to the notice-only title. This is mapping maintenance, not a
+product question, and Jira remains untouched.
 
-The Test Design Agent must decide the execution-owning Story and execution
-designation for the cross-Story cases identified in Section 3. This is an
-artifact-migration action, not a new product decision.
+Human approval of this DRAFT Plan Version 1.4 is required before Test Design
+consumption or code. After Plan approval, the Test Design Agent must revise
+old TEST-001 Version 2.1 against approved Requirement Version 1.4 and approved
+Plan Version 1.4: keep TC-014-01 notice validation under STORY-014; remove
+TC-014-02's deployed HTTPS expectation and STORY-014 blocking AC-032 mapping;
+and revise TC-016 coverage or add a STORY-016 case that starts from the existing README
+local-run instructions, accesses the local application, and exercises the
+in-scope demonstration workflows without deployment or HTTPS prerequisites,
+blocking STORY-016 completion. Obtain Human approval of the revised Test
+Design before implementation uses it. Synchronize the Jira summary later if
+needed; do not alter Jira as part of this Plan update.

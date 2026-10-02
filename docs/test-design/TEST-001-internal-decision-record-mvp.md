@@ -1,30 +1,36 @@
 # Test Design: Internal Decision Record MVP
 
 **Test Design ID:** TEST-001
-**Version:** 2.1
+**Version:** 2.2
 **Status:** APPROVED
-**Approval date:** 2026-09-29
+**Approval Date:** 2026-10-02
+**Approval Decision:** 批准 TEST-001 v2.2，按新基线调整实现
 **Mode:** DESIGN MODE
-**Design Date:** 2026-09-29
-**Source Requirement:** `docs/requirements/requirement-definition.md`, Version 1.3, Approved
-**Source Development Plan:** `docs/planning/PLAN-001-internal-decision-record-mvp.md`, Version 1.2, Approved on 2026-09-29
+**Design Date:** 2026-10-02
+**Source Requirement:** `docs/requirements/requirement-definition.md`, Version 1.4, Approved on 2026-10-02
+**Source Development Plan:** `docs/planning/PLAN-001-internal-decision-record-mvp.md`, Version 1.4, Approved on 2026-10-02
 **Scope:** STORY-001 through STORY-016
 
 ## Readiness Assessment
 
-- Requirement Version 1.3 is explicitly Approved.
-- Development Plan Version 1.2 is explicitly Approved and defines typed Story
+- Requirement Version 1.4 is explicitly Approved.
+- Development Plan Version 1.4 is explicitly Approved and defines typed Story
   and Task dependencies, satisfaction evidence, and non-blocking
   integration-validation relationships.
 - Every planned Story maps to active Requirements and Acceptance Criteria.
 - All 38 active Acceptance Criteria are observable and testable.
 - No unresolved product question blocks test design.
 - Every blocking-completion case can execute from its coverage Story's scope
-  and satisfied Start dependencies.
+  and satisfied typed Plan dependency path.
 - Cases requiring capabilities assigned to later Stories retain their original
   coverage traceability and are designated non-blocking integration validation
   under the later execution-owning Story.
 - The combined Plan and Test Design have no Start or Completion cycle.
+- AC-037 notice coverage remains assigned to STORY-014, whose blocking case
+  requires only its STORY-001 and STORY-003 Start dependencies.
+- AC-032 local-operation coverage is blocking only for STORY-016 and runs
+  after its integrated capability dependencies; deployment and HTTPS are not
+  preconditions or assertions.
 - Expected behavior comes only from the approved Requirement and Development
   Plan. Production implementation and Jira were not inspected.
 
@@ -45,9 +51,9 @@
 | TS-011 | Discuss records with top-level comments | STORY-011 | CR-USR-002; CR-FR-017, CR-FR-019; CR-BR-012 | AC-016, AC-018–019 | Verify attributed top-level comments and author-only auditable soft deletion. | Acceptance / Integration / Negative / Concurrency | High |
 | TS-012 | Archive and restore retained records | STORY-012 | CR-FR-020–021, CR-FR-030; CR-NFR-008; CR-BR-007, CR-BR-014, CR-BR-019 | AC-003, AC-020–021, AC-026, AC-034, AC-047 | Verify administrator-only archival, discovery, exact restoration, replacement guards, and preservation of Abandoned. | Acceptance / Integration / State Transition | High |
 | TS-013 | Prevent decision-record deletion | STORY-013 | CR-SCP-001; CR-FR-029; CR-OOS-007 | AC-045 | Verify deletion is absent or denied in every lifecycle, archival, and replacement-specific condition. | Acceptance / Negative / Retention | High |
-| TS-014 | Enforce demo-data and deployed HTTPS boundaries | STORY-014 | CR-SCP-003; CR-FR-023; CR-NFR-005; CR-BR-010 | AC-032, AC-037 | Verify required data-use notices and HTTPS application traffic in deployed environments. | Acceptance / Configuration / E2E | High |
+| TS-014 | Display demo-data notices on identity-entry and record surfaces | STORY-014 | CR-SCP-003; CR-FR-023; CR-BR-010 | AC-037 | Verify the unchanged required data-use notice on identity-entry, creation, and editing surfaces. | Acceptance / E2E | High |
 | TS-015 | Audit and permanently retain governed events | STORY-015 | CR-FR-014, CR-FR-019–021, CR-FR-030; CR-NFR-007–008 | AC-013, AC-018, AC-033–034, AC-046 | Verify complete event coverage, actor/time attribution, immutability, and no expiry or deletion. | Integration / Audit / Retention | High |
-| TS-016 | Meet approved capacity and browser compatibility | STORY-016 | CR-SCP-002; CR-NFR-004, CR-NFR-011 | AC-031, AC-036 | Verify all in-scope functions at 25 Mock users and 1,000 records in supported browser versions without a response-time assertion. | Non-functional / Compatibility / E2E | High |
+| TS-016 | Operate the integrated local MVP at approved capacity and browser compatibility | STORY-016 | CR-OBJ-001; CR-SCP-002, CR-SCP-004; CR-NFR-004–006, CR-NFR-011–012; CR-OOS-015 | AC-031–032, AC-036 | Verify README-based local operation and in-scope workflow exercise without deployment or HTTPS prerequisites, plus approved functional capacity and supported browsers without a response-time assertion. | Acceptance / Non-functional / Compatibility / E2E | High |
 
 ### Scenario Execution Profiles
 
@@ -193,12 +199,11 @@ authoritative for each individual case.
 | TC-013-01 | TS-013 | STORY-013 | CR-FR-029; CR-OOS-007 | AC-045 | Records cover every lifecycle status plus active replacement, Abandoned, and archived conditions. | As every role inspect available actions and attempt permanent and soft record deletion through supported interfaces. | No deletion action is available or every attempt is denied; every record remains retained. | High | API / E2E |
 | TC-013-02 | TS-013 | STORY-013 | CR-SCP-001; CR-FR-029 | AC-045 | Records from TC-013-01 remain. | Perform otherwise-permitted archive and restore operations. | Archive and restore remain available under their rules and do not delete records. | High | Acceptance |
 
-### STORY-014 — Enforce Demo Data and Deployed HTTPS Boundaries
+### STORY-014 — Display Demo-Data Notices
 
 | Test Case ID | Parent Scenario | Story | Related Requirements | Related AC | Preconditions | Test Steps | Expected Result | Priority | Recommended Automation |
 |---|---|---|---|---|---|---|---|---|---|
-| TC-014-01 | TS-014 | STORY-014 | CR-SCP-003; CR-FR-023; CR-BR-010 | AC-037 | Entry, creation, and editing screens are available. | Inspect each screen. | Each visibly permits only demo or synthetic data and prohibits all three named real-data categories. | High | E2E |
-| TC-014-02 | TS-014 | STORY-014 | CR-NFR-005 | AC-032 | Representative deployed environment and local development environment exist. | Access the deployed client and exercise subsequent application traffic; inspect the local environment separately. | Deployed client-facing and subsequent application traffic use HTTPS; no equivalent HTTPS assertion is applied to local development. | High | Configuration / Integration |
+| TC-014-01 | TS-014 | STORY-014 | CR-SCP-003; CR-FR-023; CR-BR-010 | AC-037 | Identity-entry, record-creation, and record-editing screens are available. | Inspect the identity-entry screen, a record-creation screen, and a record-editing screen. | Each of the three screens visibly states that only demo or synthetic data may be used and that real internal confidential information, regulated personal information, and health information must not be entered. | High | E2E |
 
 ### STORY-015 — Audit and Permanently Retain Governed Events
 
@@ -208,12 +213,13 @@ authoritative for each individual case.
 | TC-015-02 | TS-015 | STORY-015 | CR-FR-019, CR-FR-030; CR-NFR-007 | AC-018, AC-033, AC-046 | Comment deletion and abandonment are performed by known Mock identities. | Inspect their audit records. | Comment deletion identifies the deleting Mock identity; abandonment identifies acting administrator and time. | High | Integration |
 | TC-015-03 | TS-015 | STORY-015 | CR-FR-014; CR-NFR-003, CR-NFR-008 | AC-013, AC-034 | Audit entries and archived records exist. | Attempt modification, expiry assignment, and permanent deletion; retrieve them repeatedly. | Audit entries are immutable; neither audit entries nor archived records have retention expiry or a permanent deletion path and both remain retrievable. | High | Security / Integration |
 
-### STORY-016 — Meet Capacity and Compatibility Requirements
+### STORY-016 — Validate Integrated Local MVP, Capacity, and Compatibility
 
 | Test Case ID | Parent Scenario | Story | Related Requirements | Related AC | Preconditions | Test Steps | Expected Result | Priority | Recommended Automation |
 |---|---|---|---|---|---|---|---|---|---|
 | TC-016-01 | TS-016 | STORY-016 | CR-SCP-002; CR-NFR-004 | AC-031 | 25 preconfigured Mock users and 1,000 representative decision records exist. | Exercise every in-scope functional Acceptance Criterion against the approved-capacity dataset and identities. | Every applicable functional Acceptance Criterion remains satisfied; no response-time assertion is made. | High | Integration / E2E |
 | TC-016-02 | TS-016 | STORY-016 | CR-NFR-011 | AC-036 | Current and immediately prior major Chrome and Edge versions are identified at execution time. | Run all in-scope acceptance workflows on each of the four browser/version combinations. | Every in-scope function is supported in each required browser/version combination. | High | E2E |
+| TC-016-03 | TS-016 | STORY-016 | CR-OBJ-001; CR-SCP-004; CR-NFR-005; CR-OOS-015 | AC-032 | The integrated capabilities required by STORY-001 through STORY-015 and TASK-025 are available; the README local-run instructions are available. | Follow the repository README local-run instructions to start the application; access the local application; exercise all in-scope demonstration workflows covered by the applicable acceptance cases in this Test Design. | The README instructions are sufficient to start and use the local application for all in-scope demonstration workflows. The workflows are operable without a deployed environment. Neither a deployed endpoint nor HTTPS is a precondition or assertion for this case. | High | E2E |
 
 ## Test Case Execution Ownership Matrix
 
@@ -244,11 +250,11 @@ coverage but cannot block that earlier Story's Definition of Done.
 | TC-011-01–04 | STORY-011 | STORY-011 | Blocking completion | Executable from comment and reusable audit-foundation scope. |
 | TC-012-01–05 | STORY-012 | STORY-012 | Blocking completion | Executable from archive and restore scope. |
 | TC-013-01–02 | STORY-013 | STORY-012 | Non-blocking integration-validation | Full deletion-denial coverage requires replacement, Abandoned, archived, and restore conditions; STORY-012 is the last planned capability. |
-| TC-014-01–02 | STORY-014 | STORY-014 | Blocking completion | Executable from data-boundary and deployed-HTTPS scope. |
+| TC-014-01 | STORY-014 | STORY-014 | Blocking completion | The three notice surfaces are supplied by STORY-001 and STORY-003 Start dependencies; no later Story capability is required. |
 | TC-015-01 | STORY-015; STORY-005–STORY-007; STORY-011–STORY-012 | STORY-012 | Non-blocking integration-validation | Full event-category coverage requires the later governed workflows, ending with archive and restore. |
 | TC-015-02 | STORY-015; STORY-007; STORY-011 | STORY-007 | Non-blocking integration-validation | Requires both comment deletion and replacement abandonment; STORY-007 is later in the approved order. |
 | TC-015-03 | STORY-015; STORY-012 | STORY-012 | Non-blocking integration-validation | Archived-record retention evidence requires STORY-012. |
-| TC-016-01–02 | STORY-016 | STORY-016 | Blocking completion | Capacity and browser validation are the delivered scope of STORY-016. |
+| TC-016-01–03 | STORY-016 | STORY-016 | Blocking completion | Capacity, browser, and local-operation validation are the delivered scope of STORY-016; TC-016-03 runs only after the integrated capabilities assigned to STORY-001 through STORY-015 and TASK-022's TASK-025 prerequisite are available under STORY-016's integration-validation dependency and TASK-022's Start prerequisites. |
 
 ## Test Traceability Matrix
 
@@ -285,7 +291,7 @@ Story -> Execution designation -> Scenario -> Test Case.
 | CR-FR-005, CR-FR-025 | AC-029 | STORY-010 | TS-010 | TC-010-01–02 | Covered |
 | CR-FR-026 | AC-030 | STORY-006 | TS-006 | TC-006-03 | Covered |
 | CR-SCP-002; CR-NFR-004 | AC-031 | STORY-016 | TS-016 | TC-016-01 | Covered |
-| CR-NFR-005 | AC-032 | STORY-014 | TS-014 | TC-014-02 | Covered |
+| CR-OBJ-001; CR-SCP-004; CR-NFR-005; CR-OOS-015 | AC-032 | STORY-016 | TS-016 | TC-016-03 | Covered |
 | CR-NFR-007 | AC-033 | STORY-015 | TS-015 | TC-015-01–02 | Covered |
 | CR-NFR-008 | AC-034 | STORY-012, STORY-015 | TS-012, TS-015 | TC-012-01, TC-015-03 | Covered |
 | CR-NFR-011 | AC-036 | STORY-016 | TS-016 | TC-016-02 | Covered |
@@ -321,13 +327,22 @@ Story -> Execution designation -> Scenario -> Test Case.
 | Replacement operations corrupt immutable history or links. | STORY-007–STORY-008 | Atomic supersession, one active replacement, abandonment, bidirectional links, and no cycles. |
 | Archival changes lifecycle or replacement conditions. | STORY-007, STORY-012–STORY-013 | Prior-status restoration, Proposed-replacement guard, Abandoned preservation, and record retention. |
 | Comment deletion removes evidence or affects decision records. | STORY-011, STORY-013, STORY-015 | Placeholder, author authorization, audit attribution, concurrency, and distinction from record deletion. |
+| README-based local startup or integrated operation fails across workflows. | STORY-001–STORY-016 | Follow the repository README local-run instructions and exercise the in-scope workflows locally; no deployment or HTTPS prerequisite. |
 | Capacity or browser changes expose workflow-specific defects. | STORY-016 | Full functional acceptance suite against capacity data and each browser/version combination. |
 
 ## Test Design Gaps and Execution Constraints
 
 - No requirement ambiguity blocks this design.
-- No planning correction is required. All later-capability cases are explicitly
-  non-blocking for their earlier coverage Stories.
+- No planning correction is required. Earlier-Story coverage that needs later
+  capabilities is explicitly non-blocking for that earlier Story. TC-014-01
+  is executable from STORY-014's satisfied STORY-001 and STORY-003 Start
+  dependencies. Blocking TC-016-03 runs only under STORY-016 after its
+  integrated capability dependencies are available and cannot block an
+  earlier Story.
+- AC-032 is covered by TC-016-03 as a STORY-016 blocking completion case. It
+  follows the approved README local-run instructions and exercises the
+  in-scope workflows locally; deployment and HTTPS are neither preconditions
+  nor assertions.
 - Permanent retention cannot be proven by waiting forever. Validation must
   combine the absence of expiry and permanent-delete behavior with applicable
   retention-control evidence and repeated retrieval.
@@ -344,6 +359,9 @@ Story -> Execution designation -> Scenario -> Test Case.
 - Mock identity selection demonstrates roles and attribution but is not
   authentication, team-membership verification, or a security boundary.
 - Only demo or synthetic data may be used.
+- The MVP demonstration must be operable locally using the repository README
+  local-run instructions. Deployment, deployed HTTPS, and local HTTPS are not
+  acceptance prerequisites.
 - Backup/recovery, encryption at rest, tag administration, comment replies,
   record deletion, and formal response-time targets are outside MVP scope.
 - Out-of-scope items are guardrails and do not introduce positive behavior
@@ -351,9 +369,11 @@ Story -> Execution designation -> Scenario -> Test Case.
 
 ## Open Testing Questions
 
-None. Test entry points, fixture implementation, concurrency tooling, deployed
-HTTPS evidence, capacity data generation, and browser execution infrastructure
-are deferred to VALIDATION MODE without changing expected behavior.
+None. Test entry points, fixture implementation, concurrency tooling, capacity
+data generation, and browser execution infrastructure are deferred to
+VALIDATION MODE without changing expected behavior. The local-operation case
+uses the repository's existing README instructions; it does not require a
+deployed endpoint or HTTPS.
 
 ## Quality Gate
 
@@ -365,6 +385,11 @@ are deferred to VALIDATION MODE without changing expected behavior.
 - TC-002-02–04, TC-003-02, TC-004-05, TC-005-03, TC-006-02, TC-009-01,
   TC-013-01–02, and TC-015-01–03 are non-blocking integration validation and
   cannot prevent their earlier coverage Stories from reaching Done.
+- TC-014-01 is the STORY-014 blocking AC-037 notice case and requires only
+  STORY-014's satisfied STORY-001 and STORY-003 Start dependencies.
+- TC-016-03 is the STORY-016 blocking AC-032 case; it runs after integrated
+  capability dependencies and cannot block any earlier Story. It does not
+  require or assert a deployed endpoint or HTTPS.
 - Blocking-completion cases require no capability assigned only to a later
   Story.
 - The combined Plan and Test Design contain no Start or Completion cycle.
@@ -377,5 +402,11 @@ are deferred to VALIDATION MODE without changing expected behavior.
 - Expected results are observable and independent of production implementation.
 - Requirement to Acceptance Criterion to Story to Scenario to Test Case
   traceability is preserved.
+
+## Change History
+
+| Version | Date | Change |
+|---|---|---|
+| 2.2 | 2026-10-02 | Revised against Requirement Version 1.4 Approved and PLAN-001 Version 1.4 Approved. Preserved TC-014-01 as the unchanged AC-037 notice case for identity-entry, creation, and editing under STORY-014. Removed the v2.1 TC-014-02 deployed-HTTPS/AC-032 mapping from active coverage. That superseded v2.1 mapping assigned AC-032 to TC-014-02 and STORY-014 as blocking completion; it is historical only and is not a v2.2 acceptance condition. Added TC-016-03 for README-based local operation and in-scope workflow exercise, blocking only STORY-016. |
 
 **Recommendation:** READY FOR HUMAN REVIEW
