@@ -98,14 +98,19 @@ def test_tc_009_01_returns_matching_current_and_historical_records(
     assert {record["status"] for record in records} == set(expected_statuses)
 
 
-@pytest.mark.skip(
-    reason=(
-        "DEFERRED BY HUMAN REVIEWER 2026-09-11: validate archived exact-tag "
-        "discovery with STORY-012 when archival support is available"
-    )
-)
-def test_tc_009_01_returns_matching_archived_records() -> None:
+def test_tc_009_01_returns_matching_archived_records(client: TestClient) -> None:
     """TC-009-01 / AC-015: archived exact-tag matches remain discoverable."""
+    record = create_record(client, "Retained archived decision", [TARGET_TAG])
+    assert client.post(
+        "/api/mock-session", json={"identity_id": "zoe-admin"}
+    ).status_code == 200
+    archived = client.post(f"/api/decision-records/{record['id']}/archive")
+    assert archived.status_code == 200
+    assert archived.json()["archived"] is True
+    assert client.post(
+        "/api/mock-session", json={"identity_id": ACTOR}
+    ).status_code == 200
+    assert filter_by_tag(client, TARGET_TAG) == [archived.json()]
 
 
 def test_tc_009_02_returns_only_records_with_the_complete_selected_tag(
