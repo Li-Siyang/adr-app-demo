@@ -1,17 +1,20 @@
 # STORY-014 validation status
 
-**Latest independent run:** [TR-034](details/TR-034-story-014-browser-notice-content.md)
+**Latest independent run:** [TR-035](details/TR-035-story-014-isolated-tag-fixture.md)
 — **PASSED**; recommendation: **READY FOR REVIEW**.
-**Tested commit:** `2e9d194f623566f45299613d9926c05ad236552c`.
+**Tested commit:** `0927482fb5911e6bda8ddbfcdcde3494921dd62b`.
 **Current-code applicability:** The latest run independently validates the
 actual served UI through Mock identity selection, record creation, and record
 editing. It confirms the complete required notice content and rendered
-visibility in each state. Production source is unchanged from TR-033.
+visibility in each state, with no STORY-010 tag-creation dependency in the
+blocking browser test. Production source remains unchanged.
 
 TC-014-01 passed for identity entry, record creation, and record editing,
 including all four required notice phrases and rendered visibility in the
-initialized create and edit states in headless Chrome. The full backend
-regression suite passed (272 passed, 1 skipped). HTTPS,
+initialized create and edit states in headless Chrome. The Draft was created
+through the actual UI using a synthetic tag fixture rather than the separate
+STORY-010 tag-creation workflow. The full backend regression suite passed
+(272 passed, 1 skipped). HTTPS,
 deployment, AC-032, and TC-016-03 are not STORY-014 acceptance conditions
 under the approved v1.4 baseline; AC-032 and TC-016-03 belong to STORY-016.
 The inherited legacy Jira mapping discrepancy is a tracking issue and does
@@ -30,3 +33,4 @@ Jira was not modified.
 | [TR-032](details/TR-032-story-014-initialized-browser-surfaces.md) | `e9df3afaa12912978812d352de28da89ef452749` | PASSED | Actual app browser E2E passed after identity selection and page initialization; full backend suite passed (272 passed, 1 skipped). |
 | [TR-033](details/TR-033-story-014-create-edit-browser-validation.md) | `5fe70443d40606e300053d7c665814b224586446` | PASSED | TC-014-01 passed through actual browser identity selection, record creation, and edit-mode visibility checks; full backend suite passed (272 passed, 1 skipped). |
 | [TR-034](details/TR-034-story-014-browser-notice-content.md) | `2e9d194f623566f45299613d9926c05ad236552c` | PASSED | Actual browser checks confirm complete required notice text and rendered visibility on identity entry, initialized creation, and editing; full backend suite passed (272 passed, 1 skipped). |
+| [TR-035](details/TR-035-story-014-isolated-tag-fixture.md) | `0927482fb5911e6bda8ddbfcdcde3494921dd62b` | PASSED | Browser acceptance flow uses a synthetic tag fixture rather than STORY-010 tag creation, while creating/editing the Draft through the UI; full backend suite passed (272 passed, 1 skipped). |
