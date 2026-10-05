@@ -296,29 +296,12 @@ def test_tc_014_01_notice_is_visible_after_real_ui_initialization(tmp_path: Path
                 {
                     "expression": """
 (() => {
-  const field = document.querySelector("#tag-name");
-  field.value = "story014-validation";
-  document.querySelector("#tag-form").dispatchEvent(
-    new Event("submit", {bubbles: true, cancelable: true})
-  );
-})()
-""",
-                    "returnByValue": True,
-                },
-            )
-            _wait_for(
-                connection,
-                14,
-                "document.querySelector('#record-tags option[value=\"story014-validation\"]') ? 'ready' : 'loading'",
-                "ready",
-            )
-            _cdp_command(
-                connection,
-                15,
-                "Runtime.evaluate",
-                {
-                    "expression": """
-(() => {
+  // Keep this STORY-014 flow independent of STORY-010 tag creation.
+  const tag = document.createElement("option");
+  tag.value = "story014-validation";
+  tag.textContent = "story014-validation";
+  tag.selected = true;
+  document.querySelector("#record-tags").append(tag);
   const form = document.querySelector("#record-form");
   form.elements.title.value = "STORY-014 notice validation record";
   form.elements.context.value = "Synthetic context for UI validation.";
@@ -328,9 +311,6 @@ def test_tc_014_01_notice_is_visible_after_real_ui_initialization(tmp_path: Path
   form.elements.consequences.value = "The synthetic Draft is editable.";
   form.elements.owner_id.value = "maya-member";
   form.elements.decision_date.value = "2026-10-02";
-  document.querySelector(
-    '#record-tags option[value="story014-validation"]'
-  ).selected = true;
   form.dispatchEvent(new Event("submit", {bubbles: true, cancelable: true}));
 })()
 """,
