@@ -43,6 +43,15 @@ MOCK_IDENTITIES: tuple[MockIdentity, ...] = (
         label="Lee Administrator and Approver (Mock User)",
         roles=(Role.TEAM_MEMBER, Role.ADMINISTRATOR, Role.APPROVER),
     ),
+    *(
+        MockIdentity(
+            id=f"mock-user-{number:02}",
+            display_name=f"Mock User {number:02}",
+            label=f"Mock User {number:02} (Mock User)",
+            roles=(Role.TEAM_MEMBER,),
+        )
+        for number in range(5, 26)
+    ),
 )
 
 _IDENTITIES_BY_ID = {identity.id: identity for identity in MOCK_IDENTITIES}
@@ -52,4 +61,3 @@ def find_mock_identity(identity_id: str | None) -> MockIdentity | None:
     if identity_id is None:
         return None
     return _IDENTITIES_BY_ID.get(identity_id)
-

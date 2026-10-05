@@ -36,6 +36,8 @@ def test_lists_preconfigured_identities_as_mock_users(client: TestClient) -> Non
 
     assert response.status_code == 200
     identities = response.json()
+    assert len(MOCK_IDENTITIES) == 25
+    assert len({identity["id"] for identity in identities}) == 25
     assert len(identities) == len(MOCK_IDENTITIES)
     assert all(identity["is_mock"] is True for identity in identities)
     assert all("Mock User" in identity["label"] for identity in identities)
